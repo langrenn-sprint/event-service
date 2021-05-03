@@ -1,0 +1,55 @@
+openapi: 3.0.3
+info:
+  title: Event service
+  description: The event service let you administrate the main domain objects startlist and racelist
+  version: '1.0'
+  license:
+      name: Apache 2.0
+      url: 'http://www.apache.org/licenses/LICENSE-2.0.html'
+paths:
+  /events:
+    post:
+      security:
+      - bearerAuth: []
+      description: Add a new event
+      requestBody:
+        description: A Multipart/form-data body containing one or more of the following parts
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Event'
+      responses:
+        201:
+          description: Created
+    get:
+      description: Get a list of events
+      responses:
+        200:
+          description: Ok
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EventCollection'
+#  /events/{id}/racelist:
+#  /events/{id}//startlist:
+#  /contestants:
+components:
+  schemas:
+    EventCollection:
+      type: object
+      properties:
+        shapes:
+          type: array
+          items:
+            $ref: '#/components/schemas/Event'      
+    Event:
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
