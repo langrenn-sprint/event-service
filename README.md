@@ -4,17 +4,17 @@ Backend service to adminster events, will generate racelists etc
 ## Running the API locally
 Start the server locally:
 ```
-% poetry run adev runserver src/event_service
+% poetry run adev runserver -p 8080 src/event_service
 ```
 ## Running the API in a wsgi-server (gunicorn)
 ```
-% poetry run gunicorn event_service:create_app --bind localhost:8000 --worker-class aiohttp.GunicornWebWorker
+% cd src && poetry run gunicorn event_service:create_app --bind localhost:8080 --worker-class aiohttp.GunicornWebWorker
 ```
 ## Running the wsgi-server in Docker
 To build and run the api in a Docker container:
 ```
 % docker build -t digdir/event-service:latest .
-% docker run --env-file .env -p 8000:8080 -d digdir/event-service:latest
+% docker run --env-file .env -p 8080:8080 -d digdir/event-service:latest
 ```
 The easier way would be with docker-compose:
 ```
