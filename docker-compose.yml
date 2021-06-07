@@ -1,0 +1,19 @@
+version: '3'
+services:
+  event-service:
+    build: .
+    image: gcr.io/langrenn-sprint/event-service:test
+    ports:
+      - "8000:8080"
+    environment:
+      - DB_HOST=mongodb
+      - DB_PORT=27017
+      - DB_USER=user
+      - DB_PASSWORD=secret
+    depends_on:
+      - "mongodb"
+
+  mongodb:
+    image: mongo:latest
+    ports:
+      - 27017:27017

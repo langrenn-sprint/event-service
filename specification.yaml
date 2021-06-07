@@ -13,7 +13,7 @@ paths:
       - bearerAuth: []
       description: Add a new event
       requestBody:
-        description: A Multipart/form-data body containing one or more of the following parts
+        description: The new event to be created
         content:
           application/json:
             schema:
@@ -30,9 +30,33 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/EventCollection'
+  /events/{id}:
+
 #  /events/{id}/racelist:
-#  /events/{id}//startlist:
-#  /contestants:
+  /races:
+  /races/{id}:
+  /races/{id}/startlist:
+    get:
+      description: a start list for the race given by id
+      responses:
+        200:
+          description: Ok
+          content:
+            appliation/json:
+              schema:
+                $ref: '#/components/schemas/Startlist'
+  /contestants:
+    post:
+      description: create new contestant
+      requestBody:
+        description: the new contestant to be created
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Contestant'
+      responses:
+        201:
+          description: Created
 components:
   schemas:
     EventCollection:
@@ -41,13 +65,43 @@ components:
         shapes:
           type: array
           items:
-            $ref: '#/components/schemas/Event'      
+            $ref: '#/components/schemas/Event'
     Event:
       properties:
         id:
           type: string
         name:
           type: string
+    Contestant:
+      properties:
+        id:
+          description: system generated unique id
+          type: string
+        firstName:
+          type: string
+        lastName:
+          type: string
+        birthDate:
+          type: string
+          format: date
+        club:
+          type: string
+        minIdrettId:
+          type: string
+    Startlist:
+      type: array
+      items:
+        type: object
+        properties:
+          raceId:
+            type: string
+          contestantId:
+            type: string
+          bib:
+            type: string
+          startTime:
+            type: string
+            format: timestamp
   securitySchemes:
     bearerAuth:
       type: http
