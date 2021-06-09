@@ -1,6 +1,15 @@
 # event-service
 Backend service to adminster events, will generate racelists etc
 
+
+```
+% curl -i \
+ -H "Content-Type: application/json" \
+ --data @tests/files/event.json \
+-X POST http://localhost:8000/events
+```
+
+
 ## Running the API locally
 Start the server locally:
 ```
