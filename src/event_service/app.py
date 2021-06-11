@@ -1,11 +1,14 @@
 """Module for admin of sporting events."""
 import logging
 import os
+from typing import Any
 
 from aiohttp import web
 import motor.motor_asyncio
 
 from .views import (
+    Event,
+    Events,
     Ping,
     Ready,
 )
@@ -26,13 +29,21 @@ async def create_app() -> web.Application:
 
     # Set up database connection:
     logging.debug(f"Connecting to db at {DB_HOST}:{DB_PORT}")
-    client = motor.motor_asyncio.AsyncIOMotorClient(DB_HOST, DB_PORT)
-    db = client.DB_NAME
+    mongo = motor.motor_asyncio.AsyncIOMotorClient(DB_HOST, DB_PORT)
+    db = mongo.DB_NAME
     app["db"] = db
     app.add_routes(
         [
             web.view("/ping", Ping),
             web.view("/ready", Ready),
+            web.view("/events", Events),
+            web.view("/events/{id}", Event),
         ]
     )
+
+    async def cleanup(app: Any) -> None:
+        mongo.close()
+
+    app.on_cleanup.append(cleanup)
+
     return app
