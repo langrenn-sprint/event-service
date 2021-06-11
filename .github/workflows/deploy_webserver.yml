@@ -1,6 +1,6 @@
 name: Test, build and deploy webserver
 on:
-  push
+  push:
     branches:
       - main
 env:
