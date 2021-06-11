@@ -13,7 +13,7 @@ class EventsAdapter:
     """Class representing an adapter for events."""
 
     @classmethod
-    async def get_all_events(cls: Any, db: Any) -> List:
+    async def get_all_events(cls: Any, db: Any) -> List:  # pragma: no cover
         """Get all events function."""
         events: List = []
         cursor = db.events_collection.find()
@@ -23,7 +23,9 @@ class EventsAdapter:
         return events
 
     @classmethod
-    async def create_event(cls: Any, db: Any, event: dict) -> Optional[str]:
+    async def create_event(
+        cls: Any, db: Any, event: dict
+    ) -> Optional[str]:  # pragma: no cover
         """Create event function."""
         # create id
         id = create_id()
@@ -36,7 +38,9 @@ class EventsAdapter:
         return None  # pragma: no cover
 
     @classmethod
-    async def get_event(cls: Any, db: Any, id: str) -> Optional[dict]:
+    async def get_event(
+        cls: Any, db: Any, id: str
+    ) -> Optional[dict]:  # pragma: no cover
         """Get event function."""
         # insert new
         result = await db.events_collection.find_one({"id": id})
@@ -46,7 +50,9 @@ class EventsAdapter:
         return None
 
     @classmethod
-    async def update_event(cls: Any, db: Any, id: str, event: dict) -> Optional[str]:
+    async def update_event(
+        cls: Any, db: Any, id: str, event: dict
+    ) -> Optional[str]:  # pragma: no cover
         """Get event function."""
         # get old document
         old_document = await db.events_collection.find_one({"id": id})
@@ -57,7 +63,9 @@ class EventsAdapter:
         return None
 
     @classmethod
-    async def delete_event(cls: Any, db: Any, id: str) -> Optional[str]:
+    async def delete_event(
+        cls: Any, db: Any, id: str
+    ) -> Optional[str]:  # pragma: no cover
         """Get event function."""
         # get old document
         document = await db.events_collection.find_one({"id": id})

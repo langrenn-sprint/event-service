@@ -36,7 +36,6 @@ def is_responsive(url: Any) -> Any:
         return False
 
 
-@pytest.mark.integration
 @pytest.mark.contract
 @pytest.fixture(scope="session")
 def http_service(docker_ip: Any, docker_services: Any) -> Any:
@@ -50,7 +49,6 @@ def http_service(docker_ip: Any, docker_services: Any) -> Any:
     return url
 
 
-@pytest.mark.integration
 @pytest.mark.contract
 @pytest.fixture(scope="session")
 def docker_compose_file(pytestconfig: Any) -> Any:
