@@ -1,7 +1,8 @@
 name: Test, build and deploy webserver
 on:
   push
-
+    branches:
+      - main
 env:
   PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
 
