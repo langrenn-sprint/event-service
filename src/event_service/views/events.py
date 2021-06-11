@@ -14,11 +14,8 @@ from event_service.adapters import EventsAdapter
 
 load_dotenv()
 HOST_SERVER = os.getenv("HOST_SERVER", "localhost")
-HOST_PORT = os.getenv("HOST_PORT")
-if HOST_PORT:
-    BASE_URL = f"http://{HOST_SERVER}:{HOST_PORT}"
-else:  # pragma: no cover
-    BASE_URL = f"http://{HOST_SERVER}"
+HOST_PORT = os.getenv("HOST_PORT", "8080")
+BASE_URL = f"http://{HOST_SERVER}:{HOST_PORT}"
 
 
 class Events(View):
