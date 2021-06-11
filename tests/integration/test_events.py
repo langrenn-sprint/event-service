@@ -14,6 +14,10 @@ async def test_create_event(client: _TestClient, mocker: MockFixture) -> None:
         "event_service.adapters.events_adapter.create_id",
         return_value=ID,
     )
+    mocker.patch(
+        "event_service.adapters.events_adapter.EventsAdapter.create_event",
+        return_value=ID,
+    )
 
     request_body = {"name": "Oslo Skagen sprint"}
     headers = MultiDict({hdrs.CONTENT_TYPE: "application/json"})
@@ -27,6 +31,10 @@ async def test_create_event(client: _TestClient, mocker: MockFixture) -> None:
 async def test_get_event_by_id(client: _TestClient, mocker: MockFixture) -> None:
     """Should return OK, and a body containing one event."""
     ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
+    mocker.patch(
+        "event_service.adapters.events_adapter.EventsAdapter.get_event",
+        return_value={"id": ID, "name": "Oslo Skagen Sprint"},
+    )
 
     resp = await client.get(f"/events/{ID}")
     assert resp.status == 200
@@ -40,6 +48,10 @@ async def test_get_event_by_id(client: _TestClient, mocker: MockFixture) -> None
 async def test_put_event_by_id(client: _TestClient, mocker: MockFixture) -> None:
     """Should return No Content."""
     ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
+    mocker.patch(
+        "event_service.adapters.events_adapter.EventsAdapter.update_event",
+        return_value=ID,
+    )
 
     headers = MultiDict({hdrs.CONTENT_TYPE: "application/json"})
     request_body = {"id": ID, "name": "Oslo Skagen sprint Oppdatert"}
@@ -49,8 +61,13 @@ async def test_put_event_by_id(client: _TestClient, mocker: MockFixture) -> None
 
 
 @pytest.mark.integration
-async def test_list_events(client: _TestClient) -> None:
+async def test_list_events(client: _TestClient, mocker: MockFixture) -> None:
     """Should return OK and a valid json body."""
+    ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
+    mocker.patch(
+        "event_service.adapters.events_adapter.EventsAdapter.get_all_events",
+        return_value=[{"id": ID, "name": "Oslo Skagen Sprint"}],
+    )
     resp = await client.get("/events")
     assert resp.status == 200
     assert "application/json" in resp.headers[hdrs.CONTENT_TYPE]
@@ -63,6 +80,10 @@ async def test_list_events(client: _TestClient) -> None:
 async def test_delete_event_by_id(client: _TestClient, mocker: MockFixture) -> None:
     """Should return No Content."""
     ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
+    mocker.patch(
+        "event_service.adapters.events_adapter.EventsAdapter.delete_event",
+        return_value=ID,
+    )
 
     resp = await client.delete(f"/events/{ID}")
     assert resp.status == 204
@@ -72,17 +93,26 @@ async def test_delete_event_by_id(client: _TestClient, mocker: MockFixture) -> N
 
 
 @pytest.mark.integration
-async def test_get_event_not_found(client: _TestClient) -> None:
+async def test_get_event_not_found(client: _TestClient, mocker: MockFixture) -> None:
     """Should return 404 Not found."""
     ID = "does-not-exist"
+    mocker.patch(
+        "event_service.adapters.events_adapter.EventsAdapter.get_event",
+        return_value=None,
+    )
+
     resp = await client.get(f"/events/{ID}")
     assert resp.status == 404
 
 
 @pytest.mark.integration
-async def test_update_event_not_found(client: _TestClient) -> None:
+async def test_update_event_not_found(client: _TestClient, mocker: MockFixture) -> None:
     """Should return 404 Not found."""
     ID = "does-not-exist"
+    mocker.patch(
+        "event_service.adapters.events_adapter.EventsAdapter.update_event",
+        return_value=None,
+    )
     headers = MultiDict({hdrs.CONTENT_TYPE: "application/json"})
     request_body = {
         "id": "290e70d5-0933-4af0-bb53-1d705ba7eb95",
@@ -95,8 +125,12 @@ async def test_update_event_not_found(client: _TestClient) -> None:
 
 
 @pytest.mark.integration
-async def test_delete_event_not_found(client: _TestClient) -> None:
+async def test_delete_event_not_found(client: _TestClient, mocker: MockFixture) -> None:
     """Should return 404 Not found."""
     ID = "does-not-exist"
+    mocker.patch(
+        "event_service.adapters.events_adapter.EventsAdapter.delete_event",
+        return_value=None,
+    )
     resp = await client.delete(f"/events/{ID}")
     assert resp.status == 404
