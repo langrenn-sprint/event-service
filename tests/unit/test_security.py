@@ -1,5 +1,6 @@
 """Unit test cases for the security module."""
 import os
+from typing import Optional
 
 import jwt
 import pytest
@@ -13,9 +14,9 @@ async def test_valid_token() -> None:
     secret = os.getenv("JWT_SECRET")
     algorithm = "HS256"
     payload = {"identity": "test_user"}
-    token = jwt.encode(payload, secret, algorithm)  # type: ignore
+    token: Optional[str] = jwt.encode(payload, secret, algorithm)  # type: ignore
 
-    assert valid_token(token.decode("utf-8"))
+    assert valid_token(token)
 
 
 @pytest.mark.unit

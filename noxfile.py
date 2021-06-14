@@ -8,7 +8,14 @@ import nox_poetry
 package = "event_service"
 locations = "src", "tests", "noxfile.py"
 nox.options.stop_on_first_error = True
-nox.options.sessions = "lint", "mypy", "pytype", "integration_tests", "contract_tests"
+nox.options.sessions = (
+    "lint",
+    "mypy",
+    "pytype",
+    "unit_tests",
+    "integration_tests",
+    "contract_tests",
+)
 
 
 @nox_poetry.session
