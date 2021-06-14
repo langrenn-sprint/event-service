@@ -16,15 +16,6 @@ Backend service to adminster events, will generate racelists etc
 % curl -H "Authorization: Bearer $ACCESS"  http://localhost:8080/events
 ```
 
-
-```
-% curl -i \
- -H "Content-Type: application/json" \
- --data @tests/files/event.json \
--X POST http://localhost:8000/events
-```
-
-
 ## Running the API locally
 Start the server locally:
 ```
