@@ -12,6 +12,26 @@ nox.options.sessions = "lint", "mypy", "pytype", "integration_tests", "contract_
 
 
 @nox_poetry.session
+def unit_tests(session: Session) -> None:
+    """Run the unit test suite."""
+    args = session.posargs
+    session.install(
+        ".",
+        "pytest",
+        "pytest-mock",
+        "pytest-aiohttp",
+        "requests",
+    )
+    session.run(
+        "pytest",
+        "-m unit",
+        "-rA",
+        *args,
+        env={"CONFIG": "test", "JWT_SECRET": "secret"},
+    )
+
+
+@nox_poetry.session
 def integration_tests(session: Session) -> None:
     """Run the integration test suite."""
     args = session.posargs or ["--cov"]
@@ -29,7 +49,12 @@ def integration_tests(session: Session) -> None:
         "-m integration",
         "-rA",
         *args,
-        env={"CONFIG": "test"},
+        env={
+            "CONFIG": "test",
+            "JWT_SECRET": "secret",
+            "ADMIN_USERNAME": "test",
+            "ADMIN_PASSWORD": "password",
+        },
     )
 
 

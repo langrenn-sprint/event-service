@@ -3,6 +3,21 @@ Backend service to adminster events, will generate racelists etc
 
 
 ```
+% curl -H "Content-Type: application/json" \
+  -X POST \
+  --data '{"username":"admin","password":"passw123"}' \
+  http://localhost:8080/login
+% export ACCESS="" #token from response
+% curl -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $ACCESS" \
+  -X POST \
+  --data @tests/files/event.json \
+  http://localhost:8080/events
+% curl -H "Authorization: Bearer $ACCESS"  http://localhost:8080/events
+```
+
+
+```
 % curl -i \
  -H "Content-Type: application/json" \
  --data @tests/files/event.json \

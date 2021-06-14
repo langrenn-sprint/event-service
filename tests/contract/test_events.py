@@ -1,16 +1,31 @@
 """Contract test cases for ping."""
+import os
 from typing import Any
 
 from aiohttp import ClientSession, hdrs
+import jwt
 import pytest
+from pytest_mock import MockFixture
+
+
+@pytest.fixture
+def token() -> str:
+    """Create a valid token."""
+    secret = os.getenv("JWT_SECRET")
+    algorithm = "HS256"
+    payload = {"identity": os.getenv("ADMIN_USERNAME")}
+    return jwt.encode(payload, secret, algorithm)  # type: ignore
 
 
 @pytest.mark.contract
 @pytest.mark.asyncio
-async def test_create_event(http_service: Any) -> None:
+async def test_create_event(http_service: Any, token: MockFixture) -> None:
     """Should return Created, location header and no body."""
     url = f"{http_service}/events"
-    headers = {hdrs.CONTENT_TYPE: "application/json"}
+    headers = {
+        hdrs.CONTENT_TYPE: "application/json",
+        hdrs.AUTHORIZATION: f"Bearer {token}",
+    }
     request_body = {"name": "Oslo Skagen sprint"}
     session = ClientSession()
     async with session.post(url, headers=headers, json=request_body) as response:
@@ -23,12 +38,15 @@ async def test_create_event(http_service: Any) -> None:
 
 @pytest.mark.contract
 @pytest.mark.asyncio
-async def test_events(http_service: Any) -> None:
+async def test_events(http_service: Any, token: MockFixture) -> None:
     """Should return OK and a list of events as json."""
     url = f"{http_service}/events"
+    headers = {
+        hdrs.AUTHORIZATION: f"Bearer {token}",
+    }
 
     session = ClientSession()
-    async with session.get(url) as response:
+    async with session.get(url, headers=headers) as response:
         events = await response.json()
     await session.close()
 
@@ -40,16 +58,20 @@ async def test_events(http_service: Any) -> None:
 
 @pytest.mark.contract
 @pytest.mark.asyncio
-async def test_get_event(http_service: Any) -> None:
+async def test_get_event(http_service: Any, token: MockFixture) -> None:
     """Should return OK and an event as json."""
     url = f"{http_service}/events"
 
+    headers = {
+        hdrs.AUTHORIZATION: f"Bearer {token}",
+    }
+
     async with ClientSession() as session:
-        async with session.get(url) as response:
+        async with session.get(url, headers=headers) as response:
             events = await response.json()
         id = events[0]["id"]
         url = f"{url}/{id}"
-        async with session.get(url) as response:
+        async with session.get(url, headers=headers) as response:
             event = await response.json()
 
     assert response.status == 200
@@ -61,13 +83,16 @@ async def test_get_event(http_service: Any) -> None:
 
 @pytest.mark.contract
 @pytest.mark.asyncio
-async def test_update_event(http_service: Any) -> None:
+async def test_update_event(http_service: Any, token: MockFixture) -> None:
     """Should return No Content."""
     url = f"{http_service}/events"
-    headers = {hdrs.CONTENT_TYPE: "application/json"}
+    headers = {
+        hdrs.CONTENT_TYPE: "application/json",
+        hdrs.AUTHORIZATION: f"Bearer {token}",
+    }
 
     async with ClientSession() as session:
-        async with session.get(url) as response:
+        async with session.get(url, headers=headers) as response:
             events = await response.json()
         id = events[0]["id"]
         url = f"{url}/{id}"
@@ -80,16 +105,19 @@ async def test_update_event(http_service: Any) -> None:
 
 @pytest.mark.contract
 @pytest.mark.asyncio
-async def test_delete_event(http_service: Any) -> None:
+async def test_delete_event(http_service: Any, token: MockFixture) -> None:
     """Should return No Content."""
     url = f"{http_service}/events"
+    headers = {
+        hdrs.AUTHORIZATION: f"Bearer {token}",
+    }
 
     async with ClientSession() as session:
-        async with session.get(url) as response:
+        async with session.get(url, headers=headers) as response:
             events = await response.json()
         id = events[0]["id"]
         url = f"{url}/{id}"
-        async with session.delete(url) as response:
+        async with session.delete(url, headers=headers) as response:
             pass
 
     assert response.status == 204
