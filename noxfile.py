@@ -8,7 +8,34 @@ import nox_poetry
 package = "event_service"
 locations = "src", "tests", "noxfile.py"
 nox.options.stop_on_first_error = True
-nox.options.sessions = "lint", "mypy", "pytype", "integration_tests", "contract_tests"
+nox.options.sessions = (
+    "lint",
+    "mypy",
+    "pytype",
+    "unit_tests",
+    "integration_tests",
+    "contract_tests",
+)
+
+
+@nox_poetry.session
+def unit_tests(session: Session) -> None:
+    """Run the unit test suite."""
+    args = session.posargs
+    session.install(
+        ".",
+        "pytest",
+        "pytest-mock",
+        "pytest-aiohttp",
+        "requests",
+    )
+    session.run(
+        "pytest",
+        "-m unit",
+        "-rA",
+        *args,
+        env={"CONFIG": "test", "JWT_SECRET": "secret"},
+    )
 
 
 @nox_poetry.session
@@ -29,7 +56,12 @@ def integration_tests(session: Session) -> None:
         "-m integration",
         "-rA",
         *args,
-        env={"CONFIG": "test"},
+        env={
+            "CONFIG": "test",
+            "JWT_SECRET": "secret",
+            "ADMIN_USERNAME": "test",
+            "ADMIN_PASSWORD": "password",
+        },
     )
 
 
