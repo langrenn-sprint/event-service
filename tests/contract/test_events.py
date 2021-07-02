@@ -1,20 +1,33 @@
 """Contract test cases for ping."""
+import logging
 import os
 from typing import Any
 
 from aiohttp import ClientSession, hdrs
-import jwt
 import pytest
 from pytest_mock import MockFixture
 
+USERS_HOST_SERVER = os.getenv("USERS_HOST_SERVER")
+USERS_HOST_PORT = os.getenv("USERS_HOST_PORT")
+
 
 @pytest.fixture
-def token() -> str:
+@pytest.mark.asyncio
+async def token(http_service: Any) -> str:
     """Create a valid token."""
-    secret = os.getenv("JWT_SECRET")
-    algorithm = "HS256"
-    payload = {"identity": os.getenv("ADMIN_USERNAME")}
-    return jwt.encode(payload, secret, algorithm)  # type: ignore
+    url = f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/login"
+    headers = {hdrs.CONTENT_TYPE: "application/json"}
+    request_body = {
+        "username": os.getenv("ADMIN_USERNAME"),
+        "password": os.getenv("ADMIN_PASSWORD"),
+    }
+    session = ClientSession()
+    async with session.post(url, headers=headers, json=request_body) as response:
+        body = await response.json()
+    await session.close()
+    if response.status != 200:
+        logging.error(f"Got unexpected status {response.status} from {http_service}.")
+    return body["token"]
 
 
 @pytest.mark.contract
