@@ -1,4 +1,4 @@
-"""Resource module for ageclasss resources."""
+"""Resource module for ageclasses resources."""
 import json
 import logging
 import os
@@ -21,7 +21,7 @@ BASE_URL = f"http://{HOST_SERVER}:{HOST_PORT}"
 
 
 class Ageclasses(View):
-    """Class representing ageclasss resource."""
+    """Class representing ageclasses resource."""
 
     async def get(self) -> Response:
         """Get route function."""
@@ -29,9 +29,9 @@ class Ageclasses(View):
         if not valid_token(token):
             raise HTTPUnauthorized()
 
-        ageclasss = await AgeclassesAdapter.get_all_ageclasss(self.request.app["db"])
+        ageclasses = await AgeclassesAdapter.get_all_ageclasses(self.request.app["db"])
 
-        body = json.dumps(ageclasss, default=str, ensure_ascii=False)
+        body = json.dumps(ageclasses, default=str, ensure_ascii=False)
         return Response(status=200, body=body, content_type="application/json")
 
     async def post(self) -> Response:
@@ -46,7 +46,7 @@ class Ageclasses(View):
         id = await AgeclassesAdapter.create_ageclass(self.request.app["db"], body)
         if id:
             logging.debug(f"inserted document with id {id}")
-            headers = MultiDict({hdrs.LOCATION: f"{BASE_URL}/ageclasss/{id}"})
+            headers = MultiDict({hdrs.LOCATION: f"{BASE_URL}/ageclasses/{id}"})
 
             return Response(status=201, headers=headers)
         raise HTTPBadRequest()  # pragma: no cover
