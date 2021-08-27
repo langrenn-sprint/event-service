@@ -7,6 +7,8 @@ from aiohttp import web
 import motor.motor_asyncio
 
 from .views import (
+    Ageclass,
+    Ageclasses,
     Event,
     Events,
     Login,
@@ -42,6 +44,8 @@ async def create_app() -> web.Application:
             web.view("/login", Login),
             web.view("/ping", Ping),
             web.view("/ready", Ready),
+            web.view("/ageclasses", Ageclasses),
+            web.view("/ageclasses/{id}", Ageclass),
             web.view("/events", Events),
             web.view("/events/{id}", Event),
         ]
