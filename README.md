@@ -6,7 +6,7 @@ Backend service to adminster events, will generate racelists etc
 % curl -H "Content-Type: application/json" \
   -X POST \
   --data '{"username":"admin","password":"passw123"}' \
-  http://localhost:8080/login
+  http://localhost:8081/login
 % export ACCESS="" #token from response
 % curl -H "Content-Type: application/json" \
   -H "Authorization: Bearer $ACCESS" \
