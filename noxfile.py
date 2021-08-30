@@ -28,6 +28,7 @@ def unit_tests(session: Session) -> None:
         "pytest-mock",
         "pytest-aiohttp",
         "requests",
+        "aioresponses",
     )
     session.run(
         "pytest",
@@ -50,6 +51,7 @@ def integration_tests(session: Session) -> None:
         "pytest-mock",
         "pytest-aiohttp",
         "requests",
+        "aioresponses",
     )
     session.run(
         "pytest",
@@ -61,6 +63,8 @@ def integration_tests(session: Session) -> None:
             "JWT_SECRET": "secret",
             "ADMIN_USERNAME": "test",
             "ADMIN_PASSWORD": "password",
+            "USERS_HOST_SERVER": "example.com",
+            "USERS_HOST_PORT": "8081",
         },
     )
 
@@ -76,13 +80,20 @@ def contract_tests(session: Session) -> None:
         "pytest_mock",
         "pytest-asyncio",
         "requests",
+        "aioresponses",
     )
     session.run(
         "pytest",
         "-m contract",
         "-rA",
         *args,
-        env={},
+        env={
+            "CONFIG": "test",
+            "ADMIN_USERNAME": "admin",
+            "ADMIN_PASSWORD": "password",
+            "USERS_HOST_SERVER": "localhost",
+            "USERS_HOST_PORT": "8081",
+        },
     )
 
 

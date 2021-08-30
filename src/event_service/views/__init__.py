@@ -1,4 +1,3 @@
 """Package for all views."""
-from .events import Event, Events
+from .events import EventsView, EventView
 from .liveness import Ping, Ready
-from .login import Login

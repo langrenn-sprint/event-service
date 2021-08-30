@@ -4,12 +4,12 @@ import os
 from typing import Any
 
 from aiohttp import web
+from aiohttp_middlewares import cors_middleware, error_middleware
 import motor.motor_asyncio
 
 from .views import (
-    Event,
-    Events,
-    Login,
+    EventsView,
+    EventView,
     Ping,
     Ready,
 )
@@ -25,7 +25,12 @@ DB_PASSWORD = os.getenv("DB_PASSWORD")
 
 async def create_app() -> web.Application:
     """Create an web application."""
-    app = web.Application()
+    app = web.Application(
+        middlewares=[
+            cors_middleware(allow_all=True),
+            error_middleware(),  # default error handler for whole application
+        ]
+    )
     # Set up logging
     logging.basicConfig(level=LOGGING_LEVEL)
     logging.getLogger("chardet.charsetprober").setLevel(LOGGING_LEVEL)
@@ -39,11 +44,10 @@ async def create_app() -> web.Application:
     # Set up routes:
     app.add_routes(
         [
-            web.view("/login", Login),
             web.view("/ping", Ping),
             web.view("/ready", Ready),
-            web.view("/events", Events),
-            web.view("/events/{id}", Event),
+            web.view("/events", EventsView),
+            web.view("/events/{id}", EventView),
         ]
     )
 
