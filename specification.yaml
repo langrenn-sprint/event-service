@@ -33,6 +33,14 @@ paths:
   /events/{id}:
     get:
       description: Get a unique event
+      parameters:
+      - name: id
+        in: path
+        description: shape id
+        required: true
+        schema:
+          type: string
+          format: uuid
       responses:
         200:
           description: Ok
@@ -40,20 +48,47 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Event'
-
-#  /events/{id}/racelist:
-  /races:
-  /races/{id}:
-  /races/{id}/startlist:
+  /ageclasses:
+    post:
+      security:
+      - bearerAuth: []
+      description: Add a new ageclass
+      requestBody:
+        description: The new ageclass to be created
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Ageclass'
+      responses:
+        201:
+          description: Created
     get:
-      description: a start list for the race given by id
+      description: Get a list of ageclasses
       responses:
         200:
           description: Ok
           content:
-            appliation/json:
+            application/json:
               schema:
-                $ref: '#/components/schemas/Startlist'
+                $ref: '#/components/schemas/AgeclassCollection'
+  /ageclasses/{id}:
+    get:
+      description: Get a unique ageclass
+      parameters:
+      - name: id
+        in: path
+        description: shape id
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        200:
+          description: Ok
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Ageclass'
   /contestants:
     post:
       description: create new contestant
@@ -68,6 +103,19 @@ paths:
           description: Created
 components:
   schemas:
+    AgeclassCollection:
+      type: object
+      properties:
+        shapes:
+          type: array
+          items:
+            $ref: '#/components/schemas/Ageclass'
+    Ageclass:
+      properties:
+        id:
+          type: string
+        name:
+          type: string
     EventCollection:
       type: object
       properties:
