@@ -35,7 +35,7 @@ async def test_create_event(
     """Should return Created, location header."""
     ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
     mocker.patch(
-        "event_service.adapters.events_adapter.create_id",
+        "event_service.services.events_service.create_id",
         return_value=ID,
     )
     mocker.patch(
@@ -64,7 +64,7 @@ async def test_get_event_by_id(
     """Should return OK, and a body containing one event."""
     ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
     mocker.patch(
-        "event_service.adapters.events_adapter.EventsAdapter.get_event",
+        "event_service.adapters.events_adapter.EventsAdapter.get_event_by_id",
         return_value={"id": ID, "name": "Oslo Skagen Sprint"},
     )
     headers = MultiDict(
@@ -85,11 +85,15 @@ async def test_get_event_by_id(
 
 
 @pytest.mark.integration
-async def test_put_event_by_id(
+async def test_update_event_by_id(
     client: _TestClient, mocker: MockFixture, token: MockFixture
 ) -> None:
     """Should return No Content."""
     ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
+    mocker.patch(
+        "event_service.adapters.events_adapter.EventsAdapter.get_event_by_id",
+        return_value={"id": ID, "name": "Oslo Skagen Sprint"},
+    )
     mocker.patch(
         "event_service.adapters.events_adapter.EventsAdapter.update_event",
         return_value=ID,
@@ -143,6 +147,10 @@ async def test_delete_event_by_id(
     """Should return No Content."""
     ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
     mocker.patch(
+        "event_service.adapters.events_adapter.EventsAdapter.get_event_by_id",
+        return_value={"id": ID, "name": "Oslo Skagen Sprint"},
+    )
+    mocker.patch(
         "event_service.adapters.events_adapter.EventsAdapter.delete_event",
         return_value=ID,
     )
@@ -161,6 +169,150 @@ async def test_delete_event_by_id(
 
 # Bad cases
 
+# Mandatory properties missing at create and update:
+@pytest.mark.integration
+async def test_create_event_missing_mandatory_property(
+    client: _TestClient, mocker: MockFixture, token: MockFixture
+) -> None:
+    """Should return 422 HTTPUnprocessableEntity."""
+    ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
+    mocker.patch(
+        "event_service.services.events_service.create_id",
+        return_value=ID,
+    )
+    mocker.patch(
+        "event_service.adapters.events_adapter.EventsAdapter.create_event",
+        return_value=ID,
+    )
+    request_body = {"optional_property": "Optional_property"}
+    headers = MultiDict(
+        {
+            hdrs.CONTENT_TYPE: "application/json",
+            hdrs.AUTHORIZATION: f"Bearer {token}",
+        },
+    )
+
+    with aioresponses(passthrough=["http://127.0.0.1"]) as m:
+        m.post("http://example.com:8081/authorize", status=204)
+        resp = await client.post("/events", headers=headers, json=request_body)
+        assert resp.status == 422
+
+
+@pytest.mark.integration
+async def test_create_event_with_input_id(
+    client: _TestClient, mocker: MockFixture, token: MockFixture
+) -> None:
+    """Should return 422 HTTPUnprocessableEntity."""
+    ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
+    mocker.patch(
+        "event_service.services.events_service.create_id",
+        return_value=ID,
+    )
+    mocker.patch(
+        "event_service.adapters.events_adapter.EventsAdapter.create_event",
+        return_value=ID,
+    )
+    request_body = {"id": ID, "name": "Oslo Skagen sprint Oppdatert"}
+    headers = MultiDict(
+        {
+            hdrs.CONTENT_TYPE: "application/json",
+            hdrs.AUTHORIZATION: f"Bearer {token}",
+        },
+    )
+
+    with aioresponses(passthrough=["http://127.0.0.1"]) as m:
+        m.post("http://example.com:8081/authorize", status=204)
+        resp = await client.post("/events", headers=headers, json=request_body)
+        assert resp.status == 422
+
+
+@pytest.mark.integration
+async def test_create_event_adapter_fails(
+    client: _TestClient, mocker: MockFixture, token: MockFixture
+) -> None:
+    """Should return 400 HTTPBadRequest."""
+    mocker.patch(
+        "event_service.services.events_service.create_id",
+        return_value=None,
+    )
+    mocker.patch(
+        "event_service.adapters.events_adapter.EventsAdapter.create_event",
+        return_value=None,
+    )
+    request_body = {"name": "Oslo Skagen sprint Oppdatert"}
+    headers = MultiDict(
+        {
+            hdrs.CONTENT_TYPE: "application/json",
+            hdrs.AUTHORIZATION: f"Bearer {token}",
+        },
+    )
+
+    with aioresponses(passthrough=["http://127.0.0.1"]) as m:
+        m.post("http://example.com:8081/authorize", status=204)
+        resp = await client.post("/events", headers=headers, json=request_body)
+        assert resp.status == 400
+
+
+@pytest.mark.integration
+async def test_update_event_by_id_missing_mandatory_property(
+    client: _TestClient, mocker: MockFixture, token: MockFixture
+) -> None:
+    """Should return 422 HTTPUnprocessableEntity."""
+    ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
+    mocker.patch(
+        "event_service.adapters.events_adapter.EventsAdapter.get_event_by_id",
+        return_value={"id": ID, "name": "Oslo Skagen Sprint"},
+    )
+    mocker.patch(
+        "event_service.adapters.events_adapter.EventsAdapter.update_event",
+        return_value=ID,
+    )
+
+    headers = MultiDict(
+        {
+            hdrs.CONTENT_TYPE: "application/json",
+            hdrs.AUTHORIZATION: f"Bearer {token}",
+        },
+    )
+    request_body = {"id": ID, "optional_property": "Optional_property"}
+
+    with aioresponses(passthrough=["http://127.0.0.1"]) as m:
+        m.post("http://example.com:8081/authorize", status=204)
+
+        resp = await client.put(f"/events/{ID}", headers=headers, json=request_body)
+        assert resp.status == 422
+
+
+@pytest.mark.integration
+async def test_update_event_by_id_different_id_in_body(
+    client: _TestClient, mocker: MockFixture, token: MockFixture
+) -> None:
+    """Should return 422 HTTPUnprocessableEntity."""
+    ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
+    mocker.patch(
+        "event_service.adapters.events_adapter.EventsAdapter.get_event_by_id",
+        return_value={"id": ID, "name": "Oslo Skagen Sprint"},
+    )
+    mocker.patch(
+        "event_service.adapters.events_adapter.EventsAdapter.update_event",
+        return_value=ID,
+    )
+
+    headers = MultiDict(
+        {
+            hdrs.CONTENT_TYPE: "application/json",
+            hdrs.AUTHORIZATION: f"Bearer {token}",
+        },
+    )
+    request_body = {"id": "different_id", "name": "Oslo Skagen sprint Oppdatert"}
+
+    with aioresponses(passthrough=["http://127.0.0.1"]) as m:
+        m.post("http://example.com:8081/authorize", status=204)
+
+        resp = await client.put(f"/events/{ID}", headers=headers, json=request_body)
+        assert resp.status == 422
+
+
 # Unauthorized cases:
 
 
@@ -171,7 +323,7 @@ async def test_create_event_no_authorization(
     """Should return 401 Unauthorized."""
     ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
     mocker.patch(
-        "event_service.adapters.events_adapter.create_id",
+        "event_service.services.events_service.create_id",
         return_value=ID,
     )
     mocker.patch(
@@ -196,7 +348,7 @@ async def test_get_event_by_id_no_authorization(
     """Should return 401 Unauthorized."""
     ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
     mocker.patch(
-        "event_service.adapters.events_adapter.EventsAdapter.get_event",
+        "event_service.adapters.events_adapter.EventsAdapter.get_event_by_id",
         return_value={"id": ID, "name": "Oslo Skagen Sprint"},
     )
 
@@ -208,11 +360,15 @@ async def test_get_event_by_id_no_authorization(
 
 
 @pytest.mark.integration
-async def test_put_event_by_id_no_authorization(
+async def test_update_event_by_id_no_authorization(
     client: _TestClient, mocker: MockFixture
 ) -> None:
-    """Should return 401 Unauthorizedt."""
+    """Should return 401 Unauthorized."""
     ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
+    mocker.patch(
+        "event_service.adapters.events_adapter.EventsAdapter.get_event_by_id",
+        return_value={"id": ID, "name": "Oslo Skagen Sprint"},
+    )
     mocker.patch(
         "event_service.adapters.events_adapter.EventsAdapter.update_event",
         return_value=ID,
@@ -274,7 +430,7 @@ async def test_create_event_insufficient_role(
     """Should return 403 Forbidden."""
     ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
     mocker.patch(
-        "event_service.adapters.events_adapter.create_id",
+        "event_service.services.events_service.create_id",
         return_value=ID,
     )
     mocker.patch(
@@ -305,7 +461,7 @@ async def test_get_event_not_found(
     """Should return 404 Not found."""
     ID = "does-not-exist"
     mocker.patch(
-        "event_service.adapters.events_adapter.EventsAdapter.get_event",
+        "event_service.adapters.events_adapter.EventsAdapter.get_event_by_id",
         return_value=None,
     )
     headers = MultiDict(
@@ -327,6 +483,10 @@ async def test_update_event_not_found(
 ) -> None:
     """Should return 404 Not found."""
     ID = "does-not-exist"
+    mocker.patch(
+        "event_service.adapters.events_adapter.EventsAdapter.get_event_by_id",
+        return_value=None,
+    )
     mocker.patch(
         "event_service.adapters.events_adapter.EventsAdapter.update_event",
         return_value=None,
@@ -356,6 +516,10 @@ async def test_delete_event_not_found(
 ) -> None:
     """Should return 404 Not found."""
     ID = "does-not-exist"
+    mocker.patch(
+        "event_service.adapters.events_adapter.EventsAdapter.get_event_by_id",
+        return_value=None,
+    )
     mocker.patch(
         "event_service.adapters.events_adapter.EventsAdapter.delete_event",
         return_value=None,
