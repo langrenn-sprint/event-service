@@ -2,14 +2,12 @@
 import json
 import logging
 import os
-from typing import Optional
 
 from aiohttp import hdrs
 from aiohttp.web import (
     HTTPBadRequest,
     HTTPNotFound,
     HTTPUnprocessableEntity,
-    Request,
     Response,
     View,
 )
@@ -23,22 +21,12 @@ from event_service.services import (
     EventsService,
     IllegalValueException,
 )
-
+from .utils import extract_token_from_request
 
 load_dotenv()
 HOST_SERVER = os.getenv("HOST_SERVER", "localhost")
 HOST_PORT = os.getenv("HOST_PORT", "8080")
 BASE_URL = f"http://{HOST_SERVER}:{HOST_PORT}"
-
-
-def extract_token_from_request(request: Request) -> Optional[str]:
-    """Extract jwt_token from authorization header in request."""
-    jwt_token = None
-    authorization = request.headers.get("authorization", None)
-    if authorization:
-        jwt_token = str.replace(str(authorization), "Bearer ", "")
-
-    return jwt_token
 
 
 class EventsView(View):
