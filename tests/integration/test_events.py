@@ -42,7 +42,15 @@ async def test_create_event(
         "event_service.adapters.events_adapter.EventsAdapter.create_event",
         return_value=ID,
     )
-    request_body = {"name": "Oslo Skagen sprint"}
+
+    request_body = {
+        "name": "Oslo Skagen sprint",
+        "date": "2021-08-31",
+        "organiser": "Lyn Ski",
+        "webpage": "https://example.com",
+        "information": "Testarr for å teste den nye løysinga.",
+    }
+
     headers = MultiDict(
         {
             hdrs.CONTENT_TYPE: "application/json",
@@ -65,8 +73,16 @@ async def test_get_event_by_id(
     ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
     mocker.patch(
         "event_service.adapters.events_adapter.EventsAdapter.get_event_by_id",
-        return_value={"id": ID, "name": "Oslo Skagen Sprint"},
+        return_value={
+            "id": ID,
+            "name": "Oslo Skagen sprint",
+            "date": "2021-08-31",
+            "organiser": "Lyn Ski",
+            "webpage": "https://example.com",
+            "information": "Testarr for å teste den nye løysinga.",
+        },
     )
+
     headers = MultiDict(
         {
             hdrs.AUTHORIZATION: f"Bearer {token}",
@@ -82,6 +98,11 @@ async def test_get_event_by_id(
         event = await resp.json()
         assert type(event) is dict
         assert event["id"] == ID
+        assert event["name"] == "Oslo Skagen sprint"
+        assert event["date"] == "2021-08-31"
+        assert event["organiser"] == "Lyn Ski"
+        assert event["webpage"] == "https://example.com"
+        assert event["information"] == "Testarr for å teste den nye løysinga."
 
 
 @pytest.mark.integration

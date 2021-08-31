@@ -39,7 +39,13 @@ async def test_create_event(http_service: Any, token: MockFixture) -> None:
         hdrs.CONTENT_TYPE: "application/json",
         hdrs.AUTHORIZATION: f"Bearer {token}",
     }
-    request_body = {"name": "Oslo Skagen sprint"}
+    request_body = {
+        "name": "Oslo Skagen sprint",
+        "date": "2021-08-31",
+        "organiser": "Lyn Ski",
+        "webpage": "https://example.com",
+        "information": "Testarr for å teste den nye løysinga.",
+    }
     session = ClientSession()
     async with session.post(url, headers=headers, json=request_body) as response:
         status = response.status
@@ -92,6 +98,10 @@ async def test_get_event(http_service: Any, token: MockFixture) -> None:
     assert type(event) is dict
     assert event["id"]
     assert event["name"]
+    assert event["date"]
+    assert event["organiser"]
+    assert event["webpage"]
+    assert event["information"]
 
 
 @pytest.mark.contract
