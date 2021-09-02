@@ -65,12 +65,12 @@ class EventsView(View):
             )
 
         try:
-            id = await EventsService.create_event(db, event)
+            event_id = await EventsService.create_event(db, event)
         except IllegalValueException:
             raise HTTPUnprocessableEntity()
-        if id:
-            logging.debug(f"inserted document with id {id}")
-            headers = MultiDict({hdrs.LOCATION: f"{BASE_URL}/events/{id}"})
+        if event_id:
+            logging.debug(f"inserted document with event_id {event_id}")
+            headers = MultiDict({hdrs.LOCATION: f"{BASE_URL}/events/{event_id}"})
 
             return Response(status=201, headers=headers)
         raise HTTPBadRequest()
@@ -88,11 +88,11 @@ class EventView(View):
         except Exception as e:
             raise e
 
-        id = self.request.match_info["id"]
-        logging.debug(f"Got get request for event {id}")
+        event_id = self.request.match_info["eventId"]
+        logging.debug(f"Got get request for event {event_id}")
 
         try:
-            event = await EventsService.get_event_by_id(db, id)
+            event = await EventsService.get_event_by_id(db, event_id)
         except EventNotFoundException:
             raise HTTPNotFound()
         logging.debug(f"Got event: {event}")
@@ -109,10 +109,10 @@ class EventView(View):
             raise e
 
         body = await self.request.json()
-        id = self.request.match_info["id"]
-        logging.debug(f"Got request-body {body} for {id} of type {type(body)}")
+        event_id = self.request.match_info["eventId"]
+        logging.debug(f"Got request-body {body} for {event_id} of type {type(body)}")
         body = await self.request.json()
-        logging.debug(f"Got create request for event {body} of type {type(body)}")
+        logging.debug(f"Got put request for event {body} of type {type(body)}")
         try:
             event = Event.from_dict(body)
         except KeyError as e:
@@ -120,10 +120,8 @@ class EventView(View):
                 reason=f"Mandatory property {e.args[0]} is missing."
             )
 
-        id = self.request.match_info["id"]
-        logging.debug(f"Got request-body {body} for {id} of type {type(body)}")
         try:
-            id = await EventsService.update_event(db, id, event)
+            await EventsService.update_event(db, event_id, event)
         except IllegalValueException:
             raise HTTPUnprocessableEntity()
         except EventNotFoundException:
@@ -139,11 +137,11 @@ class EventView(View):
         except Exception as e:
             raise e
 
-        id = self.request.match_info["id"]
-        logging.debug(f"Got delete request for event {id}")
+        event_id = self.request.match_info["eventId"]
+        logging.debug(f"Got delete request for event {event_id}")
 
         try:
-            await EventsService.delete_event(db, id)
+            await EventsService.delete_event(db, event_id)
         except EventNotFoundException:
             raise HTTPNotFound()
         return Response(status=204)

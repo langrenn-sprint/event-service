@@ -52,10 +52,10 @@ async def create_app() -> web.Application:
             web.view("/ready", Ready),
             web.view("/ageclasses", AgeclassesView),
             web.view("/ageclasses/{id}", AgeclassView),
-            web.view("/contestants", ContestantsView),
-            web.view("/contestants/{id}", ContestantView),
             web.view("/events", EventsView),
-            web.view("/events/{id}", EventView),
+            web.view("/events/{eventId}", EventView),
+            web.view("/events/{eventId}/contestants", ContestantsView),
+            web.view("/events/{eventId}/contestants/{contestantId}", ContestantView),
         ]
     )
 

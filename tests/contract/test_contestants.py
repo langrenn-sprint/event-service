@@ -2,7 +2,7 @@
 import copy
 import logging
 import os
-from typing import Any
+from typing import Any, Optional
 
 from aiohttp import ClientSession, hdrs
 import pytest
@@ -32,6 +32,34 @@ async def token(http_service: Any) -> str:
 
 
 @pytest.fixture
+async def event_id(http_service: Any, token: MockFixture) -> Optional[str]:
+    """Create an event object for testing."""
+    url = f"{http_service}/events"
+    headers = {
+        hdrs.CONTENT_TYPE: "application/json",
+        hdrs.AUTHORIZATION: f"Bearer {token}",
+    }
+    request_body = {
+        "name": "Oslo Skagen sprint",
+        "date": "2021-08-31",
+        "organiser": "Lyn Ski",
+        "webpage": "https://example.com",
+        "information": "Testarr for å teste den nye løysinga.",
+    }
+    session = ClientSession()
+    async with session.post(url, headers=headers, json=request_body) as response:
+        status = response.status
+    await session.close()
+    if status == 201:
+        # return the event_id, which is the last item of the path
+        return response.headers[hdrs.LOCATION].split("/")[-1]
+    else:
+        logging.error(f"Got unsuccesful status when creating event: {status}.")
+        return None
+
+
+@pytest.fixture
+@pytest.mark.asyncio
 async def contestant() -> dict:
     """Create a contestant object for testing."""
     return {
@@ -45,10 +73,10 @@ async def contestant() -> dict:
 @pytest.mark.contract
 @pytest.mark.asyncio
 async def test_create_contestant(
-    http_service: Any, token: MockFixture, contestant: dict
+    http_service: Any, token: MockFixture, event_id: str, contestant: dict
 ) -> None:
     """Should return Created, location header and no body."""
-    url = f"{http_service}/contestants"
+    url = f"{http_service}/events/{event_id}/contestants"
     headers = {
         hdrs.CONTENT_TYPE: "application/json",
         hdrs.AUTHORIZATION: f"Bearer {token}",
@@ -60,14 +88,16 @@ async def test_create_contestant(
     await session.close()
 
     assert status == 201
-    assert "/contestants/" in response.headers[hdrs.LOCATION]
+    assert f"/events/{event_id}/contestants/" in response.headers[hdrs.LOCATION]
 
 
 @pytest.mark.contract
 @pytest.mark.asyncio
-async def test_contestants(http_service: Any, token: MockFixture) -> None:
+async def test_contestants(
+    http_service: Any, token: MockFixture, event_id: str
+) -> None:
     """Should return OK and a list of contestants as json."""
-    url = f"{http_service}/contestants"
+    url = f"{http_service}/events/{event_id}/contestants"
     headers = {
         hdrs.AUTHORIZATION: f"Bearer {token}",
     }
@@ -80,16 +110,16 @@ async def test_contestants(http_service: Any, token: MockFixture) -> None:
     assert response.status == 200
     assert "application/json" in response.headers[hdrs.CONTENT_TYPE]
     assert type(contestants) is list
-    assert len(contestants) == 1
+    assert len(contestants) > 0
 
 
 @pytest.mark.contract
 @pytest.mark.asyncio
 async def test_get_contestant_by_id(
-    http_service: Any, token: MockFixture, contestant: dict
+    http_service: Any, token: MockFixture, event_id: str, contestant: dict
 ) -> None:
     """Should return OK and an contestant as json."""
-    url = f"{http_service}/contestants"
+    url = f"{http_service}/events/{event_id}/contestants"
 
     headers = {
         hdrs.AUTHORIZATION: f"Bearer {token}",
@@ -116,10 +146,10 @@ async def test_get_contestant_by_id(
 @pytest.mark.contract
 @pytest.mark.asyncio
 async def test_update_contestant(
-    http_service: Any, token: MockFixture, contestant: dict
+    http_service: Any, token: MockFixture, event_id: str, contestant: dict
 ) -> None:
     """Should return No Content."""
-    url = f"{http_service}/contestants"
+    url = f"{http_service}/events/{event_id}/contestants"
     headers = {
         hdrs.CONTENT_TYPE: "application/json",
         hdrs.AUTHORIZATION: f"Bearer {token}",
@@ -141,9 +171,11 @@ async def test_update_contestant(
 
 @pytest.mark.contract
 @pytest.mark.asyncio
-async def test_delete_contestant(http_service: Any, token: MockFixture) -> None:
+async def test_delete_contestant(
+    http_service: Any, token: MockFixture, event_id: str
+) -> None:
     """Should return No Content."""
-    url = f"{http_service}/contestants"
+    url = f"{http_service}/events/{event_id}/contestants"
     headers = {
         hdrs.AUTHORIZATION: f"Bearer {token}",
     }
