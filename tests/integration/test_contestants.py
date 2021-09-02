@@ -53,18 +53,19 @@ def token_unsufficient_role() -> str:
 
 
 @pytest.mark.integration
-async def test_create_contestant(
+async def test_create_contestant_good_case(
     client: _TestClient, mocker: MockFixture, token: MockFixture, new_contestant: dict
 ) -> None:
     """Should return Created, location header."""
-    ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
+    EVENT_ID = "event_id_1"
+    CONTESTANT_ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
     mocker.patch(
         "event_service.services.contestants_service.create_id",
-        return_value=ID,
+        return_value=CONTESTANT_ID,
     )
     mocker.patch(
         "event_service.adapters.contestants_adapter.ContestantsAdapter.create_contestant",  # noqa: B950
-        return_value=ID,
+        return_value=CONTESTANT_ID,
     )
 
     request_body = new_contestant
@@ -78,9 +79,14 @@ async def test_create_contestant(
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
         m.post("http://example.com:8081/authorize", status=204)
-        resp = await client.post("/contestants", headers=headers, json=request_body)
+        resp = await client.post(
+            f"/events/{EVENT_ID}/contestants", headers=headers, json=request_body
+        )
         assert resp.status == 201
-        assert f"/contestants/{ID}" in resp.headers[hdrs.LOCATION]
+        assert (
+            f"/events/{EVENT_ID}/contestants/{CONTESTANT_ID}"
+            in resp.headers[hdrs.LOCATION]
+        )
 
 
 @pytest.mark.integration
@@ -88,7 +94,8 @@ async def test_get_contestant_by_id(
     client: _TestClient, mocker: MockFixture, token: MockFixture, contestant: dict
 ) -> None:
     """Should return OK, and a body containing one contestant."""
-    ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
+    EVENT_ID = "event_id_1"
+    CONTESTANT_ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
     mocker.patch(
         "event_service.adapters.contestants_adapter.ContestantsAdapter.get_contestant_by_id",  # noqa: B950
         return_value=contestant,
@@ -103,12 +110,14 @@ async def test_get_contestant_by_id(
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
         m.post("http://example.com:8081/authorize", status=204)
 
-        resp = await client.get(f"/contestants/{ID}", headers=headers)
+        resp = await client.get(
+            f"/events/{EVENT_ID}/contestants/{CONTESTANT_ID}", headers=headers
+        )
         assert resp.status == 200
         assert "application/json" in resp.headers[hdrs.CONTENT_TYPE]
         body = await resp.json()
         assert type(body) is dict
-        assert body["id"] == ID
+        assert body["id"] == CONTESTANT_ID
         assert body["first_name"] == contestant["first_name"]
         assert body["last_name"] == contestant["last_name"]
 
@@ -118,14 +127,15 @@ async def test_update_contestant_by_id(
     client: _TestClient, mocker: MockFixture, token: MockFixture, contestant: dict
 ) -> None:
     """Should return No Content."""
-    ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
+    EVENT_ID = "event_id_1"
+    CONTESTANT_ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
     mocker.patch(
         "event_service.adapters.contestants_adapter.ContestantsAdapter.get_contestant_by_id",  # noqa: B950
         return_value=contestant,
     )
     mocker.patch(
         "event_service.adapters.contestants_adapter.ContestantsAdapter.update_contestant",  # noqa: B950
-        return_value=ID,
+        return_value=CONTESTANT_ID,
     )
 
     headers = MultiDict(
@@ -141,7 +151,9 @@ async def test_update_contestant_by_id(
         m.post("http://example.com:8081/authorize", status=204)
 
         resp = await client.put(
-            f"/contestants/{ID}", headers=headers, json=request_body
+            f"/events/{EVENT_ID}/contestants/{CONTESTANT_ID}",
+            headers=headers,
+            json=request_body,
         )
         assert resp.status == 204
 
@@ -151,6 +163,7 @@ async def test_list_contestants(
     client: _TestClient, mocker: MockFixture, token: MockFixture, contestant: dict
 ) -> None:
     """Should return OK and a valid json body."""
+    EVENT_ID = "event_id_1"
     mocker.patch(
         "event_service.adapters.contestants_adapter.ContestantsAdapter.get_all_contestants",  # noqa: B950
         return_value=[contestant],
@@ -163,7 +176,7 @@ async def test_list_contestants(
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
         m.post("http://example.com:8081/authorize", status=204)
-        resp = await client.get("/contestants", headers=headers)
+        resp = await client.get(f"/events/{EVENT_ID}/contestants", headers=headers)
         assert resp.status == 200
         assert "application/json" in resp.headers[hdrs.CONTENT_TYPE]
         contestants = await resp.json()
@@ -176,14 +189,15 @@ async def test_delete_contestant_by_id(
     client: _TestClient, mocker: MockFixture, token: MockFixture, contestant: dict
 ) -> None:
     """Should return No Content."""
-    ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
+    EVENT_ID = "event_id_1"
+    CONTESTANT_ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
     mocker.patch(
         "event_service.adapters.contestants_adapter.ContestantsAdapter.get_contestant_by_id",  # noqa: B950
         return_value=contestant,
     )
     mocker.patch(
         "event_service.adapters.contestants_adapter.ContestantsAdapter.delete_contestant",  # noqa: B950
-        return_value=ID,
+        return_value=CONTESTANT_ID,
     )
     headers = MultiDict(
         {
@@ -194,7 +208,9 @@ async def test_delete_contestant_by_id(
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
         m.post("http://example.com:8081/authorize", status=204)
 
-        resp = await client.delete(f"/contestants/{ID}", headers=headers)
+        resp = await client.delete(
+            f"/events/{EVENT_ID}/contestants/{CONTESTANT_ID}", headers=headers
+        )
         assert resp.status == 204
 
 
@@ -206,14 +222,15 @@ async def test_create_contestant_missing_mandatory_property(
     client: _TestClient, mocker: MockFixture, token: MockFixture
 ) -> None:
     """Should return 422 HTTPUnprocessableEntity."""
-    ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
+    EVENT_ID = "event_id_1"
+    CONTESTANT_ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
     mocker.patch(
         "event_service.services.contestants_service.create_id",
-        return_value=ID,
+        return_value=CONTESTANT_ID,
     )
     mocker.patch(
         "event_service.adapters.contestants_adapter.ContestantsAdapter.create_contestant",  # noqa: B950
-        return_value=ID,
+        return_value=CONTESTANT_ID,
     )
     request_body = {"optional_property": "Optional_property"}
     headers = MultiDict(
@@ -225,7 +242,9 @@ async def test_create_contestant_missing_mandatory_property(
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
         m.post("http://example.com:8081/authorize", status=204)
-        resp = await client.post("/contestants", headers=headers, json=request_body)
+        resp = await client.post(
+            f"/events/{EVENT_ID}/contestants", headers=headers, json=request_body
+        )
         assert resp.status == 422
 
 
@@ -234,14 +253,15 @@ async def test_create_contestant_with_input_id(
     client: _TestClient, mocker: MockFixture, token: MockFixture, contestant: dict
 ) -> None:
     """Should return 422 HTTPUnprocessableEntity."""
-    ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
+    EVENT_ID = "event_id_1"
+    CONTESTANT_ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
     mocker.patch(
         "event_service.services.contestants_service.create_id",
-        return_value=ID,
+        return_value=CONTESTANT_ID,
     )
     mocker.patch(
         "event_service.adapters.contestants_adapter.ContestantsAdapter.create_contestant",  # noqa: B950
-        return_value=ID,
+        return_value=CONTESTANT_ID,
     )
     request_body = contestant
     headers = MultiDict(
@@ -253,7 +273,9 @@ async def test_create_contestant_with_input_id(
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
         m.post("http://example.com:8081/authorize", status=204)
-        resp = await client.post("/contestants", headers=headers, json=request_body)
+        resp = await client.post(
+            f"/events/{EVENT_ID}/contestants", headers=headers, json=request_body
+        )
         assert resp.status == 422
 
 
@@ -262,6 +284,7 @@ async def test_create_contestant_adapter_fails(
     client: _TestClient, mocker: MockFixture, token: MockFixture, new_contestant: dict
 ) -> None:
     """Should return 400 HTTPBadRequest."""
+    EVENT_ID = "event_id_1"
     mocker.patch(
         "event_service.services.contestants_service.create_id",
         return_value=None,
@@ -280,7 +303,9 @@ async def test_create_contestant_adapter_fails(
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
         m.post("http://example.com:8081/authorize", status=204)
-        resp = await client.post("/contestants", headers=headers, json=request_body)
+        resp = await client.post(
+            f"/events/{EVENT_ID}/contestants", headers=headers, json=request_body
+        )
         assert resp.status == 400
 
 
@@ -289,14 +314,15 @@ async def test_update_contestant_by_id_missing_mandatory_property(
     client: _TestClient, mocker: MockFixture, token: MockFixture
 ) -> None:
     """Should return 422 HTTPUnprocessableEntity."""
-    ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
+    EVENT_ID = "event_id_1"
+    CONTESTANT_ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
     mocker.patch(
         "event_service.adapters.contestants_adapter.ContestantsAdapter.get_contestant_by_id",  # noqa: B950
-        return_value={"id": ID, "first_name": "Missing LastName"},
+        return_value={"id": CONTESTANT_ID, "first_name": "Missing LastName"},
     )
     mocker.patch(
         "event_service.adapters.contestants_adapter.ContestantsAdapter.update_contestant",
-        return_value=ID,
+        return_value=CONTESTANT_ID,
     )
 
     headers = MultiDict(
@@ -305,13 +331,15 @@ async def test_update_contestant_by_id_missing_mandatory_property(
             hdrs.AUTHORIZATION: f"Bearer {token}",
         },
     )
-    request_body = {"id": ID, "optional_property": "Optional_property"}
+    request_body = {"id": CONTESTANT_ID, "optional_property": "Optional_property"}
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
         m.post("http://example.com:8081/authorize", status=204)
 
         resp = await client.put(
-            f"/contestants/{ID}", headers=headers, json=request_body
+            f"/events/{EVENT_ID}/contestants/{CONTESTANT_ID}",
+            headers=headers,
+            json=request_body,
         )
         assert resp.status == 422
 
@@ -321,7 +349,8 @@ async def test_update_contestant_by_id_different_id_in_body(
     client: _TestClient, mocker: MockFixture, token: MockFixture, contestant: dict
 ) -> None:
     """Should return 422 HTTPUnprocessableEntity."""
-    ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
+    EVENT_ID = "event_id_1"
+    CONTESTANT_ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
     mocker.patch(
         "event_service.adapters.contestants_adapter.ContestantsAdapter.get_contestant_by_id",  # noqa: B950
         return_value=contestant,
@@ -344,7 +373,9 @@ async def test_update_contestant_by_id_different_id_in_body(
         m.post("http://example.com:8081/authorize", status=204)
 
         resp = await client.put(
-            f"/contestants/{ID}", headers=headers, json=request_body
+            f"/events/{EVENT_ID}/contestants/{CONTESTANT_ID}",
+            headers=headers,
+            json=request_body,
         )
         assert resp.status == 422
 
@@ -357,14 +388,15 @@ async def test_create_contestant_no_authorization(
     client: _TestClient, mocker: MockFixture, new_contestant: dict
 ) -> None:
     """Should return 401 Unauthorized."""
-    ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
+    EVENT_ID = "event_id_1"
+    CONTESTANT_ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
     mocker.patch(
         "event_service.services.contestants_service.create_id",
-        return_value=ID,
+        return_value=CONTESTANT_ID,
     )
     mocker.patch(
         "event_service.adapters.contestants_adapter.ContestantsAdapter.create_contestant",  # noqa: B950
-        return_value=ID,
+        return_value=CONTESTANT_ID,
     )
 
     request_body = new_contestant
@@ -373,7 +405,9 @@ async def test_create_contestant_no_authorization(
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
         m.post("http://example.com:8081/authorize", status=401)
 
-        resp = await client.post("/contestants", headers=headers, json=request_body)
+        resp = await client.post(
+            f"/events/{EVENT_ID}/contestants", headers=headers, json=request_body
+        )
         assert resp.status == 401
 
 
@@ -382,7 +416,8 @@ async def test_get_contestant_by_id_no_authorization(
     client: _TestClient, mocker: MockFixture, contestant: dict
 ) -> None:
     """Should return 401 Unauthorized."""
-    ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
+    EVENT_ID = "event_id_1"
+    CONTESTANT_ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
     mocker.patch(
         "event_service.adapters.contestants_adapter.ContestantsAdapter.get_contestant_by_id",  # noqa: B950
         return_value=contestant,
@@ -391,7 +426,7 @@ async def test_get_contestant_by_id_no_authorization(
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
         m.post("http://example.com:8081/authorize", status=401)
 
-        resp = await client.get(f"/contestants/{ID}")
+        resp = await client.get(f"/events/{EVENT_ID}/contestants/{CONTESTANT_ID}")
         assert resp.status == 401
 
 
@@ -400,14 +435,15 @@ async def test_update_contestant_by_id_no_authorization(
     client: _TestClient, mocker: MockFixture, contestant: dict
 ) -> None:
     """Should return 401 Unauthorized."""
-    ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
+    EVENT_ID = "event_id_1"
+    CONTESTANT_ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
     mocker.patch(
         "event_service.adapters.contestants_adapter.ContestantsAdapter.get_contestant_by_id",  # noqa: B950
         return_value=contestant,
     )
     mocker.patch(
         "event_service.adapters.contestants_adapter.ContestantsAdapter.update_contestant",
-        return_value=ID,
+        return_value=CONTESTANT_ID,
     )
 
     headers = MultiDict(
@@ -421,7 +457,9 @@ async def test_update_contestant_by_id_no_authorization(
         m.post("http://example.com:8081/authorize", status=401)
 
         resp = await client.put(
-            f"/contestants/{ID}", headers=headers, json=request_body
+            f"/events/{EVENT_ID}/contestants/{CONTESTANT_ID}",
+            headers=headers,
+            json=request_body,
         )
         assert resp.status == 401
 
@@ -431,13 +469,14 @@ async def test_list_contestants_no_authorization(
     client: _TestClient, mocker: MockFixture, contestant: dict
 ) -> None:
     """Should return 401 Unauthorized."""
+    EVENT_ID = "event_id_1"
     mocker.patch(
         "event_service.adapters.contestants_adapter.ContestantsAdapter.get_all_contestants",  # noqa: B950
         return_value=[contestant],
     )
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
         m.post("http://example.com:8081/authorize", status=401)
-        resp = await client.get("/contestants")
+        resp = await client.get(f"/events/{EVENT_ID}/contestants")
         assert resp.status == 401
 
 
@@ -446,16 +485,17 @@ async def test_delete_contestant_by_id_no_authorization(
     client: _TestClient, mocker: MockFixture
 ) -> None:
     """Should return 401 Unauthorized."""
-    ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
+    EVENT_ID = "event_id_1"
+    CONTESTANT_ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
     mocker.patch(
         "event_service.adapters.contestants_adapter.ContestantsAdapter.delete_contestant",
-        return_value=ID,
+        return_value=CONTESTANT_ID,
     )
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
         m.post("http://example.com:8081/authorize", status=401)
 
-        resp = await client.delete(f"/contestants/{ID}")
+        resp = await client.delete(f"/events/{EVENT_ID}/contestants/{CONTESTANT_ID}")
         assert resp.status == 401
 
 
@@ -468,14 +508,15 @@ async def test_create_contestant_insufficient_role(
     new_contestant: dict,
 ) -> None:
     """Should return 403 Forbidden."""
-    ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
+    EVENT_ID = "event_id_1"
+    CONTESTANT_ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
     mocker.patch(
         "event_service.services.contestants_service.create_id",
-        return_value=ID,
+        return_value=CONTESTANT_ID,
     )
     mocker.patch(
         "event_service.adapters.contestants_adapter.ContestantsAdapter.create_contestant",
-        return_value=ID,
+        return_value=CONTESTANT_ID,
     )
     request_body = new_contestant
     headers = MultiDict(
@@ -487,7 +528,9 @@ async def test_create_contestant_insufficient_role(
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
         m.post("http://example.com:8081/authorize", status=403)
-        resp = await client.post("/contestants", headers=headers, json=request_body)
+        resp = await client.post(
+            f"/events/{EVENT_ID}/contestants", headers=headers, json=request_body
+        )
         assert resp.status == 403
 
 
@@ -499,7 +542,8 @@ async def test_get_contestant_not_found(
     client: _TestClient, mocker: MockFixture, token: MockFixture
 ) -> None:
     """Should return 404 Not found."""
-    ID = "does-not-exist"
+    EVENT_ID = "event_id_1"
+    CONTESTANT_ID = "does-not-exist"
     mocker.patch(
         "event_service.adapters.contestants_adapter.ContestantsAdapter.get_contestant_by_id",  # noqa: B950
         return_value=None,
@@ -513,7 +557,9 @@ async def test_get_contestant_not_found(
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
         m.post("http://example.com:8081/authorize", status=204)
 
-        resp = await client.get(f"/contestants/{ID}", headers=headers)
+        resp = await client.get(
+            f"/events/{EVENT_ID}/contestants/{CONTESTANT_ID}", headers=headers
+        )
         assert resp.status == 404
 
 
@@ -522,7 +568,8 @@ async def test_update_contestant_not_found(
     client: _TestClient, mocker: MockFixture, token: MockFixture, contestant: dict
 ) -> None:
     """Should return 404 Not found."""
-    ID = "does-not-exist"
+    EVENT_ID = "event_id_1"
+    CONTESTANT_ID = "does-not-exist"
     mocker.patch(
         "event_service.adapters.contestants_adapter.ContestantsAdapter.get_contestant_by_id",  # noqa: B950
         return_value=None,
@@ -540,11 +587,13 @@ async def test_update_contestant_not_found(
     )
     request_body = contestant
 
-    ID = "does-not-exist"
+    CONTESTANT_ID = "does-not-exist"
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
         m.post("http://example.com:8081/authorize", status=204)
         resp = await client.put(
-            f"/contestants/{ID}", headers=headers, json=request_body
+            f"/events/{EVENT_ID}/contestants/{CONTESTANT_ID}",
+            headers=headers,
+            json=request_body,
         )
         assert resp.status == 404
 
@@ -554,7 +603,8 @@ async def test_delete_contestant_not_found(
     client: _TestClient, mocker: MockFixture, token: MockFixture
 ) -> None:
     """Should return 404 Not found."""
-    ID = "does-not-exist"
+    EVENT_ID = "event_id_1"
+    CONTESTANT_ID = "does-not-exist"
     mocker.patch(
         "event_service.adapters.contestants_adapter.ContestantsAdapter.get_contestant_by_id",  # noqa: B950
         return_value=None,
@@ -571,5 +621,7 @@ async def test_delete_contestant_not_found(
     )
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
         m.post("http://example.com:8081/authorize", status=204)
-        resp = await client.delete(f"/contestants/{ID}", headers=headers)
+        resp = await client.delete(
+            f"/events/{EVENT_ID}/contestants/{CONTESTANT_ID}", headers=headers
+        )
         assert resp.status == 404

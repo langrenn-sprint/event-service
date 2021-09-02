@@ -42,6 +42,10 @@ To run linters, checkers and tests:
 ```
 % nox
 ```
+To run specific test:
+```
+% nox -s integration_tests -- -k test_create_event_adapter_fails
+```
 To run tests with logging, do:
 ```
 % nox -s integration_tests -- --log-cli-level=DEBUG

@@ -9,7 +9,9 @@ class ContestantsAdapter(Adapter):
     """Class representing an adapter for contestants."""
 
     @classmethod
-    async def get_all_contestants(cls: Any, db: Any) -> List:  # pragma: no cover
+    async def get_all_contestants(
+        cls: Any, db: Any, event_id: str
+    ) -> List:  # pragma: no cover
         """Get all contestants function."""
         contestants: List = []
         cursor = db.contestants_collection.find()
@@ -20,7 +22,7 @@ class ContestantsAdapter(Adapter):
 
     @classmethod
     async def create_contestant(
-        cls: Any, db: Any, contestant: dict
+        cls: Any, db: Any, event_id: str, contestant: dict
     ) -> str:  # pragma: no cover
         """Create contestant function."""
         result = await db.contestants_collection.insert_one(contestant)
@@ -28,15 +30,15 @@ class ContestantsAdapter(Adapter):
 
     @classmethod
     async def get_contestant_by_id(
-        cls: Any, db: Any, id: str
+        cls: Any, db: Any, event_id: str, contestant_id: str
     ) -> dict:  # pragma: no cover
         """Get contestant function."""
-        result = await db.contestants_collection.find_one({"id": id})
+        result = await db.contestants_collection.find_one({"id": contestant_id})
         return result
 
     @classmethod
     async def get_contestant_by_name(
-        cls: Any, db: Any, contestantname: str
+        cls: Any, db: Any, event_id: str, contestantname: str
     ) -> dict:  # pragma: no cover
         """Get contestant function."""
         result = await db.contestants_collection.find_one(
@@ -46,16 +48,18 @@ class ContestantsAdapter(Adapter):
 
     @classmethod
     async def update_contestant(
-        cls: Any, db: Any, id: str, contestant: dict
+        cls: Any, db: Any, event_id: str, contestant_id: str, contestant: dict
     ) -> Optional[str]:  # pragma: no cover
         """Get contestant function."""
-        result = await db.contestants_collection.replace_one({"id": id}, contestant)
+        result = await db.contestants_collection.replace_one(
+            {"id": contestant_id}, contestant
+        )
         return result
 
     @classmethod
     async def delete_contestant(
-        cls: Any, db: Any, id: str
+        cls: Any, db: Any, event_id: str, contestant_id: str
     ) -> Optional[str]:  # pragma: no cover
         """Get contestant function."""
-        result = await db.contestants_collection.delete_one({"id": id})
+        result = await db.contestants_collection.delete_one({"id": contestant_id})
         return result

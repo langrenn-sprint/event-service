@@ -41,7 +41,8 @@ class ContestantsView(View):
         except Exception as e:
             raise e
 
-        contestants = await ContestantsService.get_all_contestants(db)
+        event_id = self.request.match_info["eventId"]
+        contestants = await ContestantsService.get_all_contestants(db, event_id)
 
         body = json.dumps(contestants, default=str, ensure_ascii=False)
         return Response(status=200, body=body, content_type="application/json")
@@ -65,12 +66,19 @@ class ContestantsView(View):
             )
 
         try:
-            id = await ContestantsService.create_contestant(db, contestant)
+            event_id = self.request.match_info["eventId"]
+            contestant_id = await ContestantsService.create_contestant(
+                db, event_id, contestant
+            )
         except IllegalValueException:
             raise HTTPUnprocessableEntity()
-        if id:
-            logging.debug(f"inserted document with id {id}")
-            headers = MultiDict({hdrs.LOCATION: f"{BASE_URL}/contestants/{id}"})
+        if contestant_id:
+            logging.debug(f"inserted document with contestant_id {contestant_id}")
+            headers = MultiDict(
+                {
+                    hdrs.LOCATION: f"{BASE_URL}/events/{event_id}/contestants/{contestant_id}"
+                }
+            )
 
             return Response(status=201, headers=headers)
         raise HTTPBadRequest()
@@ -88,11 +96,14 @@ class ContestantView(View):
         except Exception as e:
             raise e
 
-        id = self.request.match_info["id"]
-        logging.debug(f"Got get request for contestant {id}")
+        event_id = self.request.match_info["eventId"]
+        contestant_id = self.request.match_info["contestantId"]
+        logging.debug(f"Got get request for contestant {contestant_id}")
 
         try:
-            contestant = await ContestantsService.get_contestant_by_id(db, id)
+            contestant = await ContestantsService.get_contestant_by_id(
+                db, event_id, contestant_id
+            )
         except ContestantNotFoundException:
             raise HTTPNotFound()
         logging.debug(f"Got contestant: {contestant}")
@@ -109,10 +120,13 @@ class ContestantView(View):
             raise e
 
         body = await self.request.json()
-        id = self.request.match_info["id"]
-        logging.debug(f"Got request-body {body} for {id} of type {type(body)}")
+        event_id = self.request.match_info["eventId"]
+        contestant_id = self.request.match_info["contestantId"]
         body = await self.request.json()
-        logging.debug(f"Got create request for contestant {body} of type {type(body)}")
+        logging.debug(
+            f"Got request-body {body} for {contestant_id} of type {type(body)}"
+        )
+
         try:
             contestant = Contestant.from_dict(body)
         except KeyError as e:
@@ -120,10 +134,10 @@ class ContestantView(View):
                 reason=f"Mandatory property {e.args[0]} is missing."
             )
 
-        id = self.request.match_info["id"]
-        logging.debug(f"Got request-body {body} for {id} of type {type(body)}")
         try:
-            id = await ContestantsService.update_contestant(db, id, contestant)
+            await ContestantsService.update_contestant(
+                db, event_id, contestant_id, contestant
+            )
         except IllegalValueException:
             raise HTTPUnprocessableEntity()
         except ContestantNotFoundException:
@@ -139,11 +153,14 @@ class ContestantView(View):
         except Exception as e:
             raise e
 
-        id = self.request.match_info["id"]
-        logging.debug(f"Got delete request for contestant {id}")
+        event_id = self.request.match_info["eventId"]
+        contestant_id = self.request.match_info["contestantId"]
+        logging.debug(
+            f"Got delete request for contestant {contestant_id} in event {event_id}"
+        )
 
         try:
-            await ContestantsService.delete_contestant(db, id)
+            await ContestantsService.delete_contestant(db, event_id, contestant_id)
         except ContestantNotFoundException:
             raise HTTPNotFound()
         return Response(status=204)
