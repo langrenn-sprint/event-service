@@ -59,7 +59,9 @@ class ContestantsService:
         result = await ContestantsAdapter.create_contestant(
             db, event_id, new_contestant
         )
-        logging.debug(f"inserted contestant with contestant_id: {contestant_id}")
+        logging.debug(
+            f"inserted contestant with event_id/contestant_id: {event_id}/{contestant_id}"
+        )
         if result:
             return contestant_id
         return None
