@@ -14,7 +14,7 @@ class ContestantsAdapter(Adapter):
     ) -> List:  # pragma: no cover
         """Get all contestants function."""
         contestants: List = []
-        cursor = db.contestants_collection.find()
+        cursor = db.contestants_collection.find({"event_id": event_id})
         for contestant in await cursor.to_list(length=100):
             contestants.append(contestant)
             logging.debug(contestant)
@@ -32,8 +32,10 @@ class ContestantsAdapter(Adapter):
     async def get_contestant_by_id(
         cls: Any, db: Any, event_id: str, contestant_id: str
     ) -> dict:  # pragma: no cover
-        """Get contestant function."""
-        result = await db.contestants_collection.find_one({"id": contestant_id})
+        """Get contestant in given event function."""
+        result = await db.contestants_collection.find_one(
+            {"$and": [{"event_id": event_id}, {"id": contestant_id}]}
+        )
         return result
 
     @classmethod
@@ -42,7 +44,7 @@ class ContestantsAdapter(Adapter):
     ) -> dict:  # pragma: no cover
         """Get contestant function."""
         result = await db.contestants_collection.find_one(
-            {"contestantname": contestantname}
+            {"$and": [{"event_id": event_id}, {"contestantname": contestantname}]}
         )
         return result
 
@@ -52,7 +54,7 @@ class ContestantsAdapter(Adapter):
     ) -> Optional[str]:  # pragma: no cover
         """Get contestant function."""
         result = await db.contestants_collection.replace_one(
-            {"id": contestant_id}, contestant
+            {"$and": [{"event_id": event_id}, {"id": contestant_id}]}, contestant
         )
         return result
 
@@ -61,5 +63,7 @@ class ContestantsAdapter(Adapter):
         cls: Any, db: Any, event_id: str, contestant_id: str
     ) -> Optional[str]:  # pragma: no cover
         """Get contestant function."""
-        result = await db.contestants_collection.delete_one({"id": contestant_id})
+        result = await db.contestants_collection.delete_one(
+            {"$and": [{"event_id": event_id}, {"id": contestant_id}]}
+        )
         return result

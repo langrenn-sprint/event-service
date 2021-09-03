@@ -28,6 +28,7 @@ async def new_contestant() -> dict:
         "last_name": "Stant",
         "birth_date": "1970-01-01",
         "club": "Lyn Ski",
+        "event_id": "ref_to_event",
     }
 
 
@@ -40,6 +41,7 @@ async def contestant() -> dict:
         "last_name": "Stant",
         "birth_date": "1970-01-01",
         "club": "Lyn Ski",
+        "event_id": "ref_to_event",
     }
 
 

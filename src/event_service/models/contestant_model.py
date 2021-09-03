@@ -1,6 +1,6 @@
 """Contestant data class module."""
 from dataclasses import dataclass, field
-from typing import List, Optional
+from typing import Optional
 
 from dataclasses_json import DataClassJsonMixin
 
@@ -13,6 +13,6 @@ class Contestant(DataClassJsonMixin):
     last_name: str
     birth_date: str
     club: str
+    event_id: str
     minidrett_id: Optional[str] = field(default=None)
-    events: Optional[List] = None
     id: Optional[str] = field(default=None)

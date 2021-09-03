@@ -1,4 +1,5 @@
 """Contract test cases for contestants."""
+import asyncio
 import copy
 import logging
 import os
@@ -12,8 +13,15 @@ USERS_HOST_SERVER = os.getenv("USERS_HOST_SERVER")
 USERS_HOST_PORT = os.getenv("USERS_HOST_PORT")
 
 
-@pytest.fixture
-@pytest.mark.asyncio
+@pytest.fixture(scope="session")
+def event_loop(request: Any) -> Any:
+    """Redefine the event_loop fixture to have the same scope."""
+    loop = asyncio.get_event_loop_policy().new_event_loop()
+    yield loop
+    loop.close()
+
+
+@pytest.fixture(scope="session")
 async def token(http_service: Any) -> str:
     """Create a valid token."""
     url = f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/login"
@@ -31,7 +39,7 @@ async def token(http_service: Any) -> str:
     return body["token"]
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 async def event_id(http_service: Any, token: MockFixture) -> Optional[str]:
     """Create an event object for testing."""
     url = f"{http_service}/events"
@@ -58,15 +66,15 @@ async def event_id(http_service: Any, token: MockFixture) -> Optional[str]:
         return None
 
 
-@pytest.fixture
-@pytest.mark.asyncio
-async def contestant() -> dict:
+@pytest.fixture(scope="session")
+async def contestant(event_id: str) -> dict:
     """Create a contestant object for testing."""
     return {
         "first_name": "Cont E.",
         "last_name": "Stant",
         "birth_date": "1970-01-01",
         "club": "Lyn Ski",
+        "event_id": event_id,
     }
 
 
@@ -93,7 +101,7 @@ async def test_create_contestant(
 
 @pytest.mark.contract
 @pytest.mark.asyncio
-async def test_contestants(
+async def test_get_all_contestants_in_given_event(
     http_service: Any, token: MockFixture, event_id: str
 ) -> None:
     """Should return OK and a list of contestants as json."""

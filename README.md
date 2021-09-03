@@ -19,7 +19,7 @@ Backend service to adminster events, will generate racelists etc
 ## Running the API locally
 Start the server locally:
 ```
-% poetry run adev runserver -p 8080 src/event_service
+% poetry run adev runserver -p 8080 --aux-port 8089 src/event_service
 ```
 ## Running the API in a wsgi-server (gunicorn)
 ```
