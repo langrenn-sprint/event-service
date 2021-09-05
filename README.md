@@ -19,7 +19,7 @@ Backend service to adminster events, will generate racelists etc
 ## Running the API locally
 Start the server locally:
 ```
-% poetry run adev runserver -p 8080 src/event_service
+% poetry run adev runserver -p 8080 --aux-port 8089 src/event_service
 ```
 ## Running the API in a wsgi-server (gunicorn)
 ```
@@ -41,6 +41,10 @@ We use [pytest](https://docs.pytest.org/en/latest/) for contract testing.
 To run linters, checkers and tests:
 ```
 % nox
+```
+To run specific test:
+```
+% nox -s integration_tests -- -k test_create_event_adapter_fails
 ```
 To run tests with logging, do:
 ```

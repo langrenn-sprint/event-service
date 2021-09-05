@@ -1,14 +1,23 @@
 openapi: 3.0.3
 info:
   title: Event service
-  description: The event service let you administrate the main domain objects startlist and racelist
+  description: The event service let you administrate the main domain objects event, startlist and racelist
   version: '1.0'
   license:
       name: Apache 2.0
       url: 'http://www.apache.org/licenses/LICENSE-2.0.html'
+tags:
+  - name: contestant
+    description: contestant in event operations
+  - name: event
+    description: event operations
+  - name: ageclass
+    description: ageclass operations
 paths:
   /events:
     post:
+      tags:
+      - event
       security:
       - bearerAuth: []
       description: Add a new event
@@ -22,6 +31,8 @@ paths:
         201:
           description: Created
     get:
+      tags:
+      - event
       description: Get a list of events
       responses:
         200:
@@ -30,11 +41,13 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/EventCollection'
-  /events/{id}:
+  /events/{eventId}:
     get:
+      tags:
+      - event
       description: Get a unique event
       parameters:
-      - name: id
+      - name: eventId
         in: path
         description: event id
         required: true
@@ -48,8 +61,94 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Event'
+  /events/{eventId}/contestants:
+    parameters:
+    - name: eventId
+      in: path
+      description: event id
+      required: true
+      schema:
+        type: string
+        format: uuid
+    post:
+      tags:
+      - contestant
+      description: create new contestant
+      requestBody:
+        description: the new contestant to be created
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Contestant'
+      responses:
+        201:
+          description: Created
+    get:
+      tags:
+      - contestant
+      description: Get a list of contestants
+      responses:
+        200:
+          description: Ok
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContestantCollection'
+  /events/{eventId}/contestants/{contestantId}:
+    parameters:
+    - name: eventId
+      in: path
+      description: event id
+      required: true
+      schema:
+        type: string
+        format: uuid
+    - name: contestantId
+      in: path
+      description: contestant id
+      required: true
+      schema:
+        type: string
+        format: uuid
+    get:
+      tags:
+      - contestant
+      description: Get a unique contestant
+      responses:
+        200:
+          description: Ok
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Contestant'
+    put:
+      tags:
+      - contestant
+      description: Update a contestant
+      requestBody:
+        description: the new contestant data
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Contestant'
+      responses:
+        200:
+          description: Ok
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Contestant'
+    delete:
+      tags:
+      - contestant
+      description: Delete a contestant given by id
+      responses:
+        204:
+          description: No content
   /ageclasses:
     post:
+      tags:
+      - ageclass
       security:
       - bearerAuth: []
       description: Add a new ageclass
@@ -63,6 +162,8 @@ paths:
         201:
           description: Created
     get:
+      tags:
+      - ageclass
       description: Get a list of ageclasses
       responses:
         200:
@@ -73,6 +174,8 @@ paths:
                 $ref: '#/components/schemas/AgeclassCollection'
   /ageclasses/{id}:
     get:
+      tags:
+      - ageclass
       description: Get a unique ageclass
       parameters:
       - name: id
@@ -89,18 +192,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Ageclass'
-  /contestants:
-    post:
-      description: create new contestant
-      requestBody:
-        description: the new contestant to be created
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/Contestant'
-      responses:
-        201:
-          description: Created
 components:
   schemas:
     AgeclassCollection:
@@ -139,6 +230,13 @@ components:
           format: uri
         information:
           type: string
+    ContestantCollection:
+      type: object
+      properties:
+        contestants:
+          type: array
+          items:
+            $ref: '#/components/schemas/Contestant'
     Contestant:
       properties:
         id:
@@ -155,6 +253,12 @@ components:
           type: string
         minIdrettId:
           type: string
+        events:
+          type: array
+          items:
+            type: string
+            format: uuid
+            description: list of references to events contestant has contested in
     Startlist:
       type: array
       items:
