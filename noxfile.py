@@ -61,10 +61,10 @@ def integration_tests(session: Session) -> None:
         env={
             "CONFIG": "test",
             "JWT_SECRET": "secret",
-            "ADMIN_USERNAME": "test",
+            "ADMIN_USERNAME": "admin",
             "ADMIN_PASSWORD": "password",
-            "USERS_HOST_SERVER": "example.com",
-            "USERS_HOST_PORT": "8081",
+            "USERS_HOST_SERVER": "localhost",
+            "USERS_HOST_PORT": "8086",
         },
     )
 
@@ -92,7 +92,7 @@ def contract_tests(session: Session) -> None:
             "ADMIN_USERNAME": "admin",
             "ADMIN_PASSWORD": "password",
             "USERS_HOST_SERVER": "localhost",
-            "USERS_HOST_PORT": "8081",
+            "USERS_HOST_PORT": "8086",
         },
     )
 
