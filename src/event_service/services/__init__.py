@@ -1,2 +1,4 @@
 """Package for all services."""
-from .events_service import EventNotFoundException, EventsService, IllegalValueException
+from .contestants_service import ContestantNotFoundException, ContestantsService
+from .events_service import EventNotFoundException, EventsService
+from .exceptions import IllegalValueException

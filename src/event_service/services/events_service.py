@@ -5,6 +5,7 @@ import uuid
 
 from event_service.adapters import EventsAdapter
 from event_service.models import Event
+from .exceptions import IllegalValueException
 
 
 def create_id() -> str:  # pragma: no cover
@@ -14,15 +15,6 @@ def create_id() -> str:  # pragma: no cover
 
 class EventNotFoundException(Exception):
     """Class representing custom exception for fetch method."""
-
-    def __init__(self, message: str) -> None:
-        """Initialize the error."""
-        # Call the base class constructor with the parameters it needs
-        super().__init__(message)
-
-
-class IllegalValueException(Exception):
-    """Class representing custom exception for create method."""
 
     def __init__(self, message: str) -> None:
         """Initialize the error."""

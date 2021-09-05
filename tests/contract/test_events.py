@@ -72,7 +72,7 @@ async def test_events(http_service: Any, token: MockFixture) -> None:
     assert response.status == 200
     assert "application/json" in response.headers[hdrs.CONTENT_TYPE]
     assert type(events) is list
-    assert len(events) == 1
+    assert len(events) > 0
 
 
 @pytest.mark.contract

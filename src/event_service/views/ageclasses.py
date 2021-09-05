@@ -19,7 +19,7 @@ HOST_PORT = os.getenv("HOST_PORT", "8080")
 BASE_URL = f"http://{HOST_SERVER}:{HOST_PORT}"
 
 
-class Ageclasses(View):
+class AgeclassesView(View):
     """Class representing ageclasses resource."""
 
     async def get(self) -> Response:
@@ -55,7 +55,7 @@ class Ageclasses(View):
         raise HTTPBadRequest()  # pragma: no cover
 
 
-class Ageclass(View):
+class AgeclassView(View):
     """Class representing a single ageclass resource."""
 
     async def get(self) -> Response:
