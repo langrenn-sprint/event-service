@@ -80,7 +80,7 @@ async def contestant(event_id: str) -> dict:
 
 @pytest.mark.contract
 @pytest.mark.asyncio
-async def test_create_contestant(
+async def test_create_single_contestant(
     http_service: Any, token: MockFixture, event_id: str, contestant: dict
 ) -> None:
     """Should return Created, location header and no body."""
@@ -97,6 +97,28 @@ async def test_create_contestant(
 
     assert status == 201
     assert f"/events/{event_id}/contestants/" in response.headers[hdrs.LOCATION]
+
+
+@pytest.mark.contract
+@pytest.mark.asyncio
+async def test_create_many_contestants_as_csv_file(
+    http_service: Any, token: MockFixture, event_id: str
+) -> None:
+    """Should return Created, location header and no body."""
+    url = f"{http_service}/events/{event_id}/contestants"
+    headers = {
+        hdrs.AUTHORIZATION: f"Bearer {token}",
+    }
+
+    # Send csv-file in request:
+    files = {"file": open("tests/files/contestants_eventid_364892.csv", "rb")}
+    session = ClientSession()
+    async with session.post(url, headers=headers, data=files) as response:
+        status = response.status
+    await session.close()
+
+    assert status == 201
+    assert f"/events/{event_id}/contestants" in response.headers[hdrs.LOCATION]
 
 
 @pytest.mark.contract
