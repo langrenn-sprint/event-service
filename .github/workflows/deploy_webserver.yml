@@ -1,4 +1,4 @@
-name: Test, build and deploy webserver
+name: Build, test, and deploy webserver
 on:
   push:
     branches:
@@ -45,6 +45,7 @@ jobs:
           JWT_SECRET: ${{ secrets.JWT_SECRET }}
           ADMIN_USERNAME: ${{ secrets.ADMIN_USERNAME }}
           ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
+
 
       - name: Tag and publish docker image to Google Cloud
         run: |-

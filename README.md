@@ -28,8 +28,8 @@ Start the server locally:
 ## Running the wsgi-server in Docker
 To build and run the api in a Docker container:
 ```
-% docker build -t digdir/event-service:latest .
-% docker run --env-file .env -p 8080:8080 -d digdir/event-service:latest
+% docker build -t gcr.io/langrenn-sprint/event-service:latest .
+% docker run --env-file .env -p 8080:8080 -d gcr.io/langrenn-sprint/event-service:latest
 ```
 The easier way would be with docker-compose:
 ```
