@@ -45,3 +45,5 @@ jobs:
           JWT_SECRET: ${{ secrets.JWT_SECRET }}
           ADMIN_USERNAME: ${{ secrets.ADMIN_USERNAME }}
           ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
+          USERS_HOST_SERVER: user-service
+          USERS_HOST_PORT: 8080
