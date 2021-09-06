@@ -1,7 +1,10 @@
 """Module for contestants service."""
+from io import StringIO
 import logging
 from typing import Any, List, Optional
 import uuid
+
+import pandas as pd
 
 from event_service.adapters import ContestantsAdapter
 from event_service.models import Contestant
@@ -65,6 +68,74 @@ class ContestantsService:
         if result:
             return contestant_id
         return None
+
+    @classmethod
+    async def create_contestants(
+        cls: Any, db: Any, event_id: str, contestants: str
+    ) -> Optional[int]:
+        """Create contestants function.
+
+        Args:
+            db (Any): the db
+            event_id (str): identifier of the event the contestant takes part in
+            contestants (str): a csv file as str
+
+        Returns:
+            Optional[int]: The number of contestants created. None otherwise.
+
+        """
+        result = 0
+        # Parse str as csv:
+        cols = [
+            # "Klasse",
+            "Etternavn",
+            "Fornavn",
+            # "Kjønn",
+            "Fødselsdato",
+            "Idrettsnr",
+            "Org.tilhørighet",
+        ]
+        df = pd.read_csv(
+            StringIO(contestants),
+            sep=";",
+            encoding="utf-8",
+            dtype=str,
+            skiprows=2,
+            header=0,
+            usecols=cols,
+        )
+
+        df.columns = [
+            # "Klasse",
+            "last_name",
+            "first_name",
+            # "Kjønn",
+            "birth_date",
+            "mindidrett_id",
+            "club",
+        ]
+
+        contestants = df.to_dict("records")
+        # For every record, create contestant:
+        # TODO: consider parallellizing this
+        # create id
+        result = 0
+        for _c in contestants:
+            _c["event_id"] = event_id  # type: ignore
+            contestant_id = create_id()
+            _c["id"] = contestant_id  # type: ignore
+            contestant = Contestant.from_dict(_c)
+            # insert new contestant
+            new_contestant = contestant.to_dict()
+            _result = await ContestantsAdapter.create_contestant(
+                db, event_id, new_contestant
+            )
+            logging.debug(
+                f"inserted contestant with event_id/contestant_id: {event_id}/{contestant_id}"
+            )
+            if _result:
+                result += 1
+        return result
 
     @classmethod
     async def get_contestant_by_id(

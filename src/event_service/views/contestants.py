@@ -8,6 +8,7 @@ from aiohttp.web import (
     HTTPBadRequest,
     HTTPNotFound,
     HTTPUnprocessableEntity,
+    HTTPUnsupportedMediaType,
     Response,
     View,
 )
@@ -47,7 +48,7 @@ class ContestantsView(View):
         body = json.dumps(contestants, default=str, ensure_ascii=False)
         return Response(status=200, body=body, content_type="application/json")
 
-    async def post(self) -> Response:
+    async def post(self) -> Response:  # noqa: C901
         """Post route function."""
         db = self.request.app["db"]
         token = extract_token_from_request(self.request)
@@ -56,32 +57,64 @@ class ContestantsView(View):
         except Exception as e:
             raise e
 
-        body = await self.request.json()
-        logging.debug(f"Got create request for contestant {body} of type {type(body)}")
-        try:
-            contestant = Contestant.from_dict(body)
-        except KeyError as e:
-            raise HTTPUnprocessableEntity(
-                reason=f"Mandatory property {e.args[0]} is missing."
+        # handle application/json and text/csv:
+        logging.debug(
+            f"Got following content-type-headers: {self.request.headers[hdrs.CONTENT_TYPE]}."
+        )
+        event_id = self.request.match_info["eventId"]
+        if "application/json" in self.request.headers[hdrs.CONTENT_TYPE]:
+            body = await self.request.json()
+            logging.debug(
+                f"Got create request for contestant {body} of type {type(body)}"
             )
+            try:
+                contestant = Contestant.from_dict(body)
+            except KeyError as e:
+                raise HTTPUnprocessableEntity(
+                    reason=f"Mandatory property {e.args[0]} is missing."
+                )
 
-        try:
-            event_id = self.request.match_info["eventId"]
-            contestant_id = await ContestantsService.create_contestant(
-                db, event_id, contestant
-            )
-        except IllegalValueException:
-            raise HTTPUnprocessableEntity()
-        if contestant_id:
-            logging.debug(f"inserted document with contestant_id {contestant_id}")
-            headers = MultiDict(
-                {
-                    hdrs.LOCATION: f"{BASE_URL}/events/{event_id}/contestants/{contestant_id}"
-                }
-            )
+            try:
+                contestant_id = await ContestantsService.create_contestant(
+                    db, event_id, contestant
+                )
+            except IllegalValueException:
+                raise HTTPUnprocessableEntity()
+            if contestant_id:
+                logging.debug(f"inserted document with contestant_id {contestant_id}")
+                headers = MultiDict(
+                    {
+                        hdrs.LOCATION: f"{BASE_URL}/events/{event_id}/contestants/{contestant_id}"  # noqa: B950
+                    }
+                )
+            else:
+                raise HTTPBadRequest()
 
-            return Response(status=201, headers=headers)
-        raise HTTPBadRequest()
+        elif "multipart/form-data" in self.request.headers[hdrs.CONTENT_TYPE]:
+            async for part in (await self.request.multipart()):
+                logging.debug(f"part.name {part.name}.")
+                if "text/csv" in part.headers[hdrs.CONTENT_TYPE]:
+                    # process csv:
+                    contestants = (await part.read()).decode()
+                else:
+                    raise HTTPBadRequest(
+                        reason=f"File's content-type {part.headers[hdrs.CONTENT_TYPE]} not supported."  # noqa: B950
+                    )
+                result = await ContestantsService.create_contestants(
+                    db, event_id, contestants
+                )
+                if result:
+                    logging.debug(f"inserted {result} contestans.")
+                    headers = MultiDict(
+                        {hdrs.LOCATION: f"{BASE_URL}/events/{event_id}/contestants"}
+                    )
+                else:
+                    raise HTTPBadRequest()
+        else:
+            raise HTTPUnsupportedMediaType(
+                reason=f"multipart/* content type expected, got {hdrs.CONTENT_TYPE}."
+            )
+        return Response(status=201, headers=headers)
 
 
 class ContestantView(View):
