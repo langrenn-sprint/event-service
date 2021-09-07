@@ -70,6 +70,11 @@ class ContestantsService:
         return None
 
     @classmethod
+    async def delete_all_contestants(cls: Any, db: Any, event_id: str) -> None:
+        """Get all contestants function."""
+        await ContestantsAdapter.delete_all_contestants(db, event_id)
+
+    @classmethod
     async def create_contestants(
         cls: Any, db: Any, event_id: str, contestants: str
     ) -> Optional[int]:

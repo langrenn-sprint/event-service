@@ -116,6 +116,20 @@ class ContestantsView(View):
             )
         return Response(status=201, headers=headers)
 
+    async def delete(self) -> Response:
+        """Delete route function."""
+        db = self.request.app["db"]
+        token = extract_token_from_request(self.request)
+        try:
+            await UsersAdapter.authorize(token, roles=["admin", "contestant-admin"])
+        except Exception as e:
+            raise e
+
+        event_id = self.request.match_info["eventId"]
+        await ContestantsService.delete_all_contestants(db, event_id)
+
+        return Response(status=204)
+
 
 class ContestantView(View):
     """Class representing a single contestant resource."""
