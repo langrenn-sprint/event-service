@@ -215,7 +215,7 @@ async def test_update_contestant(
 async def test_delete_contestant(
     http_service: Any, token: MockFixture, event_id: str
 ) -> None:
-    """Should return No Content."""
+    """Should return 204 No Content."""
     url = f"{http_service}/events/{event_id}/contestants"
     headers = {
         hdrs.AUTHORIZATION: f"Bearer {token}",
@@ -230,3 +230,24 @@ async def test_delete_contestant(
             pass
 
     assert response.status == 204
+
+
+@pytest.mark.contract
+@pytest.mark.asyncio
+async def test_delete_all_contestant(
+    http_service: Any, token: MockFixture, event_id: str
+) -> None:
+    """Should return 204 No Content."""
+    url = f"{http_service}/events/{event_id}/contestants"
+    headers = {
+        hdrs.AUTHORIZATION: f"Bearer {token}",
+    }
+
+    async with ClientSession() as session:
+        async with session.delete(url, headers=headers) as response:
+            assert response.status == 204
+
+        async with session.get(url, headers=headers) as response:
+            assert response.status == 200
+            contestants = await response.json()
+            assert len(contestants) == 0

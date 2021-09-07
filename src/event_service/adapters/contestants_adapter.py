@@ -32,7 +32,7 @@ class ContestantsAdapter(Adapter):
     async def get_contestant_by_id(
         cls: Any, db: Any, event_id: str, contestant_id: str
     ) -> dict:  # pragma: no cover
-        """Get contestant in given event function."""
+        """Get contestant by id function."""
         result = await db.contestants_collection.find_one(
             {"$and": [{"event_id": event_id}, {"id": contestant_id}]}
         )
@@ -42,7 +42,7 @@ class ContestantsAdapter(Adapter):
     async def get_contestant_by_name(
         cls: Any, db: Any, event_id: str, contestantname: str
     ) -> dict:  # pragma: no cover
-        """Get contestant function."""
+        """Get contestant by name function."""
         result = await db.contestants_collection.find_one(
             {"$and": [{"event_id": event_id}, {"contestantname": contestantname}]}
         )
@@ -52,7 +52,7 @@ class ContestantsAdapter(Adapter):
     async def update_contestant(
         cls: Any, db: Any, event_id: str, contestant_id: str, contestant: dict
     ) -> Optional[str]:  # pragma: no cover
-        """Get contestant function."""
+        """Update given contestant function."""
         result = await db.contestants_collection.replace_one(
             {"$and": [{"event_id": event_id}, {"id": contestant_id}]}, contestant
         )
@@ -62,8 +62,16 @@ class ContestantsAdapter(Adapter):
     async def delete_contestant(
         cls: Any, db: Any, event_id: str, contestant_id: str
     ) -> Optional[str]:  # pragma: no cover
-        """Get contestant function."""
+        """Delete given contestant function."""
         result = await db.contestants_collection.delete_one(
             {"$and": [{"event_id": event_id}, {"id": contestant_id}]}
         )
+        return result
+
+    @classmethod
+    async def delete_all_contestants(
+        cls: Any, db: Any, event_id: str
+    ) -> Optional[str]:  # pragma: no cover
+        """Delete all contestant function."""
+        result = await db.contestants_collection.delete_many({"event_id": event_id})
         return result

@@ -332,6 +332,38 @@ async def test_delete_contestant_by_id(
         assert resp.status == 204
 
 
+@pytest.mark.integration
+async def test_delete_all_contestants_in_event(
+    client: _TestClient, mocker: MockFixture, token: MockFixture, contestant: dict
+) -> None:
+    """Should return 204 No content."""
+    EVENT_ID = "event_id_1"
+    mocker.patch(
+        "event_service.adapters.contestants_adapter.ContestantsAdapter.delete_all_contestants",  # noqa: B950
+        return_value=None,
+    )
+    mocker.patch(
+        "event_service.adapters.contestants_adapter.ContestantsAdapter.get_all_contestants",  # noqa: B950
+        return_value=[],
+    )
+    headers = MultiDict(
+        {
+            hdrs.AUTHORIZATION: f"Bearer {token}",
+        },
+    )
+
+    with aioresponses(passthrough=["http://127.0.0.1"]) as m:
+        m.post("http://example.com:8081/authorize", status=204)
+        resp = await client.delete(f"/events/{EVENT_ID}/contestants", headers=headers)
+        assert resp.status == 204
+    with aioresponses(passthrough=["http://127.0.0.1"]) as m:
+        m.post("http://example.com:8081/authorize", status=204)
+        resp = await client.get(f"/events/{EVENT_ID}/contestants", headers=headers)
+        assert resp.status == 200
+        contestants = await resp.json()
+        assert len(contestants) == 0
+
+
 # Bad cases
 
 # Mandatory properties missing at create and update:
@@ -614,6 +646,24 @@ async def test_delete_contestant_by_id_no_authorization(
         m.post("http://example.com:8081/authorize", status=401)
 
         resp = await client.delete(f"/events/{EVENT_ID}/contestants/{CONTESTANT_ID}")
+        assert resp.status == 401
+
+
+@pytest.mark.integration
+async def test_delete_all_contestants_no_authorization(
+    client: _TestClient, mocker: MockFixture
+) -> None:
+    """Should return 401 Unauthorized."""
+    EVENT_ID = "event_id_1"
+    mocker.patch(
+        "event_service.adapters.contestants_adapter.ContestantsAdapter.delete_all_contestants",
+        return_value=None,
+    )
+
+    with aioresponses(passthrough=["http://127.0.0.1"]) as m:
+        m.post("http://example.com:8081/authorize", status=401)
+
+        resp = await client.delete(f"/events/{EVENT_ID}/contestants")
         assert resp.status == 401
 
 
