@@ -87,13 +87,16 @@ class ContestantsService:
         result = 0
         # Parse str as csv:
         cols = [
-            # "Klasse",
+            "Klasse",
             "Etternavn",
             "Fornavn",
-            # "Kjønn",
+            "Kjønn",
             "Fødselsdato",
             "Idrettsnr",
+            "E-post",
             "Org.tilhørighet",
+            "Krets/region",
+            "Team",
         ]
         df = pd.read_csv(
             StringIO(contestants),
@@ -106,13 +109,16 @@ class ContestantsService:
         )
 
         df.columns = [
-            # "Klasse",
+            "age_class",
             "last_name",
             "first_name",
-            # "Kjønn",
+            "gender",
             "birth_date",
             "mindidrett_id",
+            "email",
             "club",
+            "region",
+            "team",
         ]
 
         contestants = df.to_dict("records")
@@ -126,6 +132,7 @@ class ContestantsService:
             _c["id"] = contestant_id  # type: ignore
             contestant = Contestant.from_dict(_c)
             # insert new contestant
+            # TODO: check for duplicate. If duplicate, update:
             new_contestant = contestant.to_dict()
             _result = await ContestantsAdapter.create_contestant(
                 db, event_id, new_contestant

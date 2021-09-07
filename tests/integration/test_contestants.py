@@ -27,7 +27,12 @@ async def new_contestant() -> dict:
         "first_name": "Cont E.",
         "last_name": "Stant",
         "birth_date": "1970-01-01",
+        "gender": "M",
+        "age_class": "G 12 år",
+        "region": "Oslo Skikrets",
         "club": "Lyn Ski",
+        "team": "Team Kollen",
+        "email": "post@example.com",
         "event_id": "ref_to_event",
     }
 
@@ -40,7 +45,12 @@ async def contestant() -> dict:
         "first_name": "Cont E.",
         "last_name": "Stant",
         "birth_date": "1970-01-01",
+        "gender": "M",
+        "age_class": "G 12 år",
+        "region": "Oslo Skikrets",
         "club": "Lyn Ski",
+        "team": "Team Kollen",
+        "email": "post@example.com",
         "event_id": "ref_to_event",
     }
 
@@ -220,6 +230,14 @@ async def test_get_contestant_by_id(
         assert body["id"] == CONTESTANT_ID
         assert body["first_name"] == contestant["first_name"]
         assert body["last_name"] == contestant["last_name"]
+        assert body["birth_date"] == contestant["birth_date"]
+        assert body["gender"] == contestant["gender"]
+        assert body["age_class"] == contestant["age_class"]
+        assert body["region"] == contestant["region"]
+        assert body["club"] == contestant["club"]
+        assert body["team"] == contestant["team"]
+        assert body["email"] == contestant["email"]
+        assert body["event_id"] == contestant["event_id"]
 
 
 @pytest.mark.integration

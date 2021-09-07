@@ -12,7 +12,13 @@ class Contestant(DataClassJsonMixin):
     first_name: str
     last_name: str
     birth_date: str
+    gender: str
+    age_class: str
+    region: str
     club: str
     event_id: str
+    email: str
+    team: Optional[str] = field(default=None)
     minidrett_id: Optional[str] = field(default=None)
     id: Optional[str] = field(default=None)
+    bib: Optional[int] = field(default=None)
