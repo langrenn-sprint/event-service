@@ -249,16 +249,26 @@ components:
         birthDate:
           type: string
           format: date
+        gender:
+          type: string
+        ageClass:
+          type: string
+        region:
+          type: string
         club:
+          type: string
+        eventId:
+          type: string
+          format: uuid
+          description: id of event contestant is part of
+        email:
+          type: string
+        team:
           type: string
         minIdrettId:
           type: string
-        events:
-          type: array
-          items:
-            type: string
-            format: uuid
-            description: list of references to events contestant has contested in
+        bib:
+          type: integer
     Startlist:
       type: array
       items:
