@@ -94,6 +94,13 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ContestantCollection'
+    delete:
+      tags:
+      - contestant
+      description: Delete all contestants in event
+      responses:
+        204:
+          description: No content
   /events/{eventId}/contestants/{contestantId}:
     parameters:
     - name: eventId
