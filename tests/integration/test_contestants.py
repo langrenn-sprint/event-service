@@ -105,7 +105,7 @@ async def test_create_contestant_good_case(
 async def test_create_contestant_good_case_csv(
     client: _TestClient, mocker: MockFixture, token: MockFixture, new_contestant: dict
 ) -> None:
-    """Should return 201 Created, location header."""
+    """Should return 200 OK and simple result report in body."""
     EVENT_ID = "event_id_1"
     CONTESTANT_ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
     mocker.patch(
@@ -114,6 +114,120 @@ async def test_create_contestant_good_case_csv(
     )
     mocker.patch(
         "event_service.adapters.contestants_adapter.ContestantsAdapter.create_contestant",  # noqa: B950
+        return_value=CONTESTANT_ID,
+    )
+    mocker.patch(
+        "event_service.adapters.contestants_adapter.ContestantsAdapter.get_contestant_by_name",  # noqa: B950
+        return_value=None,
+    )
+    mocker.patch(
+        "event_service.adapters.contestants_adapter.ContestantsAdapter.get_contestant_by_minidrett_id",  # noqa: B950
+        return_value=None,
+    )
+
+    files = {"file": open("tests/files/contestants_eventid_364892.csv", "rb")}
+
+    headers = MultiDict(
+        {
+            hdrs.AUTHORIZATION: f"Bearer {token}",
+        },
+    )
+
+    with aioresponses(passthrough=["http://127.0.0.1"]) as m:
+        m.post("http://example.com:8081/authorize", status=204)
+        resp = await client.post(
+            f"/events/{EVENT_ID}/contestants", headers=headers, data=files
+        )
+        assert resp.status == 200
+
+        body = await resp.json()
+        print(f"body: {body}")
+        assert type(body) is dict
+
+        assert body["total"] > 0
+        assert body["created"] > 0
+        assert body["updated"] == 0
+        assert body["failures"] == 0
+        assert body["total"] == body["created"] + body["updated"] + body["failures"]
+
+
+@pytest.mark.integration
+async def test_create_contestant_no_minidrett_id_existing_good_case_csv(
+    client: _TestClient, mocker: MockFixture, token: MockFixture, new_contestant: dict
+) -> None:
+    """Should return 200 OK and simple result report in body."""
+    EVENT_ID = "event_id_1"
+    CONTESTANT_ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
+    mocker.patch(
+        "event_service.services.contestants_service.create_id",
+        return_value=CONTESTANT_ID,
+    )
+    mocker.patch(
+        "event_service.adapters.contestants_adapter.ContestantsAdapter.create_contestant",  # noqa: B950
+        return_value=None,
+    )
+    mocker.patch(
+        "event_service.adapters.contestants_adapter.ContestantsAdapter.get_contestant_by_minidrett_id",  # noqa: B950
+        return_value={"id": CONTESTANT_ID},
+    )
+    mocker.patch(
+        "event_service.adapters.contestants_adapter.ContestantsAdapter.get_contestant_by_name",  # noqa: B950
+        return_value={"id": CONTESTANT_ID},
+    )
+    mocker.patch(
+        "event_service.adapters.contestants_adapter.ContestantsAdapter.update_contestant",  # noqa: B950
+        return_value=CONTESTANT_ID,
+    )
+
+    files = {
+        "file": open("tests/files/contestants_eventid_364892_no_minidrett_id.csv", "rb")
+    }
+
+    headers = MultiDict(
+        {
+            hdrs.AUTHORIZATION: f"Bearer {token}",
+        },
+    )
+
+    with aioresponses(passthrough=["http://127.0.0.1"]) as m:
+        m.post("http://example.com:8081/authorize", status=204)
+        resp = await client.post(
+            f"/events/{EVENT_ID}/contestants", headers=headers, data=files
+        )
+        assert resp.status == 200
+
+        body = await resp.json()
+        print(f"body: {body}")
+        assert type(body) is dict
+
+        assert body["total"] > 0
+        assert body["created"] == 0
+        assert body["updated"] > 0
+        assert body["failures"] == 0
+        assert body["total"] == body["created"] + body["updated"] + body["failures"]
+
+
+@pytest.mark.integration
+async def test_create_contestant_minidrett_id_existing_good_case_csv(
+    client: _TestClient, mocker: MockFixture, token: MockFixture, new_contestant: dict
+) -> None:
+    """Should return 200 OK and simple result report in body."""
+    EVENT_ID = "event_id_1"
+    CONTESTANT_ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
+    mocker.patch(
+        "event_service.services.contestants_service.create_id",
+        return_value=CONTESTANT_ID,
+    )
+    mocker.patch(
+        "event_service.adapters.contestants_adapter.ContestantsAdapter.get_contestant_by_minidrett_id",  # noqa: B950
+        return_value={"id": CONTESTANT_ID},
+    )
+    mocker.patch(
+        "event_service.adapters.contestants_adapter.ContestantsAdapter.get_contestant_by_name",  # noqa: B950
+        return_value={"id": CONTESTANT_ID},
+    )
+    mocker.patch(
+        "event_service.adapters.contestants_adapter.ContestantsAdapter.update_contestant",  # noqa: B950
         return_value=CONTESTANT_ID,
     )
 
@@ -130,8 +244,125 @@ async def test_create_contestant_good_case_csv(
         resp = await client.post(
             f"/events/{EVENT_ID}/contestants", headers=headers, data=files
         )
-        assert resp.status == 201
-        assert f"/events/{EVENT_ID}/contestants" in resp.headers[hdrs.LOCATION]
+        assert resp.status == 200
+
+        body = await resp.json()
+        print(f"body: {body}")
+        assert type(body) is dict
+
+        assert body["total"] > 0
+        assert body["created"] == 0
+        assert body["updated"] > 0
+        assert body["failures"] == 0
+        assert body["total"] == body["created"] + body["updated"] + body["failures"]
+
+
+@pytest.mark.integration
+async def test_create_contestant_create_failures_good_case_csv(
+    client: _TestClient, mocker: MockFixture, token: MockFixture, new_contestant: dict
+) -> None:
+    """Should return 200 OK and simple result report in body."""
+    EVENT_ID = "event_id_1"
+    CONTESTANT_ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
+    mocker.patch(
+        "event_service.services.contestants_service.create_id",
+        return_value=CONTESTANT_ID,
+    )
+    mocker.patch(
+        "event_service.adapters.contestants_adapter.ContestantsAdapter.create_contestant",  # noqa: B950
+        return_value=None,
+    )
+    mocker.patch(
+        "event_service.adapters.contestants_adapter.ContestantsAdapter.get_contestant_by_name",  # noqa: B950
+        return_value=None,
+    )
+    mocker.patch(
+        "event_service.adapters.contestants_adapter.ContestantsAdapter.get_contestant_by_minidrett_id",  # noqa: B950
+        return_value=None,
+    )
+    mocker.patch(
+        "event_service.adapters.contestants_adapter.ContestantsAdapter.update_contestant",  # noqa: B950
+        return_value=CONTESTANT_ID,
+    )
+
+    files = {"file": open("tests/files/contestants_eventid_364892.csv", "rb")}
+
+    headers = MultiDict(
+        {
+            hdrs.AUTHORIZATION: f"Bearer {token}",
+        },
+    )
+
+    with aioresponses(passthrough=["http://127.0.0.1"]) as m:
+        m.post("http://example.com:8081/authorize", status=204)
+        resp = await client.post(
+            f"/events/{EVENT_ID}/contestants", headers=headers, data=files
+        )
+        assert resp.status == 200
+
+        body = await resp.json()
+        print(f"body: {body}")
+        assert type(body) is dict
+
+        assert body["total"] > 0
+        assert body["created"] == 0
+        assert body["updated"] == 0
+        assert body["failures"] > 0
+        assert body["total"] == body["created"] + body["updated"] + body["failures"]
+
+
+@pytest.mark.integration
+async def test_create_contestant_update_failures_good_case_csv(
+    client: _TestClient, mocker: MockFixture, token: MockFixture, new_contestant: dict
+) -> None:
+    """Should return 200 OK and simple result report in body."""
+    EVENT_ID = "event_id_1"
+    CONTESTANT_ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
+    mocker.patch(
+        "event_service.services.contestants_service.create_id",
+        return_value=CONTESTANT_ID,
+    )
+    mocker.patch(
+        "event_service.adapters.contestants_adapter.ContestantsAdapter.create_contestant",  # noqa: B950
+        return_value=CONTESTANT_ID,
+    )
+    mocker.patch(
+        "event_service.adapters.contestants_adapter.ContestantsAdapter.get_contestant_by_name",  # noqa: B950
+        return_value={"id": CONTESTANT_ID},
+    )
+    mocker.patch(
+        "event_service.adapters.contestants_adapter.ContestantsAdapter.get_contestant_by_minidrett_id",  # noqa: B950
+        return_value={"id": CONTESTANT_ID},
+    )
+    mocker.patch(
+        "event_service.adapters.contestants_adapter.ContestantsAdapter.update_contestant",  # noqa: B950
+        return_value=None,
+    )
+
+    files = {"file": open("tests/files/contestants_eventid_364892.csv", "rb")}
+
+    headers = MultiDict(
+        {
+            hdrs.AUTHORIZATION: f"Bearer {token}",
+        },
+    )
+
+    with aioresponses(passthrough=["http://127.0.0.1"]) as m:
+        m.post("http://example.com:8081/authorize", status=204)
+        resp = await client.post(
+            f"/events/{EVENT_ID}/contestants", headers=headers, data=files
+        )
+        assert resp.status == 200
+
+        body = await resp.json()
+        print(f"body: {body}")
+        assert type(body) is dict
+
+        assert body["total"] > 0
+        assert body["created"] == 0
+        assert body["updated"] == 0
+        assert body["failures"] > 0
+        assert body["total"] == body["created"] + body["updated"] + body["failures"]
 
 
 @pytest.mark.integration
@@ -167,7 +398,7 @@ async def test_create_contestant_bad_case_csv(
 
 
 @pytest.mark.integration
-async def test_create_contestant_bad_case_not_supported_content_type(
+async def test_create_contestant_bad_case_csv_not_supported_content_type(
     client: _TestClient, mocker: MockFixture, token: MockFixture, new_contestant: dict
 ) -> None:
     """Should return 415 Unsupported Media Type."""

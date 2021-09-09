@@ -87,6 +87,7 @@ class ContestantsView(View):
                         hdrs.LOCATION: f"{BASE_URL}/events/{event_id}/contestants/{contestant_id}"  # noqa: B950
                     }
                 )
+                return Response(status=201, headers=headers)
             else:
                 raise HTTPBadRequest()
 
@@ -103,18 +104,13 @@ class ContestantsView(View):
                 result = await ContestantsService.create_contestants(
                     db, event_id, contestants
                 )
-                if result:
-                    logging.debug(f"inserted {result} contestans.")
-                    headers = MultiDict(
-                        {hdrs.LOCATION: f"{BASE_URL}/events/{event_id}/contestants"}
-                    )
-                else:
-                    raise HTTPBadRequest()
+                logging.debug(f"result:\n {result}")
+                body = json.dumps(result)
+                return Response(status=200, body=body, content_type="application/json")
         else:
             raise HTTPUnsupportedMediaType(
                 reason=f"multipart/* content type expected, got {hdrs.CONTENT_TYPE}."
             )
-        return Response(status=201, headers=headers)
 
     async def delete(self) -> Response:
         """Delete route function."""
