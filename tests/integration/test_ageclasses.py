@@ -1,4 +1,5 @@
 """Integration test cases for the ageclasses route."""
+from copy import deepcopy
 import os
 
 from aiohttp import hdrs
@@ -19,22 +20,48 @@ def token() -> str:
     return jwt.encode(payload, secret, algorithm)  # type: ignore
 
 
+@pytest.fixture
+async def new_ageclass() -> dict:
+    """Create a mock ageclass object."""
+    return {
+        "name": "G 16 år",
+        "order": 1,
+        "raceclass": "G16",
+        "event_id": "ref_to_event",
+        "distance": "5km",
+    }
+
+
+@pytest.fixture
+async def ageclass() -> dict:
+    """Create a mock ageclass object."""
+    return {
+        "id": "290e70d5-0933-4af0-bb53-1d705ba7eb95",
+        "name": "G 16 år",
+        "order": 1,
+        "raceclass": "G16",
+        "event_id": "ref_to_event",
+        "distance": "5km",
+    }
+
+
 @pytest.mark.integration
 async def test_create_ageclass(
-    client: _TestClient, mocker: MockFixture, token: MockFixture
+    client: _TestClient, mocker: MockFixture, token: MockFixture, new_ageclass: dict
 ) -> None:
     """Should return Created, location header."""
-    ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
+    EVENT_ID = "event_id_1"
+    AGECLASS_ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
     mocker.patch(
-        "event_service.adapters.ageclasses_adapter.create_id",
-        return_value=ID,
+        "event_service.services.ageclasses_service.create_id",
+        return_value=AGECLASS_ID,
     )
     mocker.patch(
         "event_service.adapters.ageclasses_adapter.AgeclassesAdapter.create_ageclass",
-        return_value=ID,
+        return_value=AGECLASS_ID,
     )
 
-    request_body = {"name": "Oslo Skagen sprint"}
+    request_body = new_ageclass
     headers = MultiDict(
         {
             hdrs.CONTENT_TYPE: "application/json",
@@ -44,20 +71,26 @@ async def test_create_ageclass(
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
         m.post("http://example.com:8081/authorize", status=204)
-        resp = await client.post("/ageclasses", headers=headers, json=request_body)
+        resp = await client.post(
+            f"/events/{EVENT_ID}/ageclasses", headers=headers, json=request_body
+        )
         assert resp.status == 201
-        assert f"/ageclasses/{ID}" in resp.headers[hdrs.LOCATION]
+        assert (
+            f"/events/{EVENT_ID}/ageclasses/{AGECLASS_ID}"
+            in resp.headers[hdrs.LOCATION]
+        )
 
 
 @pytest.mark.integration
 async def test_get_ageclass_by_id(
-    client: _TestClient, mocker: MockFixture, token: MockFixture
+    client: _TestClient, mocker: MockFixture, token: MockFixture, ageclass: dict
 ) -> None:
     """Should return OK, and a body containing one ageclass."""
-    ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
+    EVENT_ID = "event_id_1"
+    AGECLASS_ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
     mocker.patch(
-        "event_service.adapters.ageclasses_adapter.AgeclassesAdapter.get_ageclass",
-        return_value={"id": ID, "name": "Oslo Skagen Sprint"},
+        "event_service.adapters.ageclasses_adapter.AgeclassesAdapter.get_ageclass_by_id",
+        return_value=ageclass,
     )
     headers = MultiDict(
         {
@@ -67,23 +100,35 @@ async def test_get_ageclass_by_id(
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
         m.post("http://example.com:8081/authorize", status=204)
-        resp = await client.get(f"/ageclasses/{ID}", headers=headers)
+        resp = await client.get(
+            f"/events/{EVENT_ID}/ageclasses/{AGECLASS_ID}", headers=headers
+        )
         assert resp.status == 200
         assert "application/json" in resp.headers[hdrs.CONTENT_TYPE]
-        ageclass = await resp.json()
-        assert type(ageclass) is dict
-        assert ageclass["id"] == ID
+        body = await resp.json()
+        assert type(body) is dict
+        assert body["id"] == ageclass["id"]
+        assert body["name"] == ageclass["name"]
+        assert body["order"] == ageclass["order"]
+        assert body["raceclass"] == ageclass["raceclass"]
+        assert body["event_id"] == ageclass["event_id"]
+        assert body["distance"] == ageclass["distance"]
 
 
 @pytest.mark.integration
-async def test_put_ageclass_by_id(
-    client: _TestClient, mocker: MockFixture, token: MockFixture
+async def test_update_ageclass_by_id(
+    client: _TestClient, mocker: MockFixture, token: MockFixture, ageclass: dict
 ) -> None:
     """Should return No Content."""
-    ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
+    EVENT_ID = "event_id_1"
+    AGECLASS_ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
+    mocker.patch(
+        "event_service.adapters.ageclasses_adapter.AgeclassesAdapter.get_ageclass_by_id",  # noqa: B950
+        return_value=ageclass,
+    )
     mocker.patch(
         "event_service.adapters.ageclasses_adapter.AgeclassesAdapter.update_ageclass",
-        return_value=ID,
+        return_value=AGECLASS_ID,
     )
 
     headers = MultiDict(
@@ -92,23 +137,28 @@ async def test_put_ageclass_by_id(
             hdrs.AUTHORIZATION: f"Bearer {token}",
         },
     )
-    request_body = {"id": ID, "name": "Oslo Skagen sprint Oppdatert"}
+    request_body = deepcopy(ageclass)
+    request_body["distance"] = "New distance"
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
         m.post("http://example.com:8081/authorize", status=204)
-        resp = await client.put(f"/ageclasses/{ID}", headers=headers, json=request_body)
+        resp = await client.put(
+            f"/events/{EVENT_ID}/ageclasses/{AGECLASS_ID}",
+            headers=headers,
+            json=request_body,
+        )
         assert resp.status == 204
 
 
 @pytest.mark.integration
 async def test_list_ageclasses(
-    client: _TestClient, mocker: MockFixture, token: MockFixture
+    client: _TestClient, mocker: MockFixture, token: MockFixture, ageclass: dict
 ) -> None:
     """Should return OK and a valid json body."""
-    ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
+    EVENT_ID = "event_id_1"
     mocker.patch(
         "event_service.adapters.ageclasses_adapter.AgeclassesAdapter.get_all_ageclasses",
-        return_value=[{"id": ID, "name": "Oslo Skagen Sprint"}],
+        return_value=[ageclass],
     )
     headers = MultiDict(
         {
@@ -118,7 +168,7 @@ async def test_list_ageclasses(
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
         m.post("http://example.com:8081/authorize", status=204)
-        resp = await client.get("/ageclasses", headers=headers)
+        resp = await client.get(f"/events/{EVENT_ID}/ageclasses", headers=headers)
         assert resp.status == 200
         assert "application/json" in resp.headers[hdrs.CONTENT_TYPE]
         ageclasses = await resp.json()
@@ -128,13 +178,18 @@ async def test_list_ageclasses(
 
 @pytest.mark.integration
 async def test_delete_ageclass_by_id(
-    client: _TestClient, mocker: MockFixture, token: MockFixture
+    client: _TestClient, mocker: MockFixture, token: MockFixture, ageclass: dict
 ) -> None:
     """Should return No Content."""
-    ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
+    EVENT_ID = "event_id_1"
+    AGECLASS_ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
+    mocker.patch(
+        "event_service.adapters.ageclasses_adapter.AgeclassesAdapter.get_ageclass_by_id",  # noqa: B950
+        return_value=ageclass,
+    )
     mocker.patch(
         "event_service.adapters.ageclasses_adapter.AgeclassesAdapter.delete_ageclass",
-        return_value=ID,
+        return_value=AGECLASS_ID,
     )
     headers = MultiDict(
         {
@@ -144,66 +199,272 @@ async def test_delete_ageclass_by_id(
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
         m.post("http://example.com:8081/authorize", status=204)
-        resp = await client.delete(f"/ageclasses/{ID}", headers=headers)
+        resp = await client.delete(
+            f"/events/{EVENT_ID}/ageclasses/{AGECLASS_ID}", headers=headers
+        )
         assert resp.status == 204
 
 
+@pytest.mark.integration
+async def test_delete_all_ageclasses_in_event(
+    client: _TestClient, mocker: MockFixture, token: MockFixture, ageclass: dict
+) -> None:
+    """Should return 204 No content."""
+    EVENT_ID = "event_id_1"
+    mocker.patch(
+        "event_service.adapters.ageclasses_adapter.AgeclassesAdapter.delete_all_ageclasses",  # noqa: B950
+        return_value=None,
+    )
+    mocker.patch(
+        "event_service.adapters.ageclasses_adapter.AgeclassesAdapter.get_all_ageclasses",  # noqa: B950
+        return_value=[],
+    )
+    headers = MultiDict(
+        {
+            hdrs.AUTHORIZATION: f"Bearer {token}",
+        },
+    )
+
+    with aioresponses(passthrough=["http://127.0.0.1"]) as m:
+        m.post("http://example.com:8081/authorize", status=204)
+        resp = await client.delete(f"/events/{EVENT_ID}/ageclasses", headers=headers)
+        assert resp.status == 204
+    with aioresponses(passthrough=["http://127.0.0.1"]) as m:
+        m.post("http://example.com:8081/authorize", status=204)
+        resp = await client.get(f"/events/{EVENT_ID}/ageclasses", headers=headers)
+        assert resp.status == 200
+        ageclasses = await resp.json()
+        assert len(ageclasses) == 0
+
+
 # Bad cases
+# Mandatory properties missing at create and update:
+@pytest.mark.integration
+async def test_create_ageclass_missing_mandatory_property(
+    client: _TestClient, mocker: MockFixture, token: MockFixture
+) -> None:
+    """Should return 422 HTTPUnprocessableEntity."""
+    EVENT_ID = "event_id_1"
+    AGECLASS_ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
+    mocker.patch(
+        "event_service.services.ageclasses_service.create_id",
+        return_value=AGECLASS_ID,
+    )
+    mocker.patch(
+        "event_service.adapters.ageclasses_adapter.AgeclassesAdapter.create_ageclass",
+        return_value=AGECLASS_ID,
+    )
+
+    request_body = {"id": AGECLASS_ID, "optional_property": "Optional_property"}
+    headers = MultiDict(
+        {
+            hdrs.CONTENT_TYPE: "application/json",
+            hdrs.AUTHORIZATION: f"Bearer {token}",
+        },
+    )
+
+    with aioresponses(passthrough=["http://127.0.0.1"]) as m:
+        m.post("http://example.com:8081/authorize", status=204)
+        resp = await client.post(
+            f"/events/{EVENT_ID}/ageclasses", headers=headers, json=request_body
+        )
+        assert resp.status == 422
+
+
+@pytest.mark.integration
+async def test_update_ageclass_by_id_missing_mandatory_property(
+    client: _TestClient, mocker: MockFixture, token: MockFixture
+) -> None:
+    """Should return 422 HTTPUnprocessableEntity."""
+    EVENT_ID = "event_id_1"
+    AGECLASS_ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
+    mocker.patch(
+        "event_service.adapters.ageclasses_adapter.AgeclassesAdapter.get_ageclass_by_id",  # noqa: B950
+        return_value={"id": AGECLASS_ID, "name": "missing_the_rest_of_the_properties"},
+    )
+    mocker.patch(
+        "event_service.adapters.ageclasses_adapter.AgeclassesAdapter.update_ageclass",
+        return_value=AGECLASS_ID,
+    )
+
+    headers = MultiDict(
+        {
+            hdrs.CONTENT_TYPE: "application/json",
+            hdrs.AUTHORIZATION: f"Bearer {token}",
+        },
+    )
+    request_body = {"id": AGECLASS_ID, "name": "missing_the_rest_of_the_properties"}
+
+    with aioresponses(passthrough=["http://127.0.0.1"]) as m:
+        m.post("http://example.com:8081/authorize", status=204)
+        resp = await client.put(
+            f"/events/{EVENT_ID}/ageclasses/{AGECLASS_ID}",
+            headers=headers,
+            json=request_body,
+        )
+        assert resp.status == 422
+
+
+@pytest.mark.integration
+async def test_create_ageclass_with_input_id(
+    client: _TestClient, mocker: MockFixture, token: MockFixture, ageclass: dict
+) -> None:
+    """Should return 422 HTTPUnprocessableEntity."""
+    EVENT_ID = "event_id_1"
+    AGECLASS_ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
+    mocker.patch(
+        "event_service.services.ageclasses_service.create_id",
+        return_value=AGECLASS_ID,
+    )
+    mocker.patch(
+        "event_service.adapters.ageclasses_adapter.AgeclassesAdapter.create_ageclass",
+        return_value=AGECLASS_ID,
+    )
+
+    request_body = ageclass
+    headers = MultiDict(
+        {
+            hdrs.CONTENT_TYPE: "application/json",
+            hdrs.AUTHORIZATION: f"Bearer {token}",
+        },
+    )
+
+    with aioresponses(passthrough=["http://127.0.0.1"]) as m:
+        m.post("http://example.com:8081/authorize", status=204)
+        resp = await client.post(
+            f"/events/{EVENT_ID}/ageclasses", headers=headers, json=request_body
+        )
+        assert resp.status == 422
+
+
+@pytest.mark.integration
+async def test_update_ageclass_by_id_different_id_in_body(
+    client: _TestClient, mocker: MockFixture, token: MockFixture, ageclass: dict
+) -> None:
+    """Should return 422 HTTPUnprocessableEntity."""
+    EVENT_ID = "event_id_1"
+    AGECLASS_ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
+    mocker.patch(
+        "event_service.adapters.ageclasses_adapter.AgeclassesAdapter.get_ageclass_by_id",  # noqa: B950
+        return_value=ageclass,
+    )
+    mocker.patch(
+        "event_service.adapters.ageclasses_adapter.AgeclassesAdapter.update_ageclass",
+        return_value=AGECLASS_ID,
+    )
+
+    headers = MultiDict(
+        {
+            hdrs.CONTENT_TYPE: "application/json",
+            hdrs.AUTHORIZATION: f"Bearer {token}",
+        },
+    )
+    request_body = deepcopy(ageclass)
+    request_body["id"] = "different_id"
+
+    with aioresponses(passthrough=["http://127.0.0.1"]) as m:
+        m.post("http://example.com:8081/authorize", status=204)
+        resp = await client.put(
+            f"/events/{EVENT_ID}/ageclasses/{AGECLASS_ID}",
+            headers=headers,
+            json=request_body,
+        )
+        assert resp.status == 422
+
+
+@pytest.mark.integration
+async def test_create_ageclass_adapter_fails(
+    client: _TestClient, mocker: MockFixture, token: MockFixture, new_ageclass: dict
+) -> None:
+    """Should return 400 HTTPBadRequest."""
+    EVENT_ID = "event_id_1"
+    mocker.patch(
+        "event_service.services.ageclasses_service.create_id",
+        return_value=None,
+    )
+    mocker.patch(
+        "event_service.adapters.ageclasses_adapter.AgeclassesAdapter.create_ageclass",  # noqa: B950
+        return_value=None,
+    )
+    request_body = new_ageclass
+    headers = MultiDict(
+        {
+            hdrs.CONTENT_TYPE: "application/json",
+            hdrs.AUTHORIZATION: f"Bearer {token}",
+        },
+    )
+
+    with aioresponses(passthrough=["http://127.0.0.1"]) as m:
+        m.post("http://example.com:8081/authorize", status=204)
+        resp = await client.post(
+            f"/events/{EVENT_ID}/ageclasses", headers=headers, json=request_body
+        )
+        assert resp.status == 400
+
 
 # Unauthorized cases:
 
 
 @pytest.mark.integration
 async def test_create_ageclass_no_authorization(
-    client: _TestClient, mocker: MockFixture
+    client: _TestClient, mocker: MockFixture, new_ageclass: dict
 ) -> None:
     """Should return 401 Unauthorized."""
-    ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
+    EVENT_ID = "event_id_1"
+    AGECLASS_ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
     mocker.patch(
-        "event_service.adapters.ageclasses_adapter.create_id",
-        return_value=ID,
+        "event_service.services.ageclasses_service.create_id",
+        return_value=AGECLASS_ID,
     )
     mocker.patch(
         "event_service.adapters.ageclasses_adapter.AgeclassesAdapter.create_ageclass",
-        return_value=ID,
+        return_value=AGECLASS_ID,
     )
 
-    request_body = {"name": "Oslo Skagen sprint"}
+    request_body = new_ageclass
     headers = MultiDict({hdrs.CONTENT_TYPE: "application/json"})
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
         m.post("http://example.com:8081/authorize", status=401)
 
-        resp = await client.post("/ageclasses", headers=headers, json=request_body)
+        resp = await client.post(
+            f"/events/{EVENT_ID}/ageclasses", headers=headers, json=request_body
+        )
         assert resp.status == 401
 
 
 @pytest.mark.integration
 async def test_get_ageclass_by_id_no_authorization(
-    client: _TestClient, mocker: MockFixture
+    client: _TestClient, mocker: MockFixture, ageclass: dict
 ) -> None:
     """Should return 401 Unauthorized."""
-    ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
+    EVENT_ID = "event_id_1"
+    AGECLASS_ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
     mocker.patch(
-        "event_service.adapters.ageclasses_adapter.AgeclassesAdapter.get_ageclass",
-        return_value={"id": ID, "name": "Oslo Skagen Sprint"},
+        "event_service.adapters.ageclasses_adapter.AgeclassesAdapter.get_ageclass_by_id",
+        return_value=ageclass,
     )
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
         m.post("http://example.com:8081/authorize", status=401)
-        resp = await client.get(f"/ageclasses/{ID}")
+        resp = await client.get(f"/events/{EVENT_ID}/ageclasses/{AGECLASS_ID}")
         assert resp.status == 401
 
 
 @pytest.mark.integration
 async def test_put_ageclass_by_id_no_authorization(
-    client: _TestClient, mocker: MockFixture
+    client: _TestClient, mocker: MockFixture, ageclass: dict
 ) -> None:
     """Should return 401 Unauthorizedt."""
-    ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
+    EVENT_ID = "event_id_1"
+    AGECLASS_ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
+    mocker.patch(
+        "event_service.adapters.ageclasses_adapter.AgeclassesAdapter.get_ageclass_by_id",
+        return_value=ageclass,
+    )
     mocker.patch(
         "event_service.adapters.ageclasses_adapter.AgeclassesAdapter.update_ageclass",
-        return_value=ID,
+        return_value=AGECLASS_ID,
     )
 
     headers = MultiDict(
@@ -211,45 +472,72 @@ async def test_put_ageclass_by_id_no_authorization(
             hdrs.CONTENT_TYPE: "application/json",
         },
     )
-    request_body = {"id": ID, "name": "Oslo Skagen sprint Oppdatert"}
+    request_body = ageclass
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
         m.post("http://example.com:8081/authorize", status=401)
-        resp = await client.put(f"/ageclasses/{ID}", headers=headers, json=request_body)
+        resp = await client.put(
+            f"/events/{EVENT_ID}/ageclasses/{AGECLASS_ID}",
+            headers=headers,
+            json=request_body,
+        )
         assert resp.status == 401
 
 
 @pytest.mark.integration
 async def test_list_ageclasses_no_authorization(
-    client: _TestClient, mocker: MockFixture
+    client: _TestClient, mocker: MockFixture, ageclass: dict
 ) -> None:
     """Should return 401 Unauthorized."""
-    ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
+    EVENT_ID = "event_id_1"
     mocker.patch(
         "event_service.adapters.ageclasses_adapter.AgeclassesAdapter.get_all_ageclasses",
-        return_value=[{"id": ID, "name": "Oslo Skagen Sprint"}],
+        return_value=[ageclass],
     )
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
         m.post("http://example.com:8081/authorize", status=401)
-        resp = await client.get("/ageclasses")
+        resp = await client.get(f"/events/{EVENT_ID}/ageclasses")
         assert resp.status == 401
 
 
 @pytest.mark.integration
 async def test_delete_ageclass_by_id_no_authorization(
-    client: _TestClient, mocker: MockFixture
+    client: _TestClient, mocker: MockFixture, ageclass: dict
 ) -> None:
     """Should return 401 Unauthorized."""
-    ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
+    EVENT_ID = "event_id_1"
+    AGECLASS_ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
+    mocker.patch(
+        "event_service.adapters.ageclasses_adapter.AgeclassesAdapter.get_ageclass_by_id",
+        return_value=ageclass,
+    )
     mocker.patch(
         "event_service.adapters.ageclasses_adapter.AgeclassesAdapter.delete_ageclass",
-        return_value=ID,
+        return_value=AGECLASS_ID,
     )
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
         m.post("http://example.com:8081/authorize", status=401)
-        resp = await client.delete(f"/ageclasses/{ID}")
+        resp = await client.delete(f"/events/{EVENT_ID}/ageclasses/{AGECLASS_ID}")
+        assert resp.status == 401
+
+
+@pytest.mark.integration
+async def test_delete_all_ageclasses_no_authorization(
+    client: _TestClient, mocker: MockFixture
+) -> None:
+    """Should return 401 Unauthorized."""
+    EVENT_ID = "event_id_1"
+    mocker.patch(
+        "event_service.adapters.ageclasses_adapter.AgeclassesAdapter.delete_all_ageclasses",
+        return_value=None,
+    )
+
+    with aioresponses(passthrough=["http://127.0.0.1"]) as m:
+        m.post("http://example.com:8081/authorize", status=401)
+
+        resp = await client.delete(f"/events/{EVENT_ID}/ageclasses")
         assert resp.status == 401
 
 
@@ -261,9 +549,10 @@ async def test_get_ageclass_not_found(
     client: _TestClient, mocker: MockFixture, token: MockFixture
 ) -> None:
     """Should return 404 Not found."""
-    ID = "does-not-exist"
+    EVENT_ID = "event_id_1"
+    AGECLASS_ID = "does-not-exist"
     mocker.patch(
-        "event_service.adapters.ageclasses_adapter.AgeclassesAdapter.get_ageclass",
+        "event_service.adapters.ageclasses_adapter.AgeclassesAdapter.get_ageclass_by_id",
         return_value=None,
     )
     headers = MultiDict(
@@ -274,16 +563,23 @@ async def test_get_ageclass_not_found(
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
         m.post("http://example.com:8081/authorize", status=204)
-        resp = await client.get(f"/ageclasses/{ID}", headers=headers)
+        resp = await client.get(
+            f"/events/{EVENT_ID}/ageclasses/{AGECLASS_ID}", headers=headers
+        )
         assert resp.status == 404
 
 
 @pytest.mark.integration
 async def test_update_ageclass_not_found(
-    client: _TestClient, mocker: MockFixture, token: MockFixture
+    client: _TestClient, mocker: MockFixture, token: MockFixture, ageclass: dict
 ) -> None:
     """Should return 404 Not found."""
-    ID = "does-not-exist"
+    EVENT_ID = "event_id_1"
+    AGECLASS_ID = "does-not-exist"
+    mocker.patch(
+        "event_service.adapters.ageclasses_adapter.AgeclassesAdapter.get_ageclass_by_id",
+        return_value=None,
+    )
     mocker.patch(
         "event_service.adapters.ageclasses_adapter.AgeclassesAdapter.update_ageclass",
         return_value=None,
@@ -295,15 +591,16 @@ async def test_update_ageclass_not_found(
             hdrs.AUTHORIZATION: f"Bearer {token}",
         },
     )
-    request_body = {
-        "id": "290e70d5-0933-4af0-bb53-1d705ba7eb95",
-        "name": "Oslo Skagen sprint Oppdatert",
-    }
+    request_body = ageclass
 
-    ID = "does-not-exist"
+    AGECLASS_ID = "does-not-exist"
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
         m.post("http://example.com:8081/authorize", status=204)
-        resp = await client.put(f"/ageclasses/{ID}", headers=headers, json=request_body)
+        resp = await client.put(
+            f"/events/{EVENT_ID}/ageclasses/{AGECLASS_ID}",
+            headers=headers,
+            json=request_body,
+        )
         assert resp.status == 404
 
 
@@ -312,7 +609,12 @@ async def test_delete_ageclass_not_found(
     client: _TestClient, mocker: MockFixture, token: MockFixture
 ) -> None:
     """Should return 404 Not found."""
-    ID = "does-not-exist"
+    EVENT_ID = "event_id_1"
+    AGECLASS_ID = "does-not-exist"
+    mocker.patch(
+        "event_service.adapters.ageclasses_adapter.AgeclassesAdapter.get_ageclass_by_id",
+        return_value=None,
+    )
     mocker.patch(
         "event_service.adapters.ageclasses_adapter.AgeclassesAdapter.delete_ageclass",
         return_value=None,
@@ -326,5 +628,7 @@ async def test_delete_ageclass_not_found(
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
         m.post("http://example.com:8081/authorize", status=204)
-        resp = await client.delete(f"/ageclasses/{ID}", headers=headers)
+        resp = await client.delete(
+            f"/events/{EVENT_ID}/ageclasses/{AGECLASS_ID}", headers=headers
+        )
         assert resp.status == 404
