@@ -40,11 +40,27 @@ class ContestantsAdapter(Adapter):
 
     @classmethod
     async def get_contestant_by_name(
-        cls: Any, db: Any, event_id: str, contestantname: str
+        cls: Any, db: Any, event_id: str, first_name: str, last_name: str
     ) -> dict:  # pragma: no cover
         """Get contestant by name function."""
         result = await db.contestants_collection.find_one(
-            {"$and": [{"event_id": event_id}, {"contestantname": contestantname}]}
+            {
+                "$and": [
+                    {"event_id": event_id},
+                    {"first_name": first_name},
+                    {"last_name": last_name},
+                ]
+            }
+        )
+        return result
+
+    @classmethod
+    async def get_contestant_by_minidrett_id(
+        cls: Any, db: Any, event_id: str, minidrett_id: str
+    ) -> dict:  # pragma: no cover
+        """Get contestant by minidrett_id function."""
+        result = await db.contestants_collection.find_one(
+            {"$and": [{"event_id": event_id}, {"minidrett_id": minidrett_id}]}
         )
         return result
 
