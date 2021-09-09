@@ -88,7 +88,7 @@ async def contestant(event_id: str) -> dict:
 async def test_create_single_contestant(
     http_service: Any, token: MockFixture, event_id: str, contestant: dict
 ) -> None:
-    """Should return Created, location header and no body."""
+    """Should return 201 Created, location header and no body."""
     url = f"{http_service}/events/{event_id}/contestants"
     headers = {
         hdrs.CONTENT_TYPE: "application/json",
@@ -109,7 +109,7 @@ async def test_create_single_contestant(
 async def test_create_many_contestants_as_csv_file(
     http_service: Any, token: MockFixture, event_id: str
 ) -> None:
-    """Should return Created, location header and no body."""
+    """Should return 200 OK and a report."""
     url = f"{http_service}/events/{event_id}/contestants"
     headers = {
         hdrs.AUTHORIZATION: f"Bearer {token}",
@@ -117,13 +117,53 @@ async def test_create_many_contestants_as_csv_file(
 
     # Send csv-file in request:
     files = {"file": open("tests/files/contestants_eventid_364892.csv", "rb")}
-    session = ClientSession()
-    async with session.post(url, headers=headers, data=files) as response:
-        status = response.status
-    await session.close()
+    async with ClientSession() as session:
+        async with session.delete(url) as response:
+            pass
+        async with session.post(url, headers=headers, data=files) as response:
+            status = response.status
+            body = await response.json()
 
-    assert status == 201
-    assert f"/events/{event_id}/contestants" in response.headers[hdrs.LOCATION]
+    assert status == 200
+    assert "application/json" in response.headers[hdrs.CONTENT_TYPE]
+
+    assert len(body) > 0
+
+    assert body["total"] > 0
+    assert body["created"] > 0
+    assert body["updated"] == 0
+    assert body["failures"] == 0
+    assert body["total"] == body["created"] + body["updated"] + body["failures"]
+
+
+@pytest.mark.contract
+@pytest.mark.asyncio
+async def test_update_many_existing_contestants_as_csv_file(
+    http_service: Any, token: MockFixture, event_id: str
+) -> None:
+    """Should return 200 OK and a report."""
+    url = f"{http_service}/events/{event_id}/contestants"
+    headers = {
+        hdrs.AUTHORIZATION: f"Bearer {token}",
+    }
+
+    # Send csv-file in request:
+    files = {"file": open("tests/files/contestants_eventid_364892.csv", "rb")}
+    async with ClientSession() as session:
+        async with session.post(url, headers=headers, data=files) as response:
+            status = response.status
+            body = await response.json()
+
+    assert status == 200
+    assert "application/json" in response.headers[hdrs.CONTENT_TYPE]
+
+    assert len(body) > 0
+
+    assert body["total"] > 0
+    assert body["created"] == 0
+    assert body["updated"] > 0
+    assert body["failures"] == 0
+    assert body["total"] == body["created"] + body["updated"] + body["failures"]
 
 
 @pytest.mark.contract
@@ -137,10 +177,9 @@ async def test_get_all_contestants_in_given_event(
         hdrs.AUTHORIZATION: f"Bearer {token}",
     }
 
-    session = ClientSession()
-    async with session.get(url, headers=headers) as response:
-        contestants = await response.json()
-    await session.close()
+    async with ClientSession() as session:
+        async with session.get(url, headers=headers) as response:
+            contestants = await response.json()
 
     assert response.status == 200
     assert "application/json" in response.headers[hdrs.CONTENT_TYPE]
