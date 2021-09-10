@@ -107,6 +107,16 @@ class ContestantsView(View):
                 logging.debug(f"result:\n {result}")
                 body = json.dumps(result)
                 return Response(status=200, body=body, content_type="application/json")
+
+        elif "text/csv" in self.request.headers[hdrs.CONTENT_TYPE]:
+            content = await self.request.content.read()
+            contestants = content.decode()
+            result = await ContestantsService.create_contestants(
+                db, event_id, contestants
+            )
+            logging.debug(f"result:\n {result}")
+            body = json.dumps(result)
+            return Response(status=200, body=body, content_type="application/json")
         else:
             raise HTTPUnsupportedMediaType(
                 reason=f"multipart/* content type expected, got {self.request.headers[hdrs.CONTENT_TYPE]}."  # noqa: B950
