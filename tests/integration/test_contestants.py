@@ -431,6 +431,56 @@ async def test_create_contestant_bad_case_csv_not_supported_content_type(
 
 
 @pytest.mark.integration
+async def test_create_contestant_good_case_octet_stream(
+    client: _TestClient, mocker: MockFixture, token: MockFixture, new_contestant: dict
+) -> None:
+    """Should return 200 OK and simple result report in body."""
+    EVENT_ID = "event_id_1"
+    CONTESTANT_ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
+    mocker.patch(
+        "event_service.services.contestants_service.create_id",
+        return_value=CONTESTANT_ID,
+    )
+    mocker.patch(
+        "event_service.adapters.contestants_adapter.ContestantsAdapter.create_contestant",  # noqa: B950
+        return_value=CONTESTANT_ID,
+    )
+    mocker.patch(
+        "event_service.adapters.contestants_adapter.ContestantsAdapter.get_contestant_by_name",  # noqa: B950
+        return_value=None,
+    )
+    mocker.patch(
+        "event_service.adapters.contestants_adapter.ContestantsAdapter.get_contestant_by_minidrett_id",  # noqa: B950
+        return_value=None,
+    )
+
+    with open("tests/files/contestants_eventid_364892.csv", "rb") as f:
+
+        headers = MultiDict(
+            {
+                hdrs.AUTHORIZATION: f"Bearer {token}",
+            },
+        )
+
+        with aioresponses(passthrough=["http://127.0.0.1"]) as m:
+            m.post("http://example.com:8081/authorize", status=204)
+            resp = await client.post(
+                f"/events/{EVENT_ID}/contestants", headers=headers, data=f
+            )
+            assert resp.status == 200
+
+            body = await resp.json()
+            print(f"body: {body}")
+            assert type(body) is dict
+
+            assert body["total"] > 0
+            assert body["created"] > 0
+            assert body["updated"] == 0
+            assert body["failures"] == 0
+            assert body["total"] == body["created"] + body["updated"] + body["failures"]
+
+
+@pytest.mark.integration
 async def test_get_contestant_by_id(
     client: _TestClient, mocker: MockFixture, token: MockFixture, contestant: dict
 ) -> None:
