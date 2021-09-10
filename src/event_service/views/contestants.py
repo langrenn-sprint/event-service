@@ -109,7 +109,7 @@ class ContestantsView(View):
                 return Response(status=200, body=body, content_type="application/json")
         else:
             raise HTTPUnsupportedMediaType(
-                reason=f"multipart/* content type expected, got {hdrs.CONTENT_TYPE}."
+                reason=f"multipart/* content type expected, got {self.request.headers[hdrs.CONTENT_TYPE]}."
             )
 
     async def delete(self) -> Response:
