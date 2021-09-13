@@ -1,51 +1,67 @@
-openapi: 3.0.3
-info:
-  title: Event service
-  description: The event service let you administrate the main domain objects event, startlist and racelist
-  version: '1.0'
-  license:
-      name: Apache 2.0
-      url: 'http://www.apache.org/licenses/LICENSE-2.0.html'
-tags:
-  - name: contestant
-    description: contestant in event operations
-  - name: event
-    description: event operations
-  - name: ageclass
-    description: ageclass operations
-paths:
-  /events:
-    post:
-      tags:
-      - event
-      security:
-      - bearerAuth: []
-      description: Add a new event
-      requestBody:
-        description: The new event to be created
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/Event'
-      responses:
-        201:
-          description: Created
-    get:
-      tags:
-      - event
-      description: Get a list of events
-      responses:
-        200:
-          description: Ok
+  openapi: 3.0.3
+  info:
+    title: Event service
+    description: The event service let you administrate the main domain objects event, startlist and racelist
+    version: '1.0'
+    license:
+        name: Apache 2.0
+        url: 'http://www.apache.org/licenses/LICENSE-2.0.html'
+  tags:
+    - name: contestant
+      description: contestant in event operations
+    - name: event
+      description: event operations
+    - name: ageclass
+      description: ageclass operations
+  paths:
+    /events:
+      post:
+        tags:
+        - event
+        security:
+        - bearerAuth: []
+        description: Add a new event
+        requestBody:
+          description: The new event to be created
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/EventCollection'
-  /events/{eventId}:
-    get:
-      tags:
-      - event
-      description: Get a unique event
+                $ref: '#/components/schemas/Event'
+        responses:
+          201:
+            description: Created
+      get:
+        tags:
+        - event
+        description: Get a list of events
+        responses:
+          200:
+            description: Ok
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/EventCollection'
+    /events/{eventId}:
+      get:
+        tags:
+        - event
+        description: Get a unique event
+        parameters:
+        - name: eventId
+          in: path
+          description: event id
+          required: true
+          schema:
+            type: string
+            format: uuid
+        responses:
+          200:
+            description: Ok
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/Event'
+    /events/{eventId}/ageclasses:
       parameters:
       - name: eventId
         in: path
@@ -54,244 +70,259 @@ paths:
         schema:
           type: string
           format: uuid
-      responses:
-        200:
-          description: Ok
+      post:
+        tags:
+        - ageclass
+        security:
+        - bearerAuth: []
+        description: Add a new ageclass
+        requestBody:
+          description: The new ageclass to be created
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Event'
-  /events/{eventId}/contestants:
-    parameters:
-    - name: eventId
-      in: path
-      description: event id
-      required: true
-      schema:
-        type: string
-        format: uuid
-    post:
-      tags:
-      - contestant
-      description: create new contestant
-      requestBody:
-        description: the new contestant to be created
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/Contestant'
-      responses:
-        201:
-          description: Created
-    get:
-      tags:
-      - contestant
-      description: Get a list of contestants
-      responses:
-        200:
-          description: Ok
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ContestantCollection'
-    delete:
-      tags:
-      - contestant
-      description: Delete all contestants in event
-      responses:
-        204:
-          description: No content
-  /events/{eventId}/contestants/{contestantId}:
-    parameters:
-    - name: eventId
-      in: path
-      description: event id
-      required: true
-      schema:
-        type: string
-        format: uuid
-    - name: contestantId
-      in: path
-      description: contestant id
-      required: true
-      schema:
-        type: string
-        format: uuid
-    get:
-      tags:
-      - contestant
-      description: Get a unique contestant
-      responses:
-        200:
-          description: Ok
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Contestant'
-    put:
-      tags:
-      - contestant
-      description: Update a contestant
-      requestBody:
-        description: the new contestant data
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/Contestant'
-      responses:
-        200:
-          description: Ok
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Contestant'
-    delete:
-      tags:
-      - contestant
-      description: Delete a contestant given by id
-      responses:
-        204:
-          description: No content
-  /ageclasses:
-    post:
-      tags:
-      - ageclass
-      security:
-      - bearerAuth: []
-      description: Add a new ageclass
-      requestBody:
-        description: The new ageclass to be created
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/Ageclass'
-      responses:
-        201:
-          description: Created
-    get:
-      tags:
-      - ageclass
-      description: Get a list of ageclasses
-      responses:
-        200:
-          description: Ok
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/AgeclassCollection'
-  /ageclasses/{id}:
-    get:
-      tags:
-      - ageclass
-      description: Get a unique ageclass
+                $ref: '#/components/schemas/Ageclass'
+        responses:
+          201:
+            description: Created
+      get:
+        tags:
+        - ageclass
+        description: Get a list of ageclasses
+        responses:
+          200:
+            description: Ok
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/AgeclassCollection'
+    /events/{eventId}/ageclasses/{ageclassId}:
       parameters:
-      - name: id
+      - name: eventId
+        in: path
+        description: event id
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: ageclassId
         in: path
         description: ageclass id
         required: true
         schema:
           type: string
           format: uuid
-      responses:
-        200:
-          description: Ok
+      get:
+        tags:
+        - ageclass
+        description: Get a unique ageclass
+        responses:
+          200:
+            description: Ok
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/Ageclass'
+    /events/{eventId}/contestants:
+      parameters:
+      - name: eventId
+        in: path
+        description: event id
+        required: true
+        schema:
+          type: string
+          format: uuid
+      post:
+        tags:
+        - contestant
+        description: create new contestant
+        requestBody:
+          description: the new contestant to be created
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Ageclass'
-components:
-  schemas:
-    AgeclassCollection:
-      type: object
-      properties:
-        ageclasses:
-          type: array
-          items:
-            $ref: '#/components/schemas/Ageclass'
-    Ageclass:
-      properties:
-        id:
-          type: string
-        name:
-          type: string
-    EventCollection:
-      type: object
-      properties:
-        events:
-          type: array
-          items:
-            $ref: '#/components/schemas/Event'
-    Event:
-      properties:
-        id:
-          type: string
-        name:
-          type: string
-        date:
-          type: string
-          format: date
-        organiser:
-          type: string
-        webpage:
-          type: string
-          format: uri
-        information:
-          type: string
-    ContestantCollection:
-      type: object
-      properties:
-        contestants:
-          type: array
-          items:
-            $ref: '#/components/schemas/Contestant'
-    Contestant:
-      properties:
-        id:
-          description: system generated unique id
-          type: string
-        firstName:
-          type: string
-        lastName:
-          type: string
-        birthDate:
-          type: string
-          format: date
-        gender:
-          type: string
-        ageClass:
-          type: string
-        region:
-          type: string
-        club:
-          type: string
-        eventId:
+                $ref: '#/components/schemas/Contestant'
+        responses:
+          201:
+            description: Created
+      get:
+        tags:
+        - contestant
+        description: Get a list of contestants
+        responses:
+          200:
+            description: Ok
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/ContestantCollection'
+      delete:
+        tags:
+        - contestant
+        description: Delete all contestants in event
+        responses:
+          204:
+            description: No content
+    /events/{eventId}/contestants/{contestantId}:
+      parameters:
+      - name: eventId
+        in: path
+        description: event id
+        required: true
+        schema:
           type: string
           format: uuid
-          description: id of event contestant is part of
-        email:
+      - name: contestantId
+        in: path
+        description: contestant id
+        required: true
+        schema:
           type: string
-        team:
-          type: string
-        minIdrettId:
-          type: string
-        bib:
-          type: integer
-    Startlist:
-      type: array
-      items:
+          format: uuid
+      get:
+        tags:
+        - contestant
+        description: Get a unique contestant
+        responses:
+          200:
+            description: Ok
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/Contestant'
+      put:
+        tags:
+        - contestant
+        description: Update a contestant
+        requestBody:
+          description: the new contestant data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Contestant'
+        responses:
+          200:
+            description: Ok
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/Contestant'
+      delete:
+        tags:
+        - contestant
+        description: Delete a contestant given by id
+        responses:
+          204:
+            description: No content
+  components:
+    schemas:
+      AgeclassCollection:
         type: object
         properties:
-          raceId:
+          ageclasses:
+            type: array
+            items:
+              $ref: '#/components/schemas/Ageclass'
+      Ageclass:
+        properties:
+          id:
             type: string
-          contestantId:
+          name:
+            type: string
+            description: human readable name of ageclass
+          order:
+            type: integer
+            description: position in starting order
+          raceclass:
+            type: string
+            description: identifier of the corresponding raceclass
+          event_id:
+            type: string
+            description: identifier of the event
+          distance:
+            type: string
+            description: name of distance the ageclass competes in
+          noOfContestants:
+            type: integer
+            description: number of contestants in ageclass
+      EventCollection:
+        type: object
+        properties:
+          events:
+            type: array
+            items:
+              $ref: '#/components/schemas/Event'
+      Event:
+        properties:
+          id:
+            type: string
+          name:
+            type: string
+          date:
+            type: string
+            format: date
+          organiser:
+            type: string
+          webpage:
+            type: string
+            format: uri
+          information:
+            type: string
+      ContestantCollection:
+        type: object
+        properties:
+          contestants:
+            type: array
+            items:
+              $ref: '#/components/schemas/Contestant'
+      Contestant:
+        properties:
+          id:
+            description: system generated unique id
+            type: string
+          firstName:
+            type: string
+          lastName:
+            type: string
+          birthDate:
+            type: string
+            format: date
+          gender:
+            type: string
+          ageClass:
+            type: string
+          region:
+            type: string
+          club:
+            type: string
+          eventId:
+            type: string
+            format: uuid
+            description: id of event contestant is part of
+          email:
+            type: string
+          team:
+            type: string
+          minIdrettId:
             type: string
           bib:
-            type: string
-          startTime:
-            type: string
-            format: timestamp
-  securitySchemes:
-    bearerAuth:
-      type: http
-      scheme: bearer
-      bearerFormat: JWT
+            type: integer
+      Startlist:
+        type: array
+        items:
+          type: object
+          properties:
+            raceId:
+              type: string
+            contestantId:
+              type: string
+            bib:
+              type: string
+            startTime:
+              type: string
+              format: timestamp
+    securitySchemes:
+      bearerAuth:
+        type: http
+        scheme: bearer
+        bearerFormat: JWT

@@ -14,4 +14,5 @@ class Ageclass(DataClassJsonMixin):
     raceclass: str
     event_id: str
     distance: str
+    no_of_contestants: Optional[int] = field(default=None)
     id: Optional[str] = field(default=None)
