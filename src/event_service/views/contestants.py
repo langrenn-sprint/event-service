@@ -44,8 +44,11 @@ class ContestantsView(View):
 
         event_id = self.request.match_info["eventId"]
         contestants = await ContestantsService.get_all_contestants(db, event_id)
+        list = []
+        for _c in contestants:
+            list.append(_c.to_dict())
 
-        body = json.dumps(contestants, default=str, ensure_ascii=False)
+        body = json.dumps(list, default=str, ensure_ascii=False)
         return Response(status=200, body=body, content_type="application/json")
 
     async def post(self) -> Response:  # noqa: C901

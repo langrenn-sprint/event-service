@@ -1,22 +1,20 @@
 """Module for ageclass adapter."""
 import logging
 from typing import Any, List, Optional
-import uuid
+
+from .adapter import Adapter
 
 
-def create_id() -> str:  # pragma: no cover
-    """Creates an uuid."""
-    return str(uuid.uuid4())
-
-
-class AgeclassesAdapter:
+class AgeclassesAdapter(Adapter):
     """Class representing an adapter for ageclasses."""
 
     @classmethod
-    async def get_all_ageclasses(cls: Any, db: Any) -> List:  # pragma: no cover
+    async def get_all_ageclasses(
+        cls: Any, db: Any, event_id: str
+    ) -> List[dict]:  # pragma: no cover
         """Get all ageclasses function."""
         ageclasses: List = []
-        cursor = db.ageclasses_collection.find()
+        cursor = db.ageclasses_collection.find({"event_id": event_id})
         for ageclass in await cursor.to_list(length=100):
             ageclasses.append(ageclass)
             logging.debug(ageclass)
@@ -24,53 +22,65 @@ class AgeclassesAdapter:
 
     @classmethod
     async def create_ageclass(
-        cls: Any, db: Any, ageclass: dict
-    ) -> Optional[str]:  # pragma: no cover
+        cls: Any, db: Any, event_id: str, ageclass: dict
+    ) -> str:  # pragma: no cover
         """Create ageclass function."""
-        # create id
-        id = create_id()
-        ageclass["id"] = id
-        # insert new ageclass
         result = await db.ageclasses_collection.insert_one(ageclass)
-        logging.debug(f"inserted ageclass with id: {id}")
-        if result:
-            return id
-        return None  # pragma: no cover
+        return result
 
     @classmethod
-    async def get_ageclass(
-        cls: Any, db: Any, id: str
-    ) -> Optional[dict]:  # pragma: no cover
-        """Get ageclass function."""
-        # insert new
-        result = await db.ageclasses_collection.find_one({"id": id})
-        # return the document if found:
-        if result:
-            return result
-        return None
+    async def get_ageclass_by_id(
+        cls: Any, db: Any, event_id: str, ageclass_id: str
+    ) -> dict:  # pragma: no cover
+        """Get ageclass by id function."""
+        result = await db.ageclasses_collection.find_one(
+            {"$and": [{"event_id": event_id}, {"id": ageclass_id}]}
+        )
+        return result
+
+    @classmethod
+    async def get_ageclass_by_name(
+        cls: Any, db: Any, event_id: str, name: str
+    ) -> List[dict]:  # pragma: no cover
+        """Get ageclass by name function."""
+        ageclasses: List = []
+        cursor = db.ageclasses_collection.find(
+            {
+                "$and": [
+                    {"event_id": event_id},
+                    {"name": name},
+                ]
+            }
+        )
+        for ageclass in await cursor.to_list(length=100):
+            ageclasses.append(ageclass)
+            logging.debug(ageclass)
+        return ageclasses
 
     @classmethod
     async def update_ageclass(
-        cls: Any, db: Any, id: str, ageclass: dict
+        cls: Any, db: Any, event_id: str, ageclass_id: str, ageclass: dict
     ) -> Optional[str]:  # pragma: no cover
-        """Get ageclass function."""
-        # get old document
-        old_document = await db.ageclasses_collection.find_one({"id": id})
-        # update the document if found:
-        if old_document:
-            _ = await db.ageclasses_collection.replace_one({"id": id}, ageclass)
-            return id
-        return None
+        """Update given ageclass function."""
+        result = await db.ageclasses_collection.replace_one(
+            {"$and": [{"event_id": event_id}, {"id": ageclass_id}]}, ageclass
+        )
+        return result
 
     @classmethod
     async def delete_ageclass(
-        cls: Any, db: Any, id: str
+        cls: Any, db: Any, event_id: str, ageclass_id: str
     ) -> Optional[str]:  # pragma: no cover
-        """Get ageclass function."""
-        # get old document
-        document = await db.ageclasses_collection.find_one({"id": id})
-        # delete the document if found:
-        if document:
-            _ = await db.ageclasses_collection.delete_one({"id": id})
-            return id
-        return None
+        """Delete given ageclass function."""
+        result = await db.ageclasses_collection.delete_one(
+            {"$and": [{"event_id": event_id}, {"id": ageclass_id}]}
+        )
+        return result
+
+    @classmethod
+    async def delete_all_ageclasses(
+        cls: Any, db: Any, event_id: str
+    ) -> Optional[str]:  # pragma: no cover
+        """Delete all ageclasses function."""
+        result = await db.ageclasses_collection.delete_many({"event_id": event_id})
+        return result
