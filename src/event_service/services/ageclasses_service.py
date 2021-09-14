@@ -22,13 +22,43 @@ class AgeclassNotFoundException(Exception):
         super().__init__(message)
 
 
+class AgeclassCreateException(Exception):
+    """Class representing custom exception for create method."""
+
+    def __init__(self, message: str) -> None:
+        """Initialize the error."""
+        # Call the base class constructor with the parameters it needs
+        super().__init__(message)
+
+
+class AgeclassUpdateException(Exception):
+    """Class representing custom exception for update method."""
+
+    def __init__(self, message: str) -> None:
+        """Initialize the error."""
+        # Call the base class constructor with the parameters it needs
+        super().__init__(message)
+
+
+class AgeclassNotUniqueNameException(Exception):
+    """Class representing custom exception for find method."""
+
+    def __init__(self, message: str) -> None:
+        """Initialize the error."""
+        # Call the base class constructor with the parameters it needs
+        super().__init__(message)
+
+
 class AgeclassesService:
     """Class representing a service for ageclasses."""
 
     @classmethod
     async def get_all_ageclasses(cls: Any, db: Any, event_id: str) -> List[Ageclass]:
         """Get all ageclasses function."""
-        ageclasses = await AgeclassesAdapter.get_all_ageclasses(db, event_id)
+        ageclasses: List[Ageclass] = []
+        _ageclasses = await AgeclassesAdapter.get_all_ageclasses(db, event_id)
+        for a in _ageclasses:
+            ageclasses.append(Ageclass.from_dict(a))
         return ageclasses
 
     @classmethod
@@ -79,6 +109,17 @@ class AgeclassesService:
         if ageclass:
             return Ageclass.from_dict(ageclass)
         raise AgeclassNotFoundException(f"Ageclass with id {ageclass_id} not found")
+
+    @classmethod
+    async def get_ageclass_by_name(
+        cls: Any, db: Any, event_id: str, name: str
+    ) -> List[Ageclass]:
+        """Get ageclass by name function."""
+        ageclasses: List[Ageclass] = []
+        _ageclasses = await AgeclassesAdapter.get_ageclass_by_name(db, event_id, name)
+        for a in _ageclasses:
+            ageclasses.append(Ageclass.from_dict(a))
+        return ageclasses
 
     @classmethod
     async def update_ageclass(

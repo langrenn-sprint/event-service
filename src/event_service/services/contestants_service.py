@@ -32,7 +32,10 @@ class ContestantsService:
     @classmethod
     async def get_all_contestants(cls: Any, db: Any, event_id: str) -> List[Contestant]:
         """Get all contestants function."""
-        contestants = await ContestantsAdapter.get_all_contestants(db, event_id)
+        contestants = []
+        _contestants = await ContestantsAdapter.get_all_contestants(db, event_id)
+        for c in _contestants:
+            contestants.append(Contestant.from_dict(c))
         return contestants
 
     @classmethod
@@ -93,6 +96,7 @@ class ContestantsService:
         # Parse str as csv:
         cols = [
             "Klasse",
+            "Øvelse",
             "Etternavn",
             "Fornavn",
             "Kjønn",
@@ -114,7 +118,8 @@ class ContestantsService:
         )
 
         df.columns = [
-            "age_class",
+            "ageclass",
+            "distance",
             "last_name",
             "first_name",
             "gender",

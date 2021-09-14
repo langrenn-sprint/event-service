@@ -10,9 +10,9 @@ class Ageclass(DataClassJsonMixin):
     """Data class with details about an ageclass."""
 
     name: str
-    order: int
     raceclass: str
     event_id: str
-    distance: str
-    no_of_contestants: Optional[int] = field(default=None)
+    no_of_contestants: int = 0
+    distance: Optional[str] = field(default=None)
+    order: Optional[int] = field(default=None)
     id: Optional[str] = field(default=None)

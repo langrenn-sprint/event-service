@@ -57,7 +57,7 @@ async def test_create_event(http_service: Any, token: MockFixture) -> None:
 
 @pytest.mark.contract
 @pytest.mark.asyncio
-async def test_events(http_service: Any, token: MockFixture) -> None:
+async def test_get_all_events(http_service: Any, token: MockFixture) -> None:
     """Should return OK and a list of events as json."""
     url = f"{http_service}/events"
     headers = {

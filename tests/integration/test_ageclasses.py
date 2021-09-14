@@ -116,6 +116,40 @@ async def test_get_ageclass_by_id(
 
 
 @pytest.mark.integration
+async def test_get_ageclass_by_name(
+    client: _TestClient, mocker: MockFixture, token: MockFixture, ageclass: dict
+) -> None:
+    """Should return 200 OK, and a body containing one ageclass."""
+    EVENT_ID = "event_id_1"
+    mocker.patch(
+        "event_service.adapters.ageclasses_adapter.AgeclassesAdapter.get_ageclass_by_name",
+        return_value=[ageclass],
+    )
+    headers = MultiDict(
+        {
+            hdrs.AUTHORIZATION: f"Bearer {token}",
+        },
+    )
+
+    name = ageclass["name"]
+    with aioresponses(passthrough=["http://127.0.0.1"]) as m:
+        m.post("http://example.com:8081/authorize", status=204)
+        resp = await client.get(
+            f"/events/{EVENT_ID}/ageclasses?name={name}", headers=headers
+        )
+        assert resp.status == 200
+        assert "application/json" in resp.headers[hdrs.CONTENT_TYPE]
+        body = await resp.json()
+        assert type(body) is list
+        assert body[0]["id"] == ageclass["id"]
+        assert body[0]["name"] == ageclass["name"]
+        assert body[0]["order"] == ageclass["order"]
+        assert body[0]["raceclass"] == ageclass["raceclass"]
+        assert body[0]["event_id"] == ageclass["event_id"]
+        assert body[0]["distance"] == ageclass["distance"]
+
+
+@pytest.mark.integration
 async def test_update_ageclass_by_id(
     client: _TestClient, mocker: MockFixture, token: MockFixture, ageclass: dict
 ) -> None:
@@ -151,7 +185,7 @@ async def test_update_ageclass_by_id(
 
 
 @pytest.mark.integration
-async def test_list_ageclasses(
+async def test_get_all_ageclasses(
     client: _TestClient, mocker: MockFixture, token: MockFixture, ageclass: dict
 ) -> None:
     """Should return OK and a valid json body."""
@@ -174,6 +208,7 @@ async def test_list_ageclasses(
         ageclasses = await resp.json()
         assert type(ageclasses) is list
         assert len(ageclasses) > 0
+        assert ageclass["id"] == ageclasses[0]["id"]
 
 
 @pytest.mark.integration

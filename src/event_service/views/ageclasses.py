@@ -43,9 +43,18 @@ class AgeclassesView(View):
             raise e
 
         event_id = self.request.match_info["eventId"]
-        ageclasses = await AgeclassesService.get_all_ageclasses(db, event_id)
+        if "name" in self.request.rel_url.query:
+            name = self.request.rel_url.query["name"]
+            ageclasses = await AgeclassesService.get_ageclass_by_name(
+                db, event_id, name
+            )
+        else:
+            ageclasses = await AgeclassesService.get_all_ageclasses(db, event_id)
 
-        body = json.dumps(ageclasses, default=str, ensure_ascii=False)
+        list = []
+        for a in ageclasses:
+            list.append(a.to_dict())
+        body = json.dumps(list, default=str, ensure_ascii=False)
         return Response(status=200, body=body, content_type="application/json")
 
     async def post(self) -> Response:

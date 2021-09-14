@@ -11,7 +11,7 @@ class AgeclassesAdapter(Adapter):
     @classmethod
     async def get_all_ageclasses(
         cls: Any, db: Any, event_id: str
-    ) -> List:  # pragma: no cover
+    ) -> List[dict]:  # pragma: no cover
         """Get all ageclasses function."""
         ageclasses: List = []
         cursor = db.ageclasses_collection.find({"event_id": event_id})
@@ -41,9 +41,10 @@ class AgeclassesAdapter(Adapter):
     @classmethod
     async def get_ageclass_by_name(
         cls: Any, db: Any, event_id: str, name: str
-    ) -> dict:  # pragma: no cover
+    ) -> List[dict]:  # pragma: no cover
         """Get ageclass by name function."""
-        result = await db.ageclasses_collection.find_one(
+        ageclasses: List = []
+        cursor = db.ageclasses_collection.find(
             {
                 "$and": [
                     {"event_id": event_id},
@@ -51,7 +52,10 @@ class AgeclassesAdapter(Adapter):
                 ]
             }
         )
-        return result
+        for ageclass in await cursor.to_list(length=100):
+            ageclasses.append(ageclass)
+            logging.debug(ageclass)
+        return ageclasses
 
     @classmethod
     async def update_ageclass(

@@ -12,6 +12,7 @@ from .views import (
     AgeclassView,
     ContestantsView,
     ContestantView,
+    EventGenerateAgeclassesView,
     EventsView,
     EventView,
     Ping,
@@ -52,6 +53,9 @@ async def create_app() -> web.Application:
             web.view("/ready", Ready),
             web.view("/events", EventsView),
             web.view("/events/{eventId}", EventView),
+            web.view(
+                "/events/{eventId}/generate-ageclasses", EventGenerateAgeclassesView
+            ),
             web.view("/events/{eventId}/ageclasses", AgeclassesView),
             web.view("/events/{eventId}/ageclasses/{ageclassId}", AgeclassView),
             web.view("/events/{eventId}/contestants", ContestantsView),
