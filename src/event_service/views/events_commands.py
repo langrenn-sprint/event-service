@@ -13,12 +13,12 @@ from dotenv import load_dotenv
 from multidict import MultiDict
 
 from event_service.adapters import UsersAdapter
+from event_service.commands import EventsCommands
 from event_service.services import (
     AgeclassCreateException,
     AgeclassNotUniqueNameException,
     AgeclassUpdateException,
     EventNotFoundException,
-    EventsService,
 )
 from .utils import extract_token_from_request
 
@@ -44,7 +44,7 @@ class EventGenerateAgeclassesView(View):
         # Execute command:
         event_id = self.request.match_info["eventId"]
         try:
-            await EventsService.generate_ageclasses(db, event_id)
+            await EventsCommands.generate_ageclasses(db, event_id)
         except EventNotFoundException:
             raise HTTPNotFound()
         except AgeclassNotUniqueNameException:

@@ -20,6 +20,12 @@ def token() -> str:
 
 
 @pytest.fixture
+async def event() -> dict:
+    """Create a mock event object."""
+    return {"id": "290e70d5-0933-4af0-bb53-1d705ba7eb95", "name": "A test event"}
+
+
+@pytest.fixture
 async def contestant() -> dict:
     """Create a mock contestant object."""
     return {
@@ -55,19 +61,14 @@ async def test_generate_ageclasses_on_event(
     client: _TestClient,
     mocker: MockFixture,
     token: MockFixture,
+    event: dict,
     contestant: dict,
     ageclass: dict,
 ) -> None:
     """Should return 201 Created, location header."""
-    EVENT_ID = "event_id_1"
-    AGECLASS_ID = "ageclass_id_1"
-    mocker.patch(
-        "event_service.services.events_service.create_id",
-        return_value=EVENT_ID,
-    )
     mocker.patch(
         "event_service.adapters.events_adapter.EventsAdapter.get_event_by_id",
-        return_value=EVENT_ID,
+        return_value=event,
     )
     mocker.patch(
         "event_service.adapters.ageclasses_adapter.AgeclassesAdapter.get_ageclass_by_name",
@@ -79,7 +80,7 @@ async def test_generate_ageclasses_on_event(
     )
     mocker.patch(
         "event_service.adapters.ageclasses_adapter.AgeclassesAdapter.create_ageclass",
-        return_value=AGECLASS_ID,
+        return_value=ageclass["id"],
     )
 
     headers = MultiDict(
@@ -89,13 +90,14 @@ async def test_generate_ageclasses_on_event(
         },
     )
 
+    event_id = event["id"]
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
         m.post("http://example.com:8081/authorize", status=204)
         resp = await client.post(
-            f"/events/{EVENT_ID}/generate-ageclasses", headers=headers
+            f"/events/{event_id}/generate-ageclasses", headers=headers
         )
         assert resp.status == 201
-        assert f"/events/{EVENT_ID}/ageclasses" in resp.headers[hdrs.LOCATION]
+        assert f"/events/{event_id}/ageclasses" in resp.headers[hdrs.LOCATION]
 
 
 @pytest.mark.integration
@@ -103,19 +105,14 @@ async def test_generate_ageclasses_on_event_ageclass_exist(
     client: _TestClient,
     mocker: MockFixture,
     token: MockFixture,
+    event: dict,
     contestant: dict,
     ageclass: dict,
 ) -> None:
     """Should return 201 Created, location header."""
-    EVENT_ID = "event_id_1"
-    AGECLASS_ID = "ageclass_id_1"
-    mocker.patch(
-        "event_service.services.events_service.create_id",
-        return_value=EVENT_ID,
-    )
     mocker.patch(
         "event_service.adapters.events_adapter.EventsAdapter.get_event_by_id",
-        return_value=EVENT_ID,
+        return_value=event,
     )
     mocker.patch(
         "event_service.adapters.ageclasses_adapter.AgeclassesAdapter.get_ageclass_by_id",
@@ -131,7 +128,7 @@ async def test_generate_ageclasses_on_event_ageclass_exist(
     )
     mocker.patch(
         "event_service.adapters.ageclasses_adapter.AgeclassesAdapter.update_ageclass",
-        return_value=AGECLASS_ID,
+        return_value=ageclass,
     )
 
     headers = MultiDict(
@@ -141,13 +138,14 @@ async def test_generate_ageclasses_on_event_ageclass_exist(
         },
     )
 
+    event_id = event["id"]
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
         m.post("http://example.com:8081/authorize", status=204)
         resp = await client.post(
-            f"/events/{EVENT_ID}/generate-ageclasses", headers=headers
+            f"/events/{event_id}/generate-ageclasses", headers=headers
         )
         assert resp.status == 201
-        assert f"/events/{EVENT_ID}/ageclasses" in resp.headers[hdrs.LOCATION]
+        assert f"/events/{event_id}/ageclasses" in resp.headers[hdrs.LOCATION]
 
 
 # Bad cases:
@@ -156,19 +154,15 @@ async def test_generate_ageclasses_on_event_duplicate_ageclasses(
     client: _TestClient,
     mocker: MockFixture,
     token: MockFixture,
+    event: dict,
     contestant: dict,
     ageclass: dict,
 ) -> None:
     """Should return 422 Unprocessable entity."""
-    EVENT_ID = "event_id_1"
-    AGECLASS_ID = "ageclass_id_1"
-    mocker.patch(
-        "event_service.services.events_service.create_id",
-        return_value=EVENT_ID,
-    )
+    ageclass_id = ageclass["id"]
     mocker.patch(
         "event_service.adapters.events_adapter.EventsAdapter.get_event_by_id",
-        return_value=EVENT_ID,
+        return_value=event,
     )
     mocker.patch(
         "event_service.adapters.ageclasses_adapter.AgeclassesAdapter.get_ageclass_by_name",
@@ -180,7 +174,7 @@ async def test_generate_ageclasses_on_event_duplicate_ageclasses(
     )
     mocker.patch(
         "event_service.adapters.ageclasses_adapter.AgeclassesAdapter.create_ageclass",
-        return_value=AGECLASS_ID,
+        return_value=ageclass_id,
     )
 
     headers = MultiDict(
@@ -190,10 +184,11 @@ async def test_generate_ageclasses_on_event_duplicate_ageclasses(
         },
     )
 
+    event_id = event["id"]
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
         m.post("http://example.com:8081/authorize", status=204)
         resp = await client.post(
-            f"/events/{EVENT_ID}/generate-ageclasses", headers=headers
+            f"/events/{event_id}/generate-ageclasses", headers=headers
         )
         assert resp.status == 422
 
@@ -203,16 +198,12 @@ async def test_generate_ageclasses_on_event_not_found(
     client: _TestClient,
     mocker: MockFixture,
     token: MockFixture,
+    event: dict,
     contestant: dict,
     ageclass: dict,
 ) -> None:
     """Should return 404 Not found."""
-    EVENT_ID = "event_id_1"
-    AGECLASS_ID = "ageclass_id_1"
-    mocker.patch(
-        "event_service.services.events_service.create_id",
-        return_value=EVENT_ID,
-    )
+    ageclass_id = ageclass["id"]
     mocker.patch(
         "event_service.adapters.events_adapter.EventsAdapter.get_event_by_id",
         return_value=None,
@@ -227,7 +218,7 @@ async def test_generate_ageclasses_on_event_not_found(
     )
     mocker.patch(
         "event_service.adapters.ageclasses_adapter.AgeclassesAdapter.create_ageclass",
-        return_value=AGECLASS_ID,
+        return_value=ageclass_id,
     )
 
     headers = MultiDict(
@@ -237,10 +228,11 @@ async def test_generate_ageclasses_on_event_not_found(
         },
     )
 
+    event_id = event["id"]
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
         m.post("http://example.com:8081/authorize", status=204)
         resp = await client.post(
-            f"/events/{EVENT_ID}/generate-ageclasses", headers=headers
+            f"/events/{event_id}/generate-ageclasses", headers=headers
         )
         assert resp.status == 404
 
@@ -251,19 +243,15 @@ async def test_generate_ageclasses_on_event_unauthorized(
     client: _TestClient,
     mocker: MockFixture,
     token: MockFixture,
+    event: dict,
     contestant: dict,
     ageclass: dict,
 ) -> None:
     """Should return 401 Unauthorized."""
-    EVENT_ID = "event_id_1"
     AGECLASS_ID = "ageclass_id_1"
     mocker.patch(
-        "event_service.services.events_service.create_id",
-        return_value=EVENT_ID,
-    )
-    mocker.patch(
         "event_service.adapters.events_adapter.EventsAdapter.get_event_by_id",
-        return_value=EVENT_ID,
+        return_value=event,
     )
     mocker.patch(
         "event_service.adapters.ageclasses_adapter.AgeclassesAdapter.get_ageclass_by_name",
@@ -285,10 +273,11 @@ async def test_generate_ageclasses_on_event_unauthorized(
         },
     )
 
+    event_id = event["id"]
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
         m.post("http://example.com:8081/authorize", status=401)
         resp = await client.post(
-            f"/events/{EVENT_ID}/generate-ageclasses", headers=headers
+            f"/events/{event_id}/generate-ageclasses", headers=headers
         )
         assert resp.status == 401
 
@@ -298,18 +287,14 @@ async def test_generate_ageclasses_on_event_create_fails(
     client: _TestClient,
     mocker: MockFixture,
     token: MockFixture,
+    event: dict,
     contestant: dict,
     ageclass: dict,
 ) -> None:
     """Should return 400 Bad request."""
-    EVENT_ID = "event_id_1"
-    mocker.patch(
-        "event_service.services.events_service.create_id",
-        return_value=EVENT_ID,
-    )
     mocker.patch(
         "event_service.adapters.events_adapter.EventsAdapter.get_event_by_id",
-        return_value=EVENT_ID,
+        return_value=event,
     )
     mocker.patch(
         "event_service.adapters.ageclasses_adapter.AgeclassesAdapter.get_ageclass_by_name",
@@ -331,10 +316,11 @@ async def test_generate_ageclasses_on_event_create_fails(
         },
     )
 
+    event_id = event["id"]
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
         m.post("http://example.com:8081/authorize", status=204)
         resp = await client.post(
-            f"/events/{EVENT_ID}/generate-ageclasses", headers=headers
+            f"/events/{event_id}/generate-ageclasses", headers=headers
         )
         assert resp.status == 400
 
@@ -344,18 +330,14 @@ async def test_generate_ageclasses_on_event_update_fails(
     client: _TestClient,
     mocker: MockFixture,
     token: MockFixture,
+    event: dict,
     contestant: dict,
     ageclass: dict,
 ) -> None:
     """Should return 400 Bad request."""
-    EVENT_ID = "event_id_1"
-    mocker.patch(
-        "event_service.services.events_service.create_id",
-        return_value=EVENT_ID,
-    )
     mocker.patch(
         "event_service.adapters.events_adapter.EventsAdapter.get_event_by_id",
-        return_value=EVENT_ID,
+        return_value=event,
     )
     mocker.patch(
         "event_service.adapters.ageclasses_adapter.AgeclassesAdapter.get_ageclass_by_name",
@@ -381,9 +363,10 @@ async def test_generate_ageclasses_on_event_update_fails(
         },
     )
 
+    event_id = event["id"]
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
         m.post("http://example.com:8081/authorize", status=204)
         resp = await client.post(
-            f"/events/{EVENT_ID}/generate-ageclasses", headers=headers
+            f"/events/{event_id}/generate-ageclasses", headers=headers
         )
         assert resp.status == 400
