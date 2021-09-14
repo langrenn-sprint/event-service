@@ -209,6 +209,22 @@
         responses:
           204:
             description: No content
+    /events/{eventId}/contestants/assign-bibs:
+      parameters:
+      - name: eventId
+        in: path
+        description: event id
+        required: true
+        schema:
+          type: string
+          format: uuid
+      post:
+        tags:
+        - contestant
+        description: command to generate assign bibs to all contestants in event
+        responses:
+          201:
+            description: Bibs assigned
     /events/{eventId}/contestants/{contestantId}:
       parameters:
       - name: eventId
