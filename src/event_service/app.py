@@ -10,6 +10,7 @@ import motor.motor_asyncio
 from .views import (
     AgeclassesView,
     AgeclassView,
+    ContestantsAssignBibsView,
     ContestantsView,
     ContestantView,
     EventGenerateAgeclassesView,
@@ -59,6 +60,9 @@ async def create_app() -> web.Application:
             web.view("/events/{eventId}/ageclasses", AgeclassesView),
             web.view("/events/{eventId}/ageclasses/{ageclassId}", AgeclassView),
             web.view("/events/{eventId}/contestants", ContestantsView),
+            web.view(
+                "/events/{eventId}/contestants/assign-bibs", ContestantsAssignBibsView
+            ),
             web.view("/events/{eventId}/contestants/{contestantId}", ContestantView),
         ]
     )
