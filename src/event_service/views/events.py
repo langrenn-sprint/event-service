@@ -42,8 +42,11 @@ class EventsView(View):
             raise e
 
         events = await EventsService.get_all_events(db)
+        list = []
+        for _e in events:
+            list.append(_e.to_dict())
 
-        body = json.dumps(events, default=str, ensure_ascii=False)
+        body = json.dumps(list, default=str, ensure_ascii=False)
         return Response(status=200, body=body, content_type="application/json")
 
     async def post(self) -> Response:

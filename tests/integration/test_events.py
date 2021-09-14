@@ -136,7 +136,7 @@ async def test_update_event_by_id(
 
 
 @pytest.mark.integration
-async def test_list_events(
+async def test_get_all_events(
     client: _TestClient, mocker: MockFixture, token: MockFixture
 ) -> None:
     """Should return OK and a valid json body."""
@@ -159,6 +159,7 @@ async def test_list_events(
         events = await resp.json()
         assert type(events) is list
         assert len(events) > 0
+        assert ID == events[0]["id"]
 
 
 @pytest.mark.integration

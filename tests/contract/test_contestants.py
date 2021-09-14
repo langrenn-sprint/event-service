@@ -74,7 +74,7 @@ async def contestant(event_id: str) -> dict:
         "last_name": "Stant",
         "birth_date": "1970-01-01",
         "gender": "M",
-        "age_class": "G 12 år",
+        "ageclass": "G 12 år",
         "region": "Oslo Skikrets",
         "club": "Lyn Ski",
         "team": "Team Kollen",
@@ -202,6 +202,8 @@ async def test_get_contestant_by_id(
     async with ClientSession() as session:
         async with session.get(url, headers=headers) as response:
             contestants = await response.json()
+        assert len(contestants) > 0
+        assert type(contestants) is list
         id = contestants[0]["id"]
         url = f"{url}/{id}"
         async with session.get(url, headers=headers) as response:
@@ -215,7 +217,7 @@ async def test_get_contestant_by_id(
     assert body["last_name"] == contestant["last_name"]
     assert body["birth_date"] == contestant["birth_date"]
     assert body["gender"] == contestant["gender"]
-    assert body["age_class"] == contestant["age_class"]
+    assert body["ageclass"] == contestant["ageclass"]
     assert body["region"] == contestant["region"]
     assert body["club"] == contestant["club"]
     assert body["team"] == contestant["team"]
@@ -238,6 +240,8 @@ async def test_update_contestant(
     async with ClientSession() as session:
         async with session.get(url, headers=headers) as response:
             contestants = await response.json()
+        assert len(contestants) > 0
+        assert type(contestants) is list
         id = contestants[0]["id"]
         url = f"{url}/{id}"
         request_body = copy.deepcopy(contestant)
@@ -263,6 +267,8 @@ async def test_delete_contestant(
     async with ClientSession() as session:
         async with session.get(url, headers=headers) as response:
             contestants = await response.json()
+        assert len(contestants) > 0
+        assert type(contestants) is list
         id = contestants[0]["id"]
         url = f"{url}/{id}"
         async with session.delete(url, headers=headers) as response:
