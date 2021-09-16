@@ -23,7 +23,7 @@ class EventsCommands:
         try:
             await EventsService.get_event_by_id(db, event_id)
         except EventNotFoundException as e:
-            raise e
+            raise e from e
         # Get all contestants in event:
         contestants = await ContestantsService.get_all_contestants(db, event_id)
         # For every contestant, create corresponding ageclass and update counter:
@@ -38,7 +38,7 @@ class EventsCommands:
             elif len(ageclasses) > 1:
                 raise AgeclassNotUniqueNameException(
                     f"Ageclass name {_c.ageclass} not unique."
-                )
+                ) from None
             else:
                 ageclass = ageclasses[0]
             # Update counter if found:
@@ -50,7 +50,7 @@ class EventsCommands:
                 if not result:
                     raise AgeclassUpdateException(
                         f"Create of raceclass with id {ageclass.id} failed."
-                    )
+                    ) from None
             # Otherwise: create
             else:
                 new_ageclass = Ageclass(
@@ -66,7 +66,7 @@ class EventsCommands:
                 if not result:
                     raise AgeclassCreateException(
                         f"Create of raceclass with name {_c.ageclass} failed."
-                    )
+                    ) from None
 
 
 # helpers

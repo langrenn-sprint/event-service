@@ -18,7 +18,7 @@ class ContestantsCommands:
         try:
             await EventsService.get_event_by_id(db, event_id)
         except EventNotFoundException as e:
-            raise e
+            raise e from e
         # Get all contestants in event:
         contestants = await ContestantsService.get_all_contestants(db, event_id)
         # For every contestant, assign unique bib and update:

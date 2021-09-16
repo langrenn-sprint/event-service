@@ -50,7 +50,7 @@ class EventsService:
         """
         # Validation:
         if event.id:
-            raise IllegalValueException("Cannot create event with input id.")
+            raise IllegalValueException("Cannot create event with input id.") from None
         # create id
         id = create_id()
         event.id = id
@@ -69,7 +69,7 @@ class EventsService:
         # return the document if found:
         if event:
             return Event.from_dict(event)
-        raise EventNotFoundException(f"Event with id {id} not found")
+        raise EventNotFoundException(f"Event with id {id} not found") from None
 
     @classmethod
     async def update_event(cls: Any, db: Any, id: str, event: Event) -> Optional[str]:
@@ -79,11 +79,11 @@ class EventsService:
         # update the event if found:
         if old_event:
             if event.id != old_event["id"]:
-                raise IllegalValueException("Cannot change id for event.")
+                raise IllegalValueException("Cannot change id for event.") from None
             new_event = event.to_dict()
             result = await EventsAdapter.update_event(db, id, new_event)
             return result
-        raise EventNotFoundException(f"Event with id {id} not found.")
+        raise EventNotFoundException(f"Event with id {id} not found.") from None
 
     @classmethod
     async def delete_event(cls: Any, db: Any, id: str) -> Optional[str]:
@@ -94,6 +94,6 @@ class EventsService:
         if event:
             result = await EventsAdapter.delete_event(db, id)
             return result
-        raise EventNotFoundException(f"Event with id {id} not found")
+        raise EventNotFoundException(f"Event with id {id} not found") from None
 
     #   Commands:
