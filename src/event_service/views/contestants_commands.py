@@ -34,14 +34,14 @@ class ContestantsAssignBibsView(View):
         try:
             await UsersAdapter.authorize(token, roles=["admin", "event-admin"])
         except Exception as e:
-            raise e
+            raise e from e
 
         # Execute command:
         event_id = self.request.match_info["eventId"]
         try:
             await ContestantsCommands.assign_bibs(db, event_id)
-        except EventNotFoundException:
-            raise HTTPNotFound()
+        except EventNotFoundException as e:
+            raise HTTPNotFound() from e
         headers = MultiDict(
             {hdrs.LOCATION: f"{BASE_URL}/events/{event_id}/contestants"}
         )

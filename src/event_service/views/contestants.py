@@ -40,7 +40,7 @@ class ContestantsView(View):
         try:
             await UsersAdapter.authorize(token, roles=["admin", "contestant-admin"])
         except Exception as e:
-            raise e
+            raise e from e
 
         event_id = self.request.match_info["eventId"]
         contestants = await ContestantsService.get_all_contestants(db, event_id)
@@ -58,7 +58,7 @@ class ContestantsView(View):
         try:
             await UsersAdapter.authorize(token, roles=["admin", "contestant-admin"])
         except Exception as e:
-            raise e
+            raise e from e
 
         # handle application/json and text/csv:
         logging.debug(
@@ -75,14 +75,14 @@ class ContestantsView(View):
             except KeyError as e:
                 raise HTTPUnprocessableEntity(
                     reason=f"Mandatory property {e.args[0]} is missing."
-                )
+                ) from e
 
             try:
                 contestant_id = await ContestantsService.create_contestant(
                     db, event_id, contestant
                 )
-            except IllegalValueException:
-                raise HTTPUnprocessableEntity()
+            except IllegalValueException as e:
+                raise HTTPUnprocessableEntity() from e
             if contestant_id:
                 logging.debug(f"inserted document with contestant_id {contestant_id}")
                 headers = MultiDict(
@@ -92,7 +92,7 @@ class ContestantsView(View):
                 )
                 return Response(status=201, headers=headers)
             else:
-                raise HTTPBadRequest()
+                raise HTTPBadRequest() from None
 
         elif "multipart/form-data" in self.request.headers[hdrs.CONTENT_TYPE]:
             async for part in (await self.request.multipart()):
@@ -103,7 +103,7 @@ class ContestantsView(View):
                 else:
                     raise HTTPBadRequest(
                         reason=f"File's content-type {part.headers[hdrs.CONTENT_TYPE]} not supported."  # noqa: B950
-                    )
+                    ) from None
                 result = await ContestantsService.create_contestants(
                     db, event_id, contestants
                 )
@@ -123,7 +123,7 @@ class ContestantsView(View):
         else:
             raise HTTPUnsupportedMediaType(
                 reason=f"multipart/* content type expected, got {self.request.headers[hdrs.CONTENT_TYPE]}."  # noqa: B950
-            )
+            ) from None
 
     async def delete(self) -> Response:
         """Delete route function."""
@@ -132,7 +132,7 @@ class ContestantsView(View):
         try:
             await UsersAdapter.authorize(token, roles=["admin", "contestant-admin"])
         except Exception as e:
-            raise e
+            raise e from e
 
         event_id = self.request.match_info["eventId"]
         await ContestantsService.delete_all_contestants(db, event_id)
@@ -150,7 +150,7 @@ class ContestantView(View):
         try:
             await UsersAdapter.authorize(token, roles=["admin", "contestant-admin"])
         except Exception as e:
-            raise e
+            raise e from e
 
         event_id = self.request.match_info["eventId"]
         contestant_id = self.request.match_info["contestantId"]
@@ -160,8 +160,8 @@ class ContestantView(View):
             contestant = await ContestantsService.get_contestant_by_id(
                 db, event_id, contestant_id
             )
-        except ContestantNotFoundException:
-            raise HTTPNotFound()
+        except ContestantNotFoundException as e:
+            raise HTTPNotFound() from e
         logging.debug(f"Got contestant: {contestant}")
         body = contestant.to_json()
         return Response(status=200, body=body, content_type="application/json")
@@ -173,7 +173,7 @@ class ContestantView(View):
         try:
             await UsersAdapter.authorize(token, roles=["admin", "contestant-admin"])
         except Exception as e:
-            raise e
+            raise e from e
 
         body = await self.request.json()
         event_id = self.request.match_info["eventId"]
@@ -188,16 +188,16 @@ class ContestantView(View):
         except KeyError as e:
             raise HTTPUnprocessableEntity(
                 reason=f"Mandatory property {e.args[0]} is missing."
-            )
+            ) from e
 
         try:
             await ContestantsService.update_contestant(
                 db, event_id, contestant_id, contestant
             )
-        except IllegalValueException:
-            raise HTTPUnprocessableEntity()
-        except ContestantNotFoundException:
-            raise HTTPNotFound()
+        except IllegalValueException as e:
+            raise HTTPUnprocessableEntity() from e
+        except ContestantNotFoundException as e:
+            raise HTTPNotFound() from e
         return Response(status=204)
 
     async def delete(self) -> Response:
@@ -207,7 +207,7 @@ class ContestantView(View):
         try:
             await UsersAdapter.authorize(token, roles=["admin", "contestant-admin"])
         except Exception as e:
-            raise e
+            raise e from e
 
         event_id = self.request.match_info["eventId"]
         contestant_id = self.request.match_info["contestantId"]
@@ -217,6 +217,6 @@ class ContestantView(View):
 
         try:
             await ContestantsService.delete_contestant(db, event_id, contestant_id)
-        except ContestantNotFoundException:
-            raise HTTPNotFound()
+        except ContestantNotFoundException as e:
+            raise HTTPNotFound() from e
         return Response(status=204)

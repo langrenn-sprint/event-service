@@ -40,7 +40,7 @@ class AgeclassesView(View):
         try:
             await UsersAdapter.authorize(token, roles=["admin", "event-admin"])
         except Exception as e:
-            raise e
+            raise e from e
 
         event_id = self.request.match_info["eventId"]
         if "name" in self.request.rel_url.query:
@@ -64,7 +64,7 @@ class AgeclassesView(View):
         try:
             await UsersAdapter.authorize(token, roles=["admin", "event-admin"])
         except Exception as e:
-            raise e
+            raise e from e
 
         event_id = self.request.match_info["eventId"]
 
@@ -76,14 +76,14 @@ class AgeclassesView(View):
         except KeyError as e:
             raise HTTPUnprocessableEntity(
                 reason=f"Mandatory property {e.args[0]} is missing."
-            )
+            ) from e
 
         try:
             ageclass_id = await AgeclassesService.create_ageclass(
                 db, event_id, ageclass
             )
-        except IllegalValueException:
-            raise HTTPUnprocessableEntity()
+        except IllegalValueException as e:
+            raise HTTPUnprocessableEntity() from e
         if ageclass_id:
             logging.debug(f"inserted document with id {ageclass_id}")
             headers = MultiDict(
@@ -93,7 +93,7 @@ class AgeclassesView(View):
             )  # noqa: B950
 
             return Response(status=201, headers=headers)
-        raise HTTPBadRequest()  # pragma: no cover
+        raise HTTPBadRequest() from None  # pragma: no cover
 
     async def delete(self) -> Response:
         """Delete route function."""
@@ -102,7 +102,7 @@ class AgeclassesView(View):
         try:
             await UsersAdapter.authorize(token, roles=["admin", "contestant-admin"])
         except Exception as e:
-            raise e
+            raise e from e
 
         event_id = self.request.match_info["eventId"]
         await AgeclassesService.delete_all_ageclasses(db, event_id)
@@ -120,7 +120,7 @@ class AgeclassView(View):
         try:
             await UsersAdapter.authorize(token, roles=["admin", "event-admin"])
         except Exception as e:
-            raise e
+            raise e from e
 
         event_id = self.request.match_info["eventId"]
         ageclass_id = self.request.match_info["ageclassId"]
@@ -130,8 +130,8 @@ class AgeclassView(View):
             ageclass = await AgeclassesService.get_ageclass_by_id(
                 db, event_id, ageclass_id
             )
-        except AgeclassNotFoundException:
-            raise HTTPNotFound()
+        except AgeclassNotFoundException as e:
+            raise HTTPNotFound() from e
         logging.debug(f"Got ageclass: {ageclass}")
         body = ageclass.to_json()
         return Response(status=200, body=body, content_type="application/json")
@@ -143,7 +143,7 @@ class AgeclassView(View):
         try:
             await UsersAdapter.authorize(token, roles=["admin", "event-admin"])
         except Exception as e:
-            raise e
+            raise e from e
 
         body = await self.request.json()
         event_id = self.request.match_info["eventId"]
@@ -155,14 +155,14 @@ class AgeclassView(View):
         except KeyError as e:
             raise HTTPUnprocessableEntity(
                 reason=f"Mandatory property {e.args[0]} is missing."
-            )
+            ) from e
 
         try:
             await AgeclassesService.update_ageclass(db, event_id, ageclass_id, ageclass)
-        except IllegalValueException:
-            raise HTTPUnprocessableEntity()
-        except AgeclassNotFoundException:
-            raise HTTPNotFound()
+        except IllegalValueException as e:
+            raise HTTPUnprocessableEntity() from e
+        except AgeclassNotFoundException as e:
+            raise HTTPNotFound() from e
         return Response(status=204)
 
     async def delete(self) -> Response:
@@ -172,7 +172,7 @@ class AgeclassView(View):
         try:
             await UsersAdapter.authorize(token, roles=["admin", "event-admin"])
         except Exception as e:
-            raise e
+            raise e from e
 
         event_id = self.request.match_info["eventId"]
         ageclass_id = self.request.match_info["ageclassId"]
@@ -180,6 +180,6 @@ class AgeclassView(View):
 
         try:
             await AgeclassesService.delete_ageclass(db, event_id, ageclass_id)
-        except AgeclassNotFoundException:
-            raise HTTPNotFound()
+        except AgeclassNotFoundException as e:
+            raise HTTPNotFound() from e
         return Response(status=204)

@@ -39,7 +39,7 @@ class EventsView(View):
         try:
             await UsersAdapter.authorize(token, roles=["admin", "event-admin"])
         except Exception as e:
-            raise e
+            raise e from e
 
         events = await EventsService.get_all_events(db)
         list = []
@@ -56,7 +56,7 @@ class EventsView(View):
         try:
             await UsersAdapter.authorize(token, roles=["admin", "event-admin"])
         except Exception as e:
-            raise e
+            raise e from e
 
         body = await self.request.json()
         logging.debug(f"Got create request for event {body} of type {type(body)}")
@@ -65,18 +65,18 @@ class EventsView(View):
         except KeyError as e:
             raise HTTPUnprocessableEntity(
                 reason=f"Mandatory property {e.args[0]} is missing."
-            )
+            ) from e
 
         try:
             event_id = await EventsService.create_event(db, event)
-        except IllegalValueException:
-            raise HTTPUnprocessableEntity()
+        except IllegalValueException as e:
+            raise HTTPUnprocessableEntity() from e
         if event_id:
             logging.debug(f"inserted document with event_id {event_id}")
             headers = MultiDict({hdrs.LOCATION: f"{BASE_URL}/events/{event_id}"})
 
             return Response(status=201, headers=headers)
-        raise HTTPBadRequest()
+        raise HTTPBadRequest() from None
 
 
 class EventView(View):
@@ -89,15 +89,15 @@ class EventView(View):
         try:
             await UsersAdapter.authorize(token, roles=["admin", "event-admin"])
         except Exception as e:
-            raise e
+            raise e from e
 
         event_id = self.request.match_info["eventId"]
         logging.debug(f"Got get request for event {event_id}")
 
         try:
             event = await EventsService.get_event_by_id(db, event_id)
-        except EventNotFoundException:
-            raise HTTPNotFound()
+        except EventNotFoundException as e:
+            raise HTTPNotFound() from e
         logging.debug(f"Got event: {event}")
         body = event.to_json()
         return Response(status=200, body=body, content_type="application/json")
@@ -109,7 +109,7 @@ class EventView(View):
         try:
             await UsersAdapter.authorize(token, roles=["admin", "event-admin"])
         except Exception as e:
-            raise e
+            raise e from e
 
         body = await self.request.json()
         event_id = self.request.match_info["eventId"]
@@ -121,14 +121,14 @@ class EventView(View):
         except KeyError as e:
             raise HTTPUnprocessableEntity(
                 reason=f"Mandatory property {e.args[0]} is missing."
-            )
+            ) from e
 
         try:
             await EventsService.update_event(db, event_id, event)
-        except IllegalValueException:
-            raise HTTPUnprocessableEntity()
-        except EventNotFoundException:
-            raise HTTPNotFound()
+        except IllegalValueException as e:
+            raise HTTPUnprocessableEntity() from e
+        except EventNotFoundException as e:
+            raise HTTPNotFound() from e
         return Response(status=204)
 
     async def delete(self) -> Response:
@@ -138,13 +138,13 @@ class EventView(View):
         try:
             await UsersAdapter.authorize(token, roles=["admin", "event-admin"])
         except Exception as e:
-            raise e
+            raise e from e
 
         event_id = self.request.match_info["eventId"]
         logging.debug(f"Got delete request for event {event_id}")
 
         try:
             await EventsService.delete_event(db, event_id)
-        except EventNotFoundException:
-            raise HTTPNotFound()
+        except EventNotFoundException as e:
+            raise HTTPNotFound() from e
         return Response(status=204)
