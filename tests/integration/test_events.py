@@ -1,4 +1,5 @@
 """Integration test cases for the events route."""
+from copy import deepcopy
 import os
 
 from aiohttp import hdrs
@@ -28,9 +29,22 @@ def token_unsufficient_role() -> str:
     return jwt.encode(payload, secret, algorithm)  # type: ignore
 
 
+@pytest.fixture
+async def event() -> dict[str, str]:
+    """An event object for testing."""
+    return {
+        "name": "Oslo Skagen sprint",
+        "competition_format": "Individual sprint",
+        "date": "2021-08-31",
+        "organiser": "Lyn Ski",
+        "webpage": "https://example.com",
+        "information": "Testarr for å teste den nye løysinga.",
+    }
+
+
 @pytest.mark.integration
 async def test_create_event(
-    client: _TestClient, mocker: MockFixture, token: MockFixture
+    client: _TestClient, mocker: MockFixture, token: MockFixture, event: dict
 ) -> None:
     """Should return Created, location header."""
     ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
@@ -43,13 +57,7 @@ async def test_create_event(
         return_value=ID,
     )
 
-    request_body = {
-        "name": "Oslo Skagen sprint",
-        "date": "2021-08-31",
-        "organiser": "Lyn Ski",
-        "webpage": "https://example.com",
-        "information": "Testarr for å teste den nye løysinga.",
-    }
+    request_body = event
 
     headers = MultiDict(
         {
@@ -67,20 +75,13 @@ async def test_create_event(
 
 @pytest.mark.integration
 async def test_get_event_by_id(
-    client: _TestClient, mocker: MockFixture, token: MockFixture
+    client: _TestClient, mocker: MockFixture, token: MockFixture, event: dict[str, str]
 ) -> None:
     """Should return OK, and a body containing one event."""
     ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
     mocker.patch(
         "event_service.adapters.events_adapter.EventsAdapter.get_event_by_id",
-        return_value={
-            "id": ID,
-            "name": "Oslo Skagen sprint",
-            "date": "2021-08-31",
-            "organiser": "Lyn Ski",
-            "webpage": "https://example.com",
-            "information": "Testarr for å teste den nye løysinga.",
-        },
+        return_value={"id": ID} | event,  # type: ignore
     )
 
     headers = MultiDict(
@@ -95,29 +96,30 @@ async def test_get_event_by_id(
         resp = await client.get(f"/events/{ID}", headers=headers)
         assert resp.status == 200
         assert "application/json" in resp.headers[hdrs.CONTENT_TYPE]
-        event = await resp.json()
+        body = await resp.json()
         assert type(event) is dict
-        assert event["id"] == ID
-        assert event["name"] == "Oslo Skagen sprint"
-        assert event["date"] == "2021-08-31"
-        assert event["organiser"] == "Lyn Ski"
-        assert event["webpage"] == "https://example.com"
-        assert event["information"] == "Testarr for å teste den nye løysinga."
+        assert body["id"] == ID
+        assert body["name"] == event["name"]
+        assert body["competition_format"] == event["competition_format"]
+        assert body["date"] == event["date"]
+        assert body["organiser"] == event["organiser"]
+        assert body["webpage"] == event["webpage"]
+        assert body["information"] == event["information"]
 
 
 @pytest.mark.integration
 async def test_update_event_by_id(
-    client: _TestClient, mocker: MockFixture, token: MockFixture
+    client: _TestClient, mocker: MockFixture, token: MockFixture, event: dict
 ) -> None:
     """Should return No Content."""
     ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
     mocker.patch(
         "event_service.adapters.events_adapter.EventsAdapter.get_event_by_id",
-        return_value={"id": ID, "name": "Oslo Skagen Sprint"},
+        return_value={"id": ID} | event,  # type: ignore
     )
     mocker.patch(
         "event_service.adapters.events_adapter.EventsAdapter.update_event",
-        return_value=ID,
+        return_value={"id": ID} | event,  # type: ignore
     )
 
     headers = MultiDict(
@@ -126,7 +128,10 @@ async def test_update_event_by_id(
             hdrs.AUTHORIZATION: f"Bearer {token}",
         },
     )
-    request_body = {"id": ID, "name": "Oslo Skagen sprint Oppdatert"}
+    new_name = "Oslo Skagen sprint Oppdatert"
+    request_body = deepcopy(event)
+    request_body["id"] = ID
+    request_body["name"] = new_name
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
         m.post("http://example.com:8081/authorize", status=204)
