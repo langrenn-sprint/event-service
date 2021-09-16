@@ -28,10 +28,10 @@ class UsersAdapter:
                 if response.status == 204:
                     pass
                 elif response.status == 401:
-                    raise HTTPUnauthorized()
+                    raise HTTPUnauthorized() from None
                 elif response.status == 403:
-                    raise HTTPForbidden()
+                    raise HTTPForbidden() from None
                 else:
                     raise HTTPInternalServerError(
                         reason=f"Got unknown status from users service: {response.status}."
-                    )
+                    ) from None

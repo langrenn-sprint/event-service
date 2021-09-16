@@ -57,7 +57,9 @@ class ContestantsService:
         """
         # Validation:
         if contestant.id:
-            raise IllegalValueException("Cannot create contestant with input id.")
+            raise IllegalValueException(
+                "Cannot create contestant with input id."
+            ) from None
         # create id
         contestant_id = create_id()
         contestant.id = contestant_id
@@ -188,7 +190,7 @@ class ContestantsService:
             return Contestant.from_dict(contestant)
         raise ContestantNotFoundException(
             f"Contestant with id {contestant_id} not found"
-        )
+        ) from None
 
     @classmethod
     async def update_contestant(
@@ -202,7 +204,9 @@ class ContestantsService:
         # update the contestant if found:
         if old_contestant:
             if contestant.id != old_contestant["id"]:
-                raise IllegalValueException("Cannot change id for contestant.")
+                raise IllegalValueException(
+                    "Cannot change id for contestant."
+                ) from None
             new_contestant = contestant.to_dict()
             result = await ContestantsAdapter.update_contestant(
                 db, event_id, contestant_id, new_contestant
@@ -210,7 +214,7 @@ class ContestantsService:
             return result
         raise ContestantNotFoundException(
             f"Contestant with id {contestant_id} not found."
-        )
+        ) from None
 
     @classmethod
     async def delete_contestant(
@@ -229,7 +233,7 @@ class ContestantsService:
             return result
         raise ContestantNotFoundException(
             f"Contestant with id {contestant_id} not found"
-        )
+        ) from None
 
     # -- helper methods
 

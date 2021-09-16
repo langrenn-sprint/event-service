@@ -80,7 +80,9 @@ class AgeclassesService:
         """
         # Validation:
         if ageclass.id:
-            raise IllegalValueException("Cannot create ageclass with input id.")
+            raise IllegalValueException(
+                "Cannot create ageclass with input id."
+            ) from None
         # create id
         ageclass_id = create_id()
         ageclass.id = ageclass_id
@@ -108,7 +110,9 @@ class AgeclassesService:
         # return the document if found:
         if ageclass:
             return Ageclass.from_dict(ageclass)
-        raise AgeclassNotFoundException(f"Ageclass with id {ageclass_id} not found")
+        raise AgeclassNotFoundException(
+            f"Ageclass with id {ageclass_id} not found"
+        ) from None
 
     @classmethod
     async def get_ageclass_by_name(
@@ -133,13 +137,15 @@ class AgeclassesService:
         # update the ageclass if found:
         if old_ageclass:
             if ageclass.id != old_ageclass["id"]:
-                raise IllegalValueException("Cannot change id for ageclass.")
+                raise IllegalValueException("Cannot change id for ageclass.") from None
             new_ageclass = ageclass.to_dict()
             result = await AgeclassesAdapter.update_ageclass(
                 db, event_id, ageclass_id, new_ageclass
             )
             return result
-        raise AgeclassNotFoundException(f"Ageclass with id {ageclass_id} not found.")
+        raise AgeclassNotFoundException(
+            f"Ageclass with id {ageclass_id} not found."
+        ) from None
 
     @classmethod
     async def delete_ageclass(
@@ -152,6 +158,8 @@ class AgeclassesService:
         if ageclass:
             result = await AgeclassesAdapter.delete_ageclass(db, event_id, ageclass_id)
             return result
-        raise AgeclassNotFoundException(f"Ageclass with id {ageclass_id} not found")
+        raise AgeclassNotFoundException(
+            f"Ageclass with id {ageclass_id} not found"
+        ) from None
 
     # -- helper methods

@@ -39,17 +39,17 @@ class EventGenerateAgeclassesView(View):
         try:
             await UsersAdapter.authorize(token, roles=["admin", "event-admin"])
         except Exception as e:
-            raise e
+            raise e from e
 
         # Execute command:
         event_id = self.request.match_info["eventId"]
         try:
             await EventsCommands.generate_ageclasses(db, event_id)
-        except EventNotFoundException:
-            raise HTTPNotFound()
-        except AgeclassNotUniqueNameException:
-            raise HTTPUnprocessableEntity()
-        except (AgeclassCreateException, AgeclassUpdateException):
-            raise HTTPBadRequest()
+        except EventNotFoundException as e:
+            raise HTTPNotFound() from e
+        except AgeclassNotUniqueNameException as e:
+            raise HTTPUnprocessableEntity() from e
+        except (AgeclassCreateException, AgeclassUpdateException) as e:
+            raise HTTPBadRequest() from e
         headers = MultiDict({hdrs.LOCATION: f"{BASE_URL}/events/{event_id}/ageclasses"})
         return Response(status=201, headers=headers)
