@@ -11,6 +11,7 @@ class Event(DataClassJsonMixin):
 
     name: str
     date: Optional[str] = field(default=None)
+    competition_format: Optional[str] = field(default=None)
     organiser: Optional[str] = field(default=None)
     webpage: Optional[str] = field(default=None)
     information: Optional[str] = field(default=None)
