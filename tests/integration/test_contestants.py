@@ -1,5 +1,6 @@
 """Integration test cases for the contestant route."""
 import copy
+from datetime import date
 import os
 
 from aiohttp import hdrs
@@ -26,7 +27,7 @@ async def new_contestant() -> dict:
     return {
         "first_name": "Cont E.",
         "last_name": "Stant",
-        "birth_date": "1970-01-01",
+        "birth_date": date(1970, 1, 1).isoformat(),
         "gender": "M",
         "ageclass": "G 12 år",
         "region": "Oslo Skikrets",
@@ -44,7 +45,7 @@ async def contestant() -> dict:
         "id": "290e70d5-0933-4af0-bb53-1d705ba7eb95",
         "first_name": "Cont E.",
         "last_name": "Stant",
-        "birth_date": "1970-01-01",
+        "birth_date": date(1970, 1, 1).isoformat(),
         "gender": "M",
         "ageclass": "G 12 år",
         "region": "Oslo Skikrets",

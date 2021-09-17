@@ -1,5 +1,6 @@
 """Contestant data class module."""
 from dataclasses import dataclass, field
+from datetime import date
 from typing import Optional
 
 from dataclasses_json import DataClassJsonMixin
@@ -11,7 +12,7 @@ class Contestant(DataClassJsonMixin):
 
     first_name: str
     last_name: str
-    birth_date: str
+    birth_date: date
     gender: str
     ageclass: str
     region: str

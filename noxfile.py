@@ -92,6 +92,7 @@ def contract_tests(session: Session) -> None:
             "ADMIN_PASSWORD": "password",
             "USERS_HOST_SERVER": "localhost",
             "USERS_HOST_PORT": "8081",
+            "JWT_EXP_DELTA_SECONDS": "60",
         },
     )
 

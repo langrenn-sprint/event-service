@@ -320,16 +320,24 @@
             type: string
           name:
             type: string
-          date:
+            description: The evnt's name.
+          competition-format:
+            type: string
+            description: Name of competition format.
+          dateOfEvent:
             type: string
             format: date
+            description: The date on which the event takes place.
           organiser:
             type: string
+            description: Name of organiser
           webpage:
             type: string
             format: uri
+            description: URL to the event's webpake
           information:
             type: string
+            description: Additional information
       ContestantCollection:
         type: object
         properties:
