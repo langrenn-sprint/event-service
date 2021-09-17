@@ -1,4 +1,5 @@
 """Integration test cases for the events route."""
+from datetime import date
 import os
 
 from aiohttp import hdrs
@@ -33,7 +34,7 @@ async def contestant() -> dict:
         "ageclass": "G 16 år",
         "first_name": "Cont E.",
         "last_name": "Stant",
-        "birth_date": "1970-01-01",
+        "birth_date": date(1970, 1, 1).isoformat(),
         "gender": "M",
         "region": "Oslo Skikrets",
         "club": "Lyn Ski",

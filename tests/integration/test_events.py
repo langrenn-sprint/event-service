@@ -1,5 +1,6 @@
 """Integration test cases for the events route."""
 from copy import deepcopy
+from datetime import date
 import os
 
 from aiohttp import hdrs
@@ -35,7 +36,7 @@ async def event() -> dict[str, str]:
     return {
         "name": "Oslo Skagen sprint",
         "competition_format": "Individual sprint",
-        "date": "2021-08-31",
+        "date_of_event": date(2021, 8, 31).isoformat(),
         "organiser": "Lyn Ski",
         "webpage": "https://example.com",
         "information": "Testarr for å teste den nye løysinga.",
@@ -101,7 +102,7 @@ async def test_get_event_by_id(
         assert body["id"] == ID
         assert body["name"] == event["name"]
         assert body["competition_format"] == event["competition_format"]
-        assert body["date"] == event["date"]
+        assert body["date_of_event"] == event["date_of_event"]
         assert body["organiser"] == event["organiser"]
         assert body["webpage"] == event["webpage"]
         assert body["information"] == event["information"]

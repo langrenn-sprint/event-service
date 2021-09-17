@@ -1,6 +1,7 @@
 """Contract test cases for contestants."""
 import asyncio
 import copy
+from datetime import date
 import logging
 import os
 from typing import Any, Optional
@@ -49,7 +50,7 @@ async def event_id(http_service: Any, token: MockFixture) -> Optional[str]:
     }
     request_body = {
         "name": "Oslo Skagen sprint",
-        "date": "2021-08-31",
+        "date_of_event": date(2021, 8, 31).isoformat(),
         "organiser": "Lyn Ski",
         "webpage": "https://example.com",
         "information": "Testarr for å teste den nye løysinga.",
@@ -72,7 +73,7 @@ async def contestant(event_id: str) -> dict:
     return {
         "first_name": "Cont E.",
         "last_name": "Stant",
-        "birth_date": "1970-01-01",
+        "birth_date": date(1970, 1, 1).isoformat(),
         "gender": "M",
         "ageclass": "G 12 år",
         "region": "Oslo Skikrets",

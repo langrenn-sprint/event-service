@@ -1,5 +1,6 @@
 """Contract test cases for ping."""
 from copy import deepcopy
+from datetime import date
 import logging
 import os
 from typing import Any, AsyncGenerator
@@ -38,7 +39,7 @@ async def event() -> dict:
     return {
         "name": "Oslo Skagen sprint",
         "competition_format": "Individual sprint",
-        "date": "2021-08-31",
+        "date_of_event": date(2021, 8, 31).isoformat(),
         "organiser": "Lyn Ski",
         "webpage": "https://example.com",
         "information": "Testarr for å teste den nye løysinga.",
@@ -132,7 +133,7 @@ async def test_get_event_by_id(
     assert body["id"] == id
     assert body["name"] == event["name"]
     assert body["competition_format"] == event["competition_format"]
-    assert body["date"] == event["date"]
+    assert body["date_of_event"] == event["date_of_event"]
     assert body["organiser"] == event["organiser"]
     assert body["webpage"] == event["webpage"]
     assert body["information"] == event["information"]
@@ -167,7 +168,7 @@ async def test_update_event(http_service: Any, token: MockFixture, event: dict) 
             updated_event = await response.json()
             assert updated_event["name"] == new_name
             assert updated_event["competition_format"] == event["competition_format"]
-            assert updated_event["date"] == event["date"]
+            assert updated_event["date_of_event"] == event["date_of_event"]
             assert updated_event["organiser"] == event["organiser"]
             assert updated_event["webpage"] == event["webpage"]
             assert updated_event["information"] == event["information"]
