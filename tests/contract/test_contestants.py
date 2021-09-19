@@ -4,7 +4,7 @@ import copy
 from datetime import date
 import logging
 import os
-from typing import Any, Optional
+from typing import Any, AsyncGenerator, Optional
 
 from aiohttp import ClientSession, hdrs
 import pytest
@@ -67,6 +67,24 @@ async def event_id(http_service: Any, token: MockFixture) -> Optional[str]:
         return None
 
 
+@pytest.fixture
+@pytest.mark.asyncio
+async def clear_db(
+    http_service: Any, token: MockFixture, event_id: str
+) -> AsyncGenerator:
+    """Delete all contestants and perform test."""
+    url = f"{http_service}/events/{event_id}/contestants"
+    headers = {
+        hdrs.AUTHORIZATION: f"Bearer {token}",
+    }
+
+    session = ClientSession()
+    async with session.delete(url, headers=headers) as response:
+        assert response.status == 204
+    await session.close()
+    yield
+
+
 @pytest.fixture(scope="session")
 async def contestant(event_id: str) -> dict:
     """Create a contestant object for testing."""
@@ -87,7 +105,11 @@ async def contestant(event_id: str) -> dict:
 @pytest.mark.contract
 @pytest.mark.asyncio
 async def test_create_single_contestant(
-    http_service: Any, token: MockFixture, event_id: str, contestant: dict
+    http_service: Any,
+    token: MockFixture,
+    event_id: str,
+    clear_db: None,
+    contestant: dict,
 ) -> None:
     """Should return 201 Created, location header and no body."""
     url = f"{http_service}/events/{event_id}/contestants"
@@ -103,130 +125,6 @@ async def test_create_single_contestant(
 
     assert status == 201
     assert f"/events/{event_id}/contestants/" in response.headers[hdrs.LOCATION]
-
-
-@pytest.mark.contract
-@pytest.mark.asyncio
-async def test_create_many_contestants_as_csv_file(
-    http_service: Any, token: MockFixture, event_id: str
-) -> None:
-    """Should return 200 OK and a report."""
-    url = f"{http_service}/events/{event_id}/contestants"
-    headers = {
-        hdrs.AUTHORIZATION: f"Bearer {token}",
-    }
-
-    # Send csv-file in request:
-    files = {"file": open("tests/files/contestants_eventid_364892.csv", "rb")}
-    async with ClientSession() as session:
-        async with session.delete(url) as response:
-            pass
-        async with session.post(url, headers=headers, data=files) as response:
-            status = response.status
-            body = await response.json()
-
-    assert status == 200
-    assert "application/json" in response.headers[hdrs.CONTENT_TYPE]
-
-    assert len(body) > 0
-
-    assert body["total"] > 0
-    assert body["created"] > 0
-    assert body["updated"] == 0
-    assert body["failures"] == 0
-    assert body["total"] == body["created"] + body["updated"] + body["failures"]
-
-
-@pytest.mark.contract
-@pytest.mark.asyncio
-async def test_update_many_existing_contestants_as_csv_file(
-    http_service: Any, token: MockFixture, event_id: str
-) -> None:
-    """Should return 200 OK and a report."""
-    url = f"{http_service}/events/{event_id}/contestants"
-    headers = {
-        hdrs.AUTHORIZATION: f"Bearer {token}",
-    }
-
-    # Send csv-file in request:
-    files = {"file": open("tests/files/contestants_eventid_364892.csv", "rb")}
-    async with ClientSession() as session:
-        async with session.post(url, headers=headers, data=files) as response:
-            status = response.status
-            body = await response.json()
-
-    assert status == 200
-    assert "application/json" in response.headers[hdrs.CONTENT_TYPE]
-
-    assert len(body) > 0
-
-    assert body["total"] > 0
-    assert body["created"] == 0
-    assert body["updated"] > 0
-    assert body["failures"] == 0
-    assert body["total"] == body["created"] + body["updated"] + body["failures"]
-
-
-@pytest.mark.contract
-@pytest.mark.asyncio
-async def test_get_all_contestants_in_given_event(
-    http_service: Any, token: MockFixture, event_id: str
-) -> None:
-    """Should return OK and a list of contestants as json."""
-    url = f"{http_service}/events/{event_id}/contestants"
-    headers = {
-        hdrs.AUTHORIZATION: f"Bearer {token}",
-    }
-
-    async with ClientSession() as session:
-        async with session.get(url, headers=headers) as response:
-            contestants = await response.json()
-
-    assert response.status == 200
-    assert "application/json" in response.headers[hdrs.CONTENT_TYPE]
-    assert type(contestants) is list
-    assert len(contestants) > 0
-
-
-@pytest.mark.contract
-@pytest.mark.asyncio
-async def test_assign_bibs(
-    http_service: Any, token: MockFixture, event_id: str
-) -> None:
-    """Should return 201 Created and a location header with url to contestants."""
-    headers = {
-        hdrs.AUTHORIZATION: f"Bearer {token}",
-    }
-
-    async with ClientSession() as session:
-
-        # First we need to assert that we have an event:
-        url = f"{http_service}/events/{event_id}"
-        async with session.get(url, headers=headers) as response:
-            assert response.status == 200
-
-        # Then we add contestants to event:
-        url = f"{http_service}/events/{event_id}/contestants"
-        files = {"file": open("tests/files/contestants_eventid_364892.csv", "rb")}
-        async with session.post(url, headers=headers, data=files) as response:
-            assert response.status == 200
-
-        # Finally assgine bibs to all contestants:
-        url = f"{http_service}/events/{event_id}/contestants/assign-bibs"
-        async with session.post(url, headers=headers) as response:
-            assert response.status == 201
-            assert f"/events/{event_id}/contestants" in response.headers[hdrs.LOCATION]
-
-        # We check that bibs are actually assigned:
-        url = response.headers[hdrs.LOCATION]
-        async with session.get(url, headers=headers) as response:
-            contestants = await response.json()
-            assert response.status == 200
-            assert "application/json" in response.headers[hdrs.CONTENT_TYPE]
-            assert type(contestants) is list
-            assert len(contestants) > 0
-            for c in contestants:
-                assert c["bib"] > 0
 
 
 @pytest.mark.contract
@@ -317,6 +215,138 @@ async def test_delete_contestant(
             pass
 
     assert response.status == 204
+
+
+@pytest.mark.contract
+@pytest.mark.asyncio
+async def test_create_many_contestants_as_csv_file(
+    http_service: Any,
+    token: MockFixture,
+    event_id: str,
+    clear_db: None,
+) -> None:
+    """Should return 200 OK and a report."""
+    url = f"{http_service}/events/{event_id}/contestants"
+    headers = {
+        hdrs.AUTHORIZATION: f"Bearer {token}",
+    }
+
+    # Send csv-file in request:
+    files = {"file": open("tests/files/allcontestants_eventid_364892.csv", "rb")}
+    async with ClientSession() as session:
+        async with session.delete(url) as response:
+            pass
+        async with session.post(url, headers=headers, data=files) as response:
+            status = response.status
+            body = await response.json()
+
+    assert status == 200
+    assert "application/json" in response.headers[hdrs.CONTENT_TYPE]
+
+    assert len(body) > 0
+
+    assert body["total"] == 333
+    assert body["created"] == 333
+    assert body["updated"] == 0
+    assert body["failures"] == 0
+    assert body["total"] == body["created"] + body["updated"] + body["failures"]
+
+
+@pytest.mark.contract
+@pytest.mark.asyncio
+async def test_update_many_existing_contestants_as_csv_file(
+    http_service: Any,
+    token: MockFixture,
+    event_id: str,
+) -> None:
+    """Should return 200 OK and a report."""
+    url = f"{http_service}/events/{event_id}/contestants"
+    headers = {
+        hdrs.AUTHORIZATION: f"Bearer {token}",
+    }
+
+    # Send csv-file in request:
+    files = {"file": open("tests/files/contestants_eventid_364892.csv", "rb")}
+    async with ClientSession() as session:
+        async with session.post(url, headers=headers, data=files) as response:
+            status = response.status
+            body = await response.json()
+
+    assert status == 200
+    assert "application/json" in response.headers[hdrs.CONTENT_TYPE]
+
+    assert len(body) > 0
+
+    assert body["total"] == 3
+    assert body["created"] == 0
+    assert body["updated"] == 3
+    assert body["failures"] == 0
+    assert body["total"] == body["created"] + body["updated"] + body["failures"]
+
+
+@pytest.mark.contract
+@pytest.mark.asyncio
+async def test_get_all_contestants_in_given_event(
+    http_service: Any, token: MockFixture, event_id: str
+) -> None:
+    """Should return OK and a list of contestants as json."""
+    url = f"{http_service}/events/{event_id}/contestants"
+    headers = {
+        hdrs.AUTHORIZATION: f"Bearer {token}",
+    }
+
+    async with ClientSession() as session:
+        async with session.get(url, headers=headers) as response:
+            contestants = await response.json()
+
+    assert response.status == 200
+    assert "application/json" in response.headers[hdrs.CONTENT_TYPE]
+    assert type(contestants) is list
+    assert len(contestants) == 333
+
+
+@pytest.mark.contract
+@pytest.mark.asyncio
+async def test_assign_bibs(
+    http_service: Any,
+    token: MockFixture,
+    event_id: str,
+    clear_db: None,
+) -> None:
+    """Should return 201 Created and a location header with url to contestants."""
+    headers = {
+        hdrs.AUTHORIZATION: f"Bearer {token}",
+    }
+
+    async with ClientSession() as session:
+
+        # First we need to assert that we have an event:
+        url = f"{http_service}/events/{event_id}"
+        async with session.get(url, headers=headers) as response:
+            assert response.status == 200
+
+        # Then we add contestants to event:
+        url = f"{http_service}/events/{event_id}/contestants"
+        files = {"file": open("tests/files/allcontestants_eventid_364892.csv", "rb")}
+        async with session.post(url, headers=headers, data=files) as response:
+            assert response.status == 200
+
+        # Finally assgine bibs to all contestants:
+        url = f"{http_service}/events/{event_id}/contestants/assign-bibs"
+        async with session.post(url, headers=headers) as response:
+            assert response.status == 201
+            assert f"/events/{event_id}/contestants" in response.headers[hdrs.LOCATION]
+
+        # We check that bibs are actually assigned:
+        url = response.headers[hdrs.LOCATION]
+        async with session.get(url, headers=headers) as response:
+            contestants = await response.json()
+            assert response.status == 200
+            assert "application/json" in response.headers[hdrs.CONTENT_TYPE]
+            assert type(contestants) is list
+            assert len(contestants) > 0
+            for c in contestants:
+                assert c["bib"] > 0
 
 
 @pytest.mark.contract

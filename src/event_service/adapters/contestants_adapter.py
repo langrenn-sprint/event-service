@@ -15,7 +15,7 @@ class ContestantsAdapter(Adapter):
         """Get all contestants function."""
         contestants: List = []
         cursor = db.contestants_collection.find({"event_id": event_id})
-        for contestant in await cursor.to_list(length=100):
+        for contestant in await cursor.to_list(None):  # we ask for all contestants
             contestants.append(contestant)
             logging.debug(contestant)
         return contestants
