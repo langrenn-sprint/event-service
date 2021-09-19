@@ -1,15 +1,15 @@
 """Module for contestants service."""
 from typing import Any
 
-from event_service.models import Ageclass
+from event_service.models import Contestant, Raceclass
 from event_service.services import (
-    AgeclassCreateException,
-    AgeclassesService,
-    AgeclassNotUniqueNameException,
-    AgeclassUpdateException,
     ContestantsService,
     EventNotFoundException,
     EventsService,
+    RaceclassCreateException,
+    RaceclassesService,
+    RaceclassNotUniqueNameException,
+    RaceclassUpdateException,
 )
 
 
@@ -17,8 +17,8 @@ class EventsCommands:
     """Class representing a commands on events."""
 
     @classmethod
-    async def generate_ageclasses(cls: Any, db: Any, event_id: str) -> None:
-        """Create ageclasses function."""
+    async def generate_raceclasses(cls: Any, db: Any, event_id: str) -> None:
+        """Create raceclasses function."""
         # Check if event exists:
         try:
             await EventsService.get_event_by_id(db, event_id)
@@ -26,56 +26,57 @@ class EventsCommands:
             raise e from e
         # Get all contestants in event:
         contestants = await ContestantsService.get_all_contestants(db, event_id)
-        # For every contestant, create corresponding ageclass and update counter:
+        # For every contestant, create corresponding raceclass and update counter:
         for _c in contestants:
-            # Check if ageclass exist:
-            ageclasses = await AgeclassesService.get_ageclass_by_name(
+            # Check if raceclass exist:
+            raceclasses = await RaceclassesService.get_raceclass_by_ageclass_name(
                 db, event_id, _c.ageclass
             )
-            ageclass_exist = True
-            if len(ageclasses) == 0:
-                ageclass_exist = False
-            elif len(ageclasses) > 1:
-                raise AgeclassNotUniqueNameException(
-                    f"Ageclass name {_c.ageclass} not unique."
+            raceclass_exist = True
+            if len(raceclasses) == 0:
+                raceclass_exist = False
+            elif len(raceclasses) > 1:
+                raise RaceclassNotUniqueNameException(
+                    f"Raceclass name {_c.ageclass} not unique."
                 ) from None
             else:
-                ageclass = ageclasses[0]
+                raceclass = raceclasses[0]
             # Update counter if found:
-            if ageclass_exist and ageclass.id:
-                ageclass.no_of_contestants += 1
-                result = await AgeclassesService.update_ageclass(
-                    db, event_id, ageclass.id, ageclass
+            if raceclass_exist and raceclass.id:
+                raceclass.no_of_contestants += 1
+                result = await RaceclassesService.update_raceclass(
+                    db, event_id, raceclass.id, raceclass
                 )
                 if not result:
-                    raise AgeclassUpdateException(
-                        f"Create of raceclass with id {ageclass.id} failed."
+                    raise RaceclassUpdateException(
+                        f"Create of raceclass with id {raceclass.id} failed."
                     ) from None
             # Otherwise: create
             else:
-                new_ageclass = Ageclass(
+                new_raceclass = Raceclass(
                     event_id=event_id,
-                    name=_c.ageclass,
-                    raceclass=_create_raceclass_name(_c.ageclass),
+                    name=_create_raceclass_name(_c),
+                    ageclass_name=_c.ageclass,
                     distance=_c.distance,
                     no_of_contestants=1,
                 )
-                result = await AgeclassesService.create_ageclass(
-                    db, event_id, new_ageclass
+                result = await RaceclassesService.create_raceclass(
+                    db, event_id, new_raceclass
                 )
                 if not result:
-                    raise AgeclassCreateException(
-                        f"Create of raceclass with name {_c.ageclass} failed."
+                    raise RaceclassCreateException(
+                        f"Create of raceclass with name {new_raceclass.name} failed."
                     ) from None
 
 
 # helpers
-def _create_raceclass_name(ageclass_name: str) -> str:
-    raceclass = ageclass_name.replace(" ", "")
-    raceclass = raceclass.replace("Menn", "M")
-    raceclass = raceclass.replace("Kvinner", "K")
-    raceclass = raceclass.replace("junior", "J")
-    raceclass = raceclass.replace("Junior", "J")
-    raceclass = raceclass.replace("Felles", "F")
-    raceclass = raceclass.replace("år", "")
-    return raceclass
+def _create_raceclass_name(contestant: Contestant) -> str:
+    """Helper function to create name of raceclass."""
+    name = contestant.ageclass.replace(" ", "")
+    name = name.replace("Menn", "M")
+    name = name.replace("Kvinner", "K")
+    name = name.replace("junior", "J")
+    name = name.replace("Junior", "J")
+    name = name.replace("Felles", "F")
+    name = name.replace("år", "")
+    return name

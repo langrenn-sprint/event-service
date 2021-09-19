@@ -45,26 +45,26 @@ async def contestant() -> dict:
 
 
 @pytest.fixture
-async def ageclass() -> dict:
-    """Create a mock ageclass object."""
+async def raceclass() -> dict:
+    """Create a mock raceclass object."""
     return {
         "id": "290e70d5-0933-4af0-bb53-1d705ba7eb95",
-        "name": "G 16 år",
+        "name": "G16",
+        "ageclass_name": "G 16 år",
         "order": 1,
-        "raceclass": "G16",
         "event_id": "ref_to_event",
         "distance": "5km",
     }
 
 
 @pytest.mark.integration
-async def test_generate_ageclasses_on_event(
+async def test_generate_raceclasses_on_event(
     client: _TestClient,
     mocker: MockFixture,
     token: MockFixture,
     event: dict,
     contestant: dict,
-    ageclass: dict,
+    raceclass: dict,
 ) -> None:
     """Should return 201 Created, location header."""
     mocker.patch(
@@ -72,7 +72,7 @@ async def test_generate_ageclasses_on_event(
         return_value=event,
     )
     mocker.patch(
-        "event_service.adapters.ageclasses_adapter.AgeclassesAdapter.get_ageclass_by_name",
+        "event_service.adapters.raceclasses_adapter.RaceclassesAdapter.get_raceclass_by_ageclass_name",  # noqa: B950
         return_value=[],
     )
     mocker.patch(
@@ -80,8 +80,8 @@ async def test_generate_ageclasses_on_event(
         return_value=[contestant],
     )
     mocker.patch(
-        "event_service.adapters.ageclasses_adapter.AgeclassesAdapter.create_ageclass",
-        return_value=ageclass["id"],
+        "event_service.adapters.raceclasses_adapter.RaceclassesAdapter.create_raceclass",
+        return_value=raceclass["id"],
     )
 
     headers = MultiDict(
@@ -95,20 +95,20 @@ async def test_generate_ageclasses_on_event(
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
         m.post("http://example.com:8081/authorize", status=204)
         resp = await client.post(
-            f"/events/{event_id}/generate-ageclasses", headers=headers
+            f"/events/{event_id}/generate-raceclasses", headers=headers
         )
         assert resp.status == 201
-        assert f"/events/{event_id}/ageclasses" in resp.headers[hdrs.LOCATION]
+        assert f"/events/{event_id}/raceclasses" in resp.headers[hdrs.LOCATION]
 
 
 @pytest.mark.integration
-async def test_generate_ageclasses_on_event_ageclass_exist(
+async def test_generate_raceclasses_on_event_raceclass_exist(
     client: _TestClient,
     mocker: MockFixture,
     token: MockFixture,
     event: dict,
     contestant: dict,
-    ageclass: dict,
+    raceclass: dict,
 ) -> None:
     """Should return 201 Created, location header."""
     mocker.patch(
@@ -116,20 +116,20 @@ async def test_generate_ageclasses_on_event_ageclass_exist(
         return_value=event,
     )
     mocker.patch(
-        "event_service.adapters.ageclasses_adapter.AgeclassesAdapter.get_ageclass_by_id",
-        return_value=ageclass,
+        "event_service.adapters.raceclasses_adapter.RaceclassesAdapter.get_raceclass_by_id",
+        return_value=raceclass,
     )
     mocker.patch(
-        "event_service.adapters.ageclasses_adapter.AgeclassesAdapter.get_ageclass_by_name",
-        return_value=[ageclass],
+        "event_service.adapters.raceclasses_adapter.RaceclassesAdapter.get_raceclass_by_ageclass_name",  # noqa: B950
+        return_value=[raceclass],
     )
     mocker.patch(
         "event_service.adapters.contestants_adapter.ContestantsAdapter.get_all_contestants",
         return_value=[contestant],
     )
     mocker.patch(
-        "event_service.adapters.ageclasses_adapter.AgeclassesAdapter.update_ageclass",
-        return_value=ageclass,
+        "event_service.adapters.raceclasses_adapter.RaceclassesAdapter.update_raceclass",
+        return_value=raceclass,
     )
 
     headers = MultiDict(
@@ -143,39 +143,39 @@ async def test_generate_ageclasses_on_event_ageclass_exist(
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
         m.post("http://example.com:8081/authorize", status=204)
         resp = await client.post(
-            f"/events/{event_id}/generate-ageclasses", headers=headers
+            f"/events/{event_id}/generate-raceclasses", headers=headers
         )
         assert resp.status == 201
-        assert f"/events/{event_id}/ageclasses" in resp.headers[hdrs.LOCATION]
+        assert f"/events/{event_id}/raceclasses" in resp.headers[hdrs.LOCATION]
 
 
 # Bad cases:
 @pytest.mark.integration
-async def test_generate_ageclasses_on_event_duplicate_ageclasses(
+async def test_generate_raceclasses_on_event_duplicate_raceclasses(
     client: _TestClient,
     mocker: MockFixture,
     token: MockFixture,
     event: dict,
     contestant: dict,
-    ageclass: dict,
+    raceclass: dict,
 ) -> None:
     """Should return 422 Unprocessable entity."""
-    ageclass_id = ageclass["id"]
+    raceclass_id = raceclass["id"]
     mocker.patch(
         "event_service.adapters.events_adapter.EventsAdapter.get_event_by_id",
         return_value=event,
     )
     mocker.patch(
-        "event_service.adapters.ageclasses_adapter.AgeclassesAdapter.get_ageclass_by_name",
-        return_value=[ageclass, ageclass],
+        "event_service.adapters.raceclasses_adapter.RaceclassesAdapter.get_raceclass_by_ageclass_name",  # noqa: B950
+        return_value=[raceclass, raceclass],
     )
     mocker.patch(
         "event_service.adapters.contestants_adapter.ContestantsAdapter.get_all_contestants",
         return_value=[contestant],
     )
     mocker.patch(
-        "event_service.adapters.ageclasses_adapter.AgeclassesAdapter.create_ageclass",
-        return_value=ageclass_id,
+        "event_service.adapters.raceclasses_adapter.RaceclassesAdapter.create_raceclass",
+        return_value=raceclass_id,
     )
 
     headers = MultiDict(
@@ -189,37 +189,37 @@ async def test_generate_ageclasses_on_event_duplicate_ageclasses(
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
         m.post("http://example.com:8081/authorize", status=204)
         resp = await client.post(
-            f"/events/{event_id}/generate-ageclasses", headers=headers
+            f"/events/{event_id}/generate-raceclasses", headers=headers
         )
         assert resp.status == 422
 
 
 @pytest.mark.integration
-async def test_generate_ageclasses_on_event_not_found(
+async def test_generate_raceclasses_on_event_not_found(
     client: _TestClient,
     mocker: MockFixture,
     token: MockFixture,
     event: dict,
     contestant: dict,
-    ageclass: dict,
+    raceclass: dict,
 ) -> None:
     """Should return 404 Not found."""
-    ageclass_id = ageclass["id"]
+    raceclass_id = raceclass["id"]
     mocker.patch(
         "event_service.adapters.events_adapter.EventsAdapter.get_event_by_id",
         return_value=None,
     )
     mocker.patch(
-        "event_service.adapters.ageclasses_adapter.AgeclassesAdapter.get_ageclass_by_name",
-        return_value=[ageclass, ageclass],
+        "event_service.adapters.raceclasses_adapter.RaceclassesAdapter.get_raceclass_by_ageclass_name",  # noqa: B950
+        return_value=[raceclass, raceclass],
     )
     mocker.patch(
         "event_service.adapters.contestants_adapter.ContestantsAdapter.get_all_contestants",
         return_value=[contestant],
     )
     mocker.patch(
-        "event_service.adapters.ageclasses_adapter.AgeclassesAdapter.create_ageclass",
-        return_value=ageclass_id,
+        "event_service.adapters.raceclasses_adapter.RaceclassesAdapter.create_raceclass",
+        return_value=raceclass_id,
     )
 
     headers = MultiDict(
@@ -233,29 +233,29 @@ async def test_generate_ageclasses_on_event_not_found(
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
         m.post("http://example.com:8081/authorize", status=204)
         resp = await client.post(
-            f"/events/{event_id}/generate-ageclasses", headers=headers
+            f"/events/{event_id}/generate-raceclasses", headers=headers
         )
         assert resp.status == 404
 
 
 # Not authenticated
 @pytest.mark.integration
-async def test_generate_ageclasses_on_event_unauthorized(
+async def test_generate_raceclasses_on_event_unauthorized(
     client: _TestClient,
     mocker: MockFixture,
     token: MockFixture,
     event: dict,
     contestant: dict,
-    ageclass: dict,
+    raceclass: dict,
 ) -> None:
     """Should return 401 Unauthorized."""
-    AGECLASS_ID = "ageclass_id_1"
+    AGECLASS_ID = "raceclass_id_1"
     mocker.patch(
         "event_service.adapters.events_adapter.EventsAdapter.get_event_by_id",
         return_value=event,
     )
     mocker.patch(
-        "event_service.adapters.ageclasses_adapter.AgeclassesAdapter.get_ageclass_by_name",
+        "event_service.adapters.raceclasses_adapter.RaceclassesAdapter.get_raceclass_by_ageclass_name",  # noqa: B950
         return_value=[],
     )
     mocker.patch(
@@ -263,7 +263,7 @@ async def test_generate_ageclasses_on_event_unauthorized(
         return_value=[contestant],
     )
     mocker.patch(
-        "event_service.adapters.ageclasses_adapter.AgeclassesAdapter.create_ageclass",
+        "event_service.adapters.raceclasses_adapter.RaceclassesAdapter.create_raceclass",
         return_value=AGECLASS_ID,
     )
 
@@ -278,19 +278,19 @@ async def test_generate_ageclasses_on_event_unauthorized(
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
         m.post("http://example.com:8081/authorize", status=401)
         resp = await client.post(
-            f"/events/{event_id}/generate-ageclasses", headers=headers
+            f"/events/{event_id}/generate-raceclasses", headers=headers
         )
         assert resp.status == 401
 
 
 @pytest.mark.integration
-async def test_generate_ageclasses_on_event_create_fails(
+async def test_generate_raceclasses_on_event_create_fails(
     client: _TestClient,
     mocker: MockFixture,
     token: MockFixture,
     event: dict,
     contestant: dict,
-    ageclass: dict,
+    raceclass: dict,
 ) -> None:
     """Should return 400 Bad request."""
     mocker.patch(
@@ -298,7 +298,7 @@ async def test_generate_ageclasses_on_event_create_fails(
         return_value=event,
     )
     mocker.patch(
-        "event_service.adapters.ageclasses_adapter.AgeclassesAdapter.get_ageclass_by_name",
+        "event_service.adapters.raceclasses_adapter.RaceclassesAdapter.get_raceclass_by_ageclass_name",  # noqa: B950
         return_value=[],
     )
     mocker.patch(
@@ -306,7 +306,7 @@ async def test_generate_ageclasses_on_event_create_fails(
         return_value=[contestant],
     )
     mocker.patch(
-        "event_service.adapters.ageclasses_adapter.AgeclassesAdapter.create_ageclass",
+        "event_service.adapters.raceclasses_adapter.RaceclassesAdapter.create_raceclass",
         return_value=None,
     )
 
@@ -321,19 +321,19 @@ async def test_generate_ageclasses_on_event_create_fails(
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
         m.post("http://example.com:8081/authorize", status=204)
         resp = await client.post(
-            f"/events/{event_id}/generate-ageclasses", headers=headers
+            f"/events/{event_id}/generate-raceclasses", headers=headers
         )
         assert resp.status == 400
 
 
 @pytest.mark.integration
-async def test_generate_ageclasses_on_event_update_fails(
+async def test_generate_raceclasses_on_event_update_fails(
     client: _TestClient,
     mocker: MockFixture,
     token: MockFixture,
     event: dict,
     contestant: dict,
-    ageclass: dict,
+    raceclass: dict,
 ) -> None:
     """Should return 400 Bad request."""
     mocker.patch(
@@ -341,19 +341,19 @@ async def test_generate_ageclasses_on_event_update_fails(
         return_value=event,
     )
     mocker.patch(
-        "event_service.adapters.ageclasses_adapter.AgeclassesAdapter.get_ageclass_by_name",
-        return_value=[ageclass],
+        "event_service.adapters.raceclasses_adapter.RaceclassesAdapter.get_raceclass_by_ageclass_name",  # noqa: B950
+        return_value=[raceclass],
     )
     mocker.patch(
-        "event_service.adapters.ageclasses_adapter.AgeclassesAdapter.get_ageclass_by_id",
-        return_value=ageclass,
+        "event_service.adapters.raceclasses_adapter.RaceclassesAdapter.get_raceclass_by_id",
+        return_value=raceclass,
     )
     mocker.patch(
         "event_service.adapters.contestants_adapter.ContestantsAdapter.get_all_contestants",
         return_value=[contestant],
     )
     mocker.patch(
-        "event_service.adapters.ageclasses_adapter.AgeclassesAdapter.update_ageclass",
+        "event_service.adapters.raceclasses_adapter.RaceclassesAdapter.update_raceclass",
         return_value=None,
     )
 
@@ -368,6 +368,6 @@ async def test_generate_ageclasses_on_event_update_fails(
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
         m.post("http://example.com:8081/authorize", status=204)
         resp = await client.post(
-            f"/events/{event_id}/generate-ageclasses", headers=headers
+            f"/events/{event_id}/generate-raceclasses", headers=headers
         )
         assert resp.status == 400
