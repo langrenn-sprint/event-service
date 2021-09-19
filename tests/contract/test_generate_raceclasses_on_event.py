@@ -85,7 +85,7 @@ async def test_generate_raceclasses(
 
         # Then we add contestants to event:
         url = f"{http_service}/events/{event_id}/contestants"
-        files = {"file": open("tests/files/contestants_eventid_364892.csv", "rb")}
+        files = {"file": open("tests/files/allcontestants_eventid_364892.csv", "rb")}
         async with session.post(url, headers=headers, data=files) as response:
             assert response.status == 200
 
@@ -95,11 +95,11 @@ async def test_generate_raceclasses(
             assert response.status == 201
             assert f"/events/{event_id}/raceclasses" in response.headers[hdrs.LOCATION]
 
-        # We check that raceclasses are actually created:
+        # We check that 12 raceclasses are actually created:
         url = response.headers[hdrs.LOCATION]
         async with session.get(url, headers=headers) as response:
             raceclasses = await response.json()
             assert response.status == 200
             assert "application/json" in response.headers[hdrs.CONTENT_TYPE]
             assert type(raceclasses) is list
-            assert len(raceclasses) > 0
+            assert len(raceclasses) == 12
