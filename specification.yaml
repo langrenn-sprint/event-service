@@ -11,8 +11,8 @@
       description: contestant in event operations
     - name: event
       description: event operations
-    - name: ageclass
-      description: ageclass operations
+    - name: raceclass
+      description: raceclass operations
   paths:
     /events:
       post:
@@ -75,7 +75,7 @@
         responses:
           204:
             description: No content
-    /events/{eventId}/generate-ageclasses:
+    /events/{eventId}/generate-raceclasses:
       parameters:
       - name: eventId
         in: path
@@ -86,14 +86,14 @@
           format: uuid
       post:
         tags:
-        - ageclass
+        - raceclass
         security:
         - bearerAuth: []
-        description: command to generate ageclasses based on contestants in event
+        description: command to generate raceclasses based on contestants in event
         responses:
           201:
             description: Created
-    /events/{eventId}/ageclasses:
+    /events/{eventId}/raceclasses:
       parameters:
       - name: eventId
         in: path
@@ -104,31 +104,39 @@
           format: uuid
       post:
         tags:
-        - ageclass
+        - raceclass
         security:
         - bearerAuth: []
-        description: Add a new ageclass
+        description: Add a new raceclass
         requestBody:
-          description: The new ageclass to be created
+          description: The new raceclass to be created
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Ageclass'
+                $ref: '#/components/schemas/Raceclass'
         responses:
           201:
             description: Created
       get:
         tags:
-        - ageclass
-        description: Get a list of ageclasses
+        - raceclass
+        description: Get a list of raceclasses
+        parameters:
+        - name: ageclass-name
+          in: query
+          description: ageclass-name of raceclass
+          required: false
+          schema:
+            type: string
+            format: uuid
         responses:
           200:
             description: Ok
             content:
               application/json:
                 schema:
-                  $ref: '#/components/schemas/AgeclassCollection'
-    /events/{eventId}/ageclasses/{ageclassId}:
+                  $ref: '#/components/schemas/RaceclassCollection'
+    /events/{eventId}/raceclasses/{raceclassId}:
       parameters:
       - name: eventId
         in: path
@@ -137,35 +145,35 @@
         schema:
           type: string
           format: uuid
-      - name: ageclassId
+      - name: raceclassId
         in: path
-        description: ageclass id
+        description: raceclass id
         required: true
         schema:
           type: string
           format: uuid
       get:
         tags:
-        - ageclass
-        description: Get a unique ageclass
+        - raceclass
+        description: Get a unique raceclass
         responses:
           200:
             description: Ok
             content:
               application/json:
                 schema:
-                  $ref: '#/components/schemas/Ageclass'
+                  $ref: '#/components/schemas/Raceclass'
       put:
         tags:
-        - ageclass
-        description: Update an ageclass
+        - raceclass
+        description: Update an raceclass
         responses:
           204:
             description: No content
       delete:
         tags:
-        - ageclass
-        description: Delete an ageclass
+        - raceclass
+        description: Delete an raceclass
         responses:
           204:
             description: No content
@@ -278,35 +286,35 @@
             description: No content
   components:
     schemas:
-      AgeclassCollection:
+      RaceclassCollection:
         type: object
         properties:
-          ageclasses:
+          raceclasses:
             type: array
             items:
-              $ref: '#/components/schemas/Ageclass'
-      Ageclass:
+              $ref: '#/components/schemas/Raceclass'
+      Raceclass:
         properties:
           id:
             type: string
           name:
             type: string
-            description: human readable name of ageclass
+            description: human readable name of raceclass
           order:
             type: integer
             description: position in starting order
-          raceclass:
+          ageclass_name:
             type: string
-            description: identifier of the corresponding raceclass
+            description: name of the corresponding ageclass
           event_id:
             type: string
             description: identifier of the event
           distance:
             type: string
-            description: name of distance the ageclass competes in
+            description: name of distance the raceclass competes in
           noOfContestants:
             type: integer
-            description: number of contestants in ageclass
+            description: number of contestants in raceclass
       EventCollection:
         type: object
         properties:

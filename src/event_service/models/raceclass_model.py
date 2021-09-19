@@ -1,4 +1,4 @@
-"""Ageclass data class module."""
+"""Raceclass data class module."""
 from dataclasses import dataclass, field
 from typing import Optional
 
@@ -6,11 +6,11 @@ from dataclasses_json import DataClassJsonMixin
 
 
 @dataclass
-class Ageclass(DataClassJsonMixin):
-    """Data class with details about an ageclass."""
+class Raceclass(DataClassJsonMixin):
+    """Data class with details about an raceclass."""
 
     name: str
-    raceclass: str
+    ageclass_name: str
     event_id: str
     no_of_contestants: int = 0
     distance: Optional[str] = field(default=None)

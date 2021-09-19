@@ -1,4 +1,4 @@
-"""Resource module for ageclasses resources."""
+"""Resource module for raceclasses resources."""
 import json
 import logging
 import os
@@ -15,11 +15,11 @@ from dotenv import load_dotenv
 from multidict import MultiDict
 
 from event_service.adapters import UsersAdapter
-from event_service.models import Ageclass
+from event_service.models import Raceclass
 from event_service.services import (
-    AgeclassesService,
-    AgeclassNotFoundException,
     IllegalValueException,
+    RaceclassesService,
+    RaceclassNotFoundException,
 )
 from .utils import extract_token_from_request
 
@@ -30,8 +30,8 @@ HOST_PORT = os.getenv("HOST_PORT", "8080")
 BASE_URL = f"http://{HOST_SERVER}:{HOST_PORT}"
 
 
-class AgeclassesView(View):
-    """Class representing ageclasses resource."""
+class RaceclassesView(View):
+    """Class representing raceclasses resource."""
 
     async def get(self) -> Response:
         """Get route function."""
@@ -43,17 +43,17 @@ class AgeclassesView(View):
             raise e from e
 
         event_id = self.request.match_info["eventId"]
-        if "name" in self.request.rel_url.query:
-            name = self.request.rel_url.query["name"]
-            ageclasses = await AgeclassesService.get_ageclass_by_name(
-                db, event_id, name
+        if "ageclass-name" in self.request.rel_url.query:
+            ageclass_name = self.request.rel_url.query["ageclass-name"]
+            raceclasses = await RaceclassesService.get_raceclass_by_ageclass_name(
+                db, event_id, ageclass_name
             )
         else:
-            ageclasses = await AgeclassesService.get_all_ageclasses(db, event_id)
+            raceclasses = await RaceclassesService.get_all_raceclasses(db, event_id)
 
         list = []
-        for a in ageclasses:
-            list.append(a.to_dict())
+        for race in raceclasses:
+            list.append(race.to_dict())
         body = json.dumps(list, default=str, ensure_ascii=False)
         return Response(status=200, body=body, content_type="application/json")
 
@@ -69,26 +69,26 @@ class AgeclassesView(View):
         event_id = self.request.match_info["eventId"]
 
         body = await self.request.json()
-        logging.debug(f"Got create request for ageclass {body} of type {type(body)}")
+        logging.debug(f"Got create request for raceclass {body} of type {type(body)}")
 
         try:
-            ageclass = Ageclass.from_dict(body)
+            raceclass = Raceclass.from_dict(body)
         except KeyError as e:
             raise HTTPUnprocessableEntity(
                 reason=f"Mandatory property {e.args[0]} is missing."
             ) from e
 
         try:
-            ageclass_id = await AgeclassesService.create_ageclass(
-                db, event_id, ageclass
+            raceclass_id = await RaceclassesService.create_raceclass(
+                db, event_id, raceclass
             )
         except IllegalValueException as e:
             raise HTTPUnprocessableEntity() from e
-        if ageclass_id:
-            logging.debug(f"inserted document with id {ageclass_id}")
+        if raceclass_id:
+            logging.debug(f"inserted document with id {raceclass_id}")
             headers = MultiDict(
                 {
-                    hdrs.LOCATION: f"{BASE_URL}/events/{event_id}/ageclasses/{ageclass_id}"
+                    hdrs.LOCATION: f"{BASE_URL}/events/{event_id}/raceclasses/{raceclass_id}"
                 }
             )  # noqa: B950
 
@@ -105,13 +105,13 @@ class AgeclassesView(View):
             raise e from e
 
         event_id = self.request.match_info["eventId"]
-        await AgeclassesService.delete_all_ageclasses(db, event_id)
+        await RaceclassesService.delete_all_raceclasses(db, event_id)
 
         return Response(status=204)
 
 
-class AgeclassView(View):
-    """Class representing a single ageclass resource."""
+class RaceclassView(View):
+    """Class representing a single raceclass resource."""
 
     async def get(self) -> Response:
         """Get route function."""
@@ -123,17 +123,17 @@ class AgeclassView(View):
             raise e from e
 
         event_id = self.request.match_info["eventId"]
-        ageclass_id = self.request.match_info["ageclassId"]
-        logging.debug(f"Got get request for ageclass {ageclass_id}")
+        raceclass_id = self.request.match_info["raceclassId"]
+        logging.debug(f"Got get request for raceclass {raceclass_id}")
 
         try:
-            ageclass = await AgeclassesService.get_ageclass_by_id(
-                db, event_id, ageclass_id
+            raceclass = await RaceclassesService.get_raceclass_by_id(
+                db, event_id, raceclass_id
             )
-        except AgeclassNotFoundException as e:
+        except RaceclassNotFoundException as e:
             raise HTTPNotFound() from e
-        logging.debug(f"Got ageclass: {ageclass}")
-        body = ageclass.to_json()
+        logging.debug(f"Got raceclass: {raceclass}")
+        body = raceclass.to_json()
         return Response(status=200, body=body, content_type="application/json")
 
     async def put(self) -> Response:
@@ -147,21 +147,25 @@ class AgeclassView(View):
 
         body = await self.request.json()
         event_id = self.request.match_info["eventId"]
-        ageclass_id = self.request.match_info["ageclassId"]
-        logging.debug(f"Got request-body {body} for {ageclass_id} of type {type(body)}")
+        raceclass_id = self.request.match_info["raceclassId"]
+        logging.debug(
+            f"Got request-body {body} for {raceclass_id} of type {type(body)}"
+        )
 
         try:
-            ageclass = Ageclass.from_dict(body)
+            raceclass = Raceclass.from_dict(body)
         except KeyError as e:
             raise HTTPUnprocessableEntity(
                 reason=f"Mandatory property {e.args[0]} is missing."
             ) from e
 
         try:
-            await AgeclassesService.update_ageclass(db, event_id, ageclass_id, ageclass)
+            await RaceclassesService.update_raceclass(
+                db, event_id, raceclass_id, raceclass
+            )
         except IllegalValueException as e:
             raise HTTPUnprocessableEntity() from e
-        except AgeclassNotFoundException as e:
+        except RaceclassNotFoundException as e:
             raise HTTPNotFound() from e
         return Response(status=204)
 
@@ -175,11 +179,11 @@ class AgeclassView(View):
             raise e from e
 
         event_id = self.request.match_info["eventId"]
-        ageclass_id = self.request.match_info["ageclassId"]
-        logging.debug(f"Got delete request for ageclass {ageclass_id}")
+        raceclass_id = self.request.match_info["raceclassId"]
+        logging.debug(f"Got delete request for raceclass {raceclass_id}")
 
         try:
-            await AgeclassesService.delete_ageclass(db, event_id, ageclass_id)
-        except AgeclassNotFoundException as e:
+            await RaceclassesService.delete_raceclass(db, event_id, raceclass_id)
+        except RaceclassNotFoundException as e:
             raise HTTPNotFound() from e
         return Response(status=204)
