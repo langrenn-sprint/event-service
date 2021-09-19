@@ -121,6 +121,14 @@
         tags:
         - raceclass
         description: Get a list of raceclasses
+        parameters:
+        - name: ageclass-name
+          in: query
+          description: ageclass-name of raceclass
+          required: false
+          schema:
+            type: string
+            format: uuid
         responses:
           200:
             description: Ok
