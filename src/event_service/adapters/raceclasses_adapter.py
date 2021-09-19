@@ -15,7 +15,7 @@ class RaceclassesAdapter(Adapter):
         """Get all raceclasses function."""
         raceclasses: List = []
         cursor = db.raceclasses_collection.find({"event_id": event_id})
-        for raceclass in await cursor.to_list(length=100):
+        for raceclass in await cursor.to_list(None):
             raceclasses.append(raceclass)
             logging.debug(raceclass)
         return raceclasses
@@ -52,7 +52,7 @@ class RaceclassesAdapter(Adapter):
                 ]
             }
         )
-        for raceclass in await cursor.to_list(length=100):
+        for raceclass in await cursor.to_list(None):
             raceclasses.append(raceclass)
             logging.debug(raceclass)
         return raceclasses

@@ -13,7 +13,7 @@ class EventsAdapter(Adapter):
         """Get all events function."""
         events: List = []
         cursor = db.events_collection.find()
-        for event in await cursor.to_list(length=100):
+        for event in await cursor.to_list(None):
             events.append(event)
             logging.debug(event)
         return events
