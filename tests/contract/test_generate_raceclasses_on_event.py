@@ -1,4 +1,4 @@
-"""Contract test cases for ping."""
+"""Contract test cases for generate-raceclass command."""
 import asyncio
 from datetime import date
 import logging
@@ -68,10 +68,10 @@ async def event_id(http_service: Any, token: MockFixture) -> Optional[str]:
 
 @pytest.mark.contract
 @pytest.mark.asyncio
-async def test_generate_ageclasses(
+async def test_generate_raceclasses(
     http_service: Any, token: MockFixture, event_id: str
 ) -> None:
-    """Should return 201 created and a location header with url to ageclasses."""
+    """Should return 201 created and a location header with url to raceclasses."""
     headers = {
         hdrs.AUTHORIZATION: f"Bearer {token}",
     }
@@ -89,17 +89,17 @@ async def test_generate_ageclasses(
         async with session.post(url, headers=headers, data=files) as response:
             assert response.status == 200
 
-        # Finally ageclasses are generated:
-        url = f"{http_service}/events/{event_id}/generate-ageclasses"
+        # Finally raceclasses are generated:
+        url = f"{http_service}/events/{event_id}/generate-raceclasses"
         async with session.post(url, headers=headers) as response:
             assert response.status == 201
-            assert f"/events/{event_id}/ageclasses" in response.headers[hdrs.LOCATION]
+            assert f"/events/{event_id}/raceclasses" in response.headers[hdrs.LOCATION]
 
-        # We check that ageclasses are actually created:
+        # We check that raceclasses are actually created:
         url = response.headers[hdrs.LOCATION]
         async with session.get(url, headers=headers) as response:
-            ageclasses = await response.json()
+            raceclasses = await response.json()
             assert response.status == 200
             assert "application/json" in response.headers[hdrs.CONTENT_TYPE]
-            assert type(ageclasses) is list
-            assert len(ageclasses) > 0
+            assert type(raceclasses) is list
+            assert len(raceclasses) > 0
