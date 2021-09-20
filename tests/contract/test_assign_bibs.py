@@ -1,9 +1,9 @@
-"""Contract test cases for generate-raceclass command."""
+"""Contract test cases for contestants."""
 import asyncio
 from datetime import date
 import logging
 import os
-from typing import Any, Optional
+from typing import Any, AsyncGenerator, Optional
 
 from aiohttp import ClientSession, hdrs
 import pytest
@@ -66,19 +66,76 @@ async def event_id(http_service: Any, token: MockFixture) -> Optional[str]:
         return None
 
 
-@pytest.mark.contract
+@pytest.fixture
 @pytest.mark.asyncio
-async def test_generate_raceclasses(
+async def clear_db(
+    http_service: Any, token: MockFixture, event_id: str
+) -> AsyncGenerator:
+    """Clear db before and after tests."""
+    delete_contestants
+    delete_raceclasses
+    yield
+    delete_raceclasses
+    delete_contestants
+
+
+async def delete_contestants(
     http_service: Any, token: MockFixture, event_id: str
 ) -> None:
-    """Should return 201 created and a location header with url to raceclasses."""
+    """Delete all contestants."""
+    url = f"{http_service}/events/{event_id}/contestants"
+    headers = {
+        hdrs.AUTHORIZATION: f"Bearer {token}",
+    }
+
+    session = ClientSession()
+    async with session.delete(url, headers=headers) as response:
+        assert response.status == 204
+    await session.close()
+
+
+async def delete_raceclasses(
+    http_service: Any, token: MockFixture, event_id: str
+) -> None:
+    """Delete all raceclasses."""
+    url = f"{http_service}/events/{event_id}/raceclasses"
+    headers = {
+        hdrs.AUTHORIZATION: f"Bearer {token}",
+    }
+
+    url = f"{http_service}/events"
+    headers = {
+        hdrs.AUTHORIZATION: f"Bearer {token}",
+    }
+
+    session = ClientSession()
+    async with session.get(url, headers=headers) as response:
+        raceclasses = await response.json()
+        for raceclass in raceclasses:
+            raceclass_id = raceclass["id"]
+            async with session.delete(
+                f"{url}/{raceclass_id}", headers=headers
+            ) as response:
+                assert response.status == 204
+    await session.close()
+
+
+@pytest.mark.contract
+@pytest.mark.asyncio
+async def test_assign_bibs(
+    http_service: Any,
+    token: MockFixture,
+    event_id: str,
+    clear_db: None,
+) -> None:
+    """Should return 201 Created and a location header with url to contestants."""
     headers = {
         hdrs.AUTHORIZATION: f"Bearer {token}",
     }
 
     async with ClientSession() as session:
 
-        # First we need to find assert that we have an event:
+        # First we need to assert that we have an event:
         url = f"{http_service}/events/{event_id}"
         async with session.get(url, headers=headers) as response:
             assert response.status == 200
@@ -89,73 +146,40 @@ async def test_generate_raceclasses(
         async with session.post(url, headers=headers, data=files) as response:
             assert response.status == 200
 
-        # Finally raceclasses are generated:
+        # We need to generate raceclasses for the event:
         url = f"{http_service}/events/{event_id}/generate-raceclasses"
         async with session.post(url, headers=headers) as response:
             assert response.status == 201
             assert f"/events/{event_id}/raceclasses" in response.headers[hdrs.LOCATION]
 
-        # We check that 12 raceclasses are actually created:
-        url = response.headers[hdrs.LOCATION]
+        # Also we need to set order for all raceclasses:
+        url = f"{http_service}/events/{event_id}/raceclasses"
         async with session.get(url, headers=headers) as response:
             assert response.status == 200
             raceclasses = await response.json()
+            order = 0
+            for raceclass in raceclasses:
+                order += 1
+                raceclass["order"] = order
+                raceclass_id = raceclass["id"]
+                async with session.put(
+                    f"{url}/{raceclass_id}", headers=headers, json=raceclass
+                ) as response:
+                    assert response.status == 204
+
+        # Finally assign bibs to all contestants:
+        url = f"{http_service}/events/{event_id}/contestants/assign-bibs"
+        async with session.post(url, headers=headers) as response:
+            assert response.status == 201
+            assert f"/events/{event_id}/contestants" in response.headers[hdrs.LOCATION]
+
+        # We check that bibs are actually assigned:
+        url = response.headers[hdrs.LOCATION]
+        async with session.get(url, headers=headers) as response:
+            contestants = await response.json()
+            assert response.status == 200
             assert "application/json" in response.headers[hdrs.CONTENT_TYPE]
-            assert type(raceclasses) is list
-
-            # Check that we have 12 raceclasses:
-            assert len(raceclasses) == 12
-
-            # Check sum of contestants is equal to total no of contestants:
-            assert sum(item["no_of_contestants"] for item in raceclasses) == 333
-
-            # Check that we have all raceclasses and that sum pr class is correct:
-            sorted_list = sorted(raceclasses, key=lambda k: k["name"])
-            assert (
-                sorted_list[0]["name"] == "G11"
-                and sorted_list[0]["no_of_contestants"] == 17
-            )
-            assert (
-                sorted_list[1]["name"] == "G12"
-                and sorted_list[1]["no_of_contestants"] == 37
-            )
-            assert (
-                sorted_list[2]["name"] == "G13"
-                and sorted_list[2]["no_of_contestants"] == 29
-            )
-            assert (
-                sorted_list[3]["name"] == "G14"
-                and sorted_list[3]["no_of_contestants"] == 26
-            )
-            assert (
-                sorted_list[4]["name"] == "G15"
-                and sorted_list[4]["no_of_contestants"] == 45
-            )
-            assert (
-                sorted_list[5]["name"] == "G16"
-                and sorted_list[5]["no_of_contestants"] == 36
-            )
-            assert (
-                sorted_list[6]["name"] == "J11"
-                and sorted_list[6]["no_of_contestants"] == 17
-            )
-            assert (
-                sorted_list[7]["name"] == "J12"
-                and sorted_list[7]["no_of_contestants"] == 18
-            )
-            assert (
-                sorted_list[8]["name"] == "J13"
-                and sorted_list[8]["no_of_contestants"] == 29
-            )
-            assert (
-                sorted_list[9]["name"] == "J14"
-                and sorted_list[9]["no_of_contestants"] == 19
-            )
-            assert (
-                sorted_list[10]["name"] == "J15"
-                and sorted_list[10]["no_of_contestants"] == 42
-            )
-            assert (
-                sorted_list[11]["name"] == "J16"
-                and sorted_list[11]["no_of_contestants"] == 18
-            )
+            assert type(contestants) is list
+            assert len(contestants) > 0
+            for c in contestants:
+                assert c["bib"] > 0

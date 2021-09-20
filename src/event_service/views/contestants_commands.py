@@ -3,6 +3,7 @@ import os
 
 from aiohttp import hdrs
 from aiohttp.web import (
+    HTTPBadRequest,
     HTTPNotFound,
     Response,
     View,
@@ -11,7 +12,11 @@ from dotenv import load_dotenv
 from multidict import MultiDict
 
 from event_service.adapters import UsersAdapter
-from event_service.commands import ContestantsCommands
+from event_service.commands import (
+    ContestantsCommands,
+    NoRaceclassInEventException,
+    NoValueForOrderInRaceclassExcpetion,
+)
 from event_service.services import (
     EventNotFoundException,
 )
@@ -40,8 +45,11 @@ class ContestantsAssignBibsView(View):
         event_id = self.request.match_info["eventId"]
         try:
             await ContestantsCommands.assign_bibs(db, event_id)
-        except EventNotFoundException as e:
+        except (EventNotFoundException, NoRaceclassInEventException) as e:
             raise HTTPNotFound() from e
+        except NoValueForOrderInRaceclassExcpetion as e:
+            raise HTTPBadRequest() from e
+
         headers = MultiDict(
             {hdrs.LOCATION: f"{BASE_URL}/events/{event_id}/contestants"}
         )
