@@ -13,7 +13,7 @@ USERS_HOST_SERVER = os.getenv("USERS_HOST_SERVER")
 USERS_HOST_PORT = os.getenv("USERS_HOST_PORT")
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="module")
 def event_loop(request: Any) -> Any:
     """Redefine the event_loop fixture to have the same scope."""
     loop = asyncio.get_event_loop_policy().new_event_loop()
@@ -21,7 +21,8 @@ def event_loop(request: Any) -> Any:
     loop.close()
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="module")
+@pytest.mark.asyncio
 async def token(http_service: Any) -> str:
     """Create a valid token."""
     url = f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/login"
@@ -39,7 +40,8 @@ async def token(http_service: Any) -> str:
     return body["token"]
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="module")
+@pytest.mark.asyncio
 async def event_id(http_service: Any, token: MockFixture) -> Optional[str]:
     """Create an event object for testing."""
     url = f"{http_service}/events"
@@ -60,23 +62,25 @@ async def event_id(http_service: Any, token: MockFixture) -> Optional[str]:
     await session.close()
     if status == 201:
         # return the event_id, which is the last item of the path
-        return response.headers[hdrs.LOCATION].split("/")[-1]
+        event_id = response.headers[hdrs.LOCATION].split("/")[-1]
+        logging.debug(f"Created event with id {event_id}.")
+        return event_id
     else:
         logging.error(f"Got unsuccesful status when creating event: {status}.")
         return None
 
 
-@pytest.fixture
+@pytest.fixture(scope="module")
 @pytest.mark.asyncio
 async def clear_db(
     http_service: Any, token: MockFixture, event_id: str
 ) -> AsyncGenerator:
     """Clear db before and after tests."""
-    delete_contestants
-    delete_raceclasses
+    await delete_contestants(http_service, token, event_id)
+    await delete_raceclasses(http_service, token, event_id)
     yield
-    delete_raceclasses
-    delete_contestants
+    await delete_raceclasses(http_service, token, event_id)
+    await delete_contestants(http_service, token, event_id)
 
 
 async def delete_contestants(
@@ -99,11 +103,6 @@ async def delete_raceclasses(
 ) -> None:
     """Delete all raceclasses."""
     url = f"{http_service}/events/{event_id}/raceclasses"
-    headers = {
-        hdrs.AUTHORIZATION: f"Bearer {token}",
-    }
-
-    url = f"{http_service}/events"
     headers = {
         hdrs.AUTHORIZATION: f"Bearer {token}",
     }
@@ -137,6 +136,7 @@ async def test_assign_bibs(
 
         # First we need to assert that we have an event:
         url = f"{http_service}/events/{event_id}"
+        logging.debug(f"Verifying event with id {event_id} at url {url}.")
         async with session.get(url, headers=headers) as response:
             assert response.status == 200
 
