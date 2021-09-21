@@ -25,7 +25,7 @@ def token_unsufficient_role() -> str:
     """Create a valid token."""
     secret = os.getenv("JWT_SECRET")
     algorithm = "HS256"
-    payload = {"identity": "user", "roles": ["user"]}
+    payload = {"identity": "user", "roles": ["event-admin"]}
     return jwt.encode(payload, secret, algorithm)  # type: ignore
 
 
