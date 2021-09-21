@@ -1,4 +1,5 @@
 """Package for all views."""
+from .competition_formats import CompetitionFormatsView, CompetitionFormatView
 from .contestants import ContestantsView, ContestantView
 from .contestants_commands import ContestantsAssignBibsView
 from .events import EventsView, EventView
