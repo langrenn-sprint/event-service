@@ -13,7 +13,7 @@ USERS_HOST_SERVER = os.getenv("USERS_HOST_SERVER")
 USERS_HOST_PORT = os.getenv("USERS_HOST_PORT")
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="module")
 def event_loop(request: Any) -> Any:
     """Redefine the event_loop fixture to have the same scope."""
     loop = asyncio.get_event_loop_policy().new_event_loop()
@@ -21,7 +21,7 @@ def event_loop(request: Any) -> Any:
     loop.close()
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="module")
 async def token(http_service: Any) -> str:
     """Create a valid token."""
     url = f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/login"
@@ -39,7 +39,7 @@ async def token(http_service: Any) -> str:
     return body["token"]
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="module")
 async def event_id(http_service: Any, token: MockFixture) -> Optional[str]:
     """Create an event object for testing."""
     url = f"{http_service}/events"
