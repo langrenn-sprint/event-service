@@ -8,6 +8,8 @@ from aiohttp_middlewares import cors_middleware, error_middleware
 import motor.motor_asyncio
 
 from .views import (
+    CompetitionFormatsView,
+    CompetitionFormatView,
     ContestantsAssignBibsView,
     ContestantsView,
     ContestantView,
@@ -52,6 +54,8 @@ async def create_app() -> web.Application:
         [
             web.view("/ping", Ping),
             web.view("/ready", Ready),
+            web.view("/competition-formats", CompetitionFormatsView),
+            web.view("/competition-formats/{id}", CompetitionFormatView),
             web.view("/events", EventsView),
             web.view("/events/{eventId}", EventView),
             web.view(

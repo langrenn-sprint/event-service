@@ -13,6 +13,8 @@
       description: event operations
     - name: raceclass
       description: raceclass operations
+    - name: competition-format
+      description: competition format operations
   paths:
     /events:
       post:
@@ -284,6 +286,67 @@
         responses:
           204:
             description: No content
+    /competition-formats:
+      post:
+        tags:
+        - competition-format
+        security:
+        - bearerAuth: []
+        description: Add a new competition format
+        requestBody:
+          description: The new format to be created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CompetitionFormat'
+        responses:
+          201:
+            description: Created
+      get:
+        tags:
+        - competition-format
+        description: Get a list of competition formats
+        responses:
+          200:
+            description: Ok
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/CompetitionFormatCollection'
+    /competition-formats/{id}:
+      parameters:
+      - name: id
+        in: path
+        description: competition format id
+        required: true
+        schema:
+          type: string
+          format: uuid
+      get:
+        tags:
+        - competition-format
+        description: Get a unique competition format
+        responses:
+          200:
+            description: Ok
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/CompetitionFormat'
+      put:
+        tags:
+        - competition-format
+        description: Update a competition format
+        responses:
+          204:
+            description: No content
+      delete:
+        tags:
+        - competition-format
+        description: Delete acompetition format
+        responses:
+          204:
+            description: No content
   components:
     schemas:
       RaceclassCollection:
@@ -328,7 +391,7 @@
             type: string
           name:
             type: string
-            description: The evnt's name.
+            description: The event's name.
           competition-format:
             type: string
             description: Name of competition format.
@@ -385,6 +448,26 @@
             type: string
           bib:
             type: integer
+      CompetitionFormatCollection:
+        type: object
+        properties:
+          events:
+            type: array
+            items:
+              $ref: '#/components/schemas/CompetitionFormat'
+      CompetitionFormat:
+        properties:
+          id:
+            type: string
+          name:
+            type: string
+            description: The competition-format's name.
+          startingOrder:
+            type: string
+            description: starting order describing how the start list should be created
+          startProcedure:
+            type: string
+            description: the start procuedure to be used for the competition
     securitySchemes:
       bearerAuth:
         type: http
