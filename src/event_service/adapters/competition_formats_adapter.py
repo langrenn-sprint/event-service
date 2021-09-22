@@ -32,19 +32,23 @@ class CompetitionFormatsAdapter(Adapter):
     async def get_competition_format_by_id(
         cls: Any, db: Any, id: str
     ) -> dict:  # pragma: no cover
-        """Get competition_format function."""
+        """Get competition_format by idfunction."""
         result = await db.competition_formats_collection.find_one({"id": id})
         return result
 
     @classmethod
-    async def get_competition_format_by_name(
-        cls: Any, db: Any, competition_formatname: str
-    ) -> dict:  # pragma: no cover
-        """Get competition_format function."""
-        result = await db.competition_formats_collection.find_one(
-            {"competition_formatname": competition_formatname}
+    async def get_competition_formats_by_name(
+        cls: Any, db: Any, competition_format_name: str
+    ) -> List[dict]:  # pragma: no cover
+        """Get competition_format by name function."""
+        competition_formats: List = []
+        cursor = db.competition_formats_collection.find(
+            {"name": competition_format_name}
         )
-        return result
+        for competition_format in await cursor.to_list(None):
+            competition_formats.append(competition_format)
+            logging.debug(competition_format)
+        return competition_formats
 
     @classmethod
     async def update_competition_format(
