@@ -41,14 +41,23 @@ class CompetitionFormatsView(View):
         except Exception as e:
             raise e from e
 
-        competition_formats = (
-            await CompetitionFormatsService.get_all_competition_formats(db)
-        )
-        list = []
-        for _e in competition_formats:
-            list.append(_e.to_dict())
-
-        body = json.dumps(list, default=str, ensure_ascii=False)
+        competition_formats = []
+        if "name" in self.request.rel_url.query:
+            name = self.request.rel_url.query["name"]
+            competition_formats = (
+                await CompetitionFormatsService.get_competition_formats_by_name(
+                    db, name
+                )
+            )
+        else:
+            competition_formats = (
+                await CompetitionFormatsService.get_all_competition_formats(db)
+            )
+        # Create json representation
+        result = []
+        for _c in competition_formats:
+            result.append(_c.to_dict())
+        body = json.dumps(result, default=str, ensure_ascii=False)
         return Response(status=200, body=body, content_type="application/json")
 
     async def post(self) -> Response:

@@ -110,6 +110,41 @@ async def test_get_competition_format_by_id(
 
 
 @pytest.mark.integration
+async def test_get_competition_formats_by_name(
+    client: _TestClient,
+    mocker: MockFixture,
+    token: MockFixture,
+    competition_format: dict,
+) -> None:
+    """Should return OK, and a body containing one competition_format."""
+    ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
+    NAME = competition_format["name"]
+    mocker.patch(
+        "event_service.adapters.competition_formats_adapter.CompetitionFormatsAdapter.get_competition_formats_by_name",  # noqa: B950
+        return_value=[{"id": ID} | competition_format],  # type: ignore
+    )
+
+    headers = MultiDict(
+        {
+            hdrs.AUTHORIZATION: f"Bearer {token}",
+        },
+    )
+
+    with aioresponses(passthrough=["http://127.0.0.1"]) as m:
+        m.post("http://example.com:8081/authorize", status=204)
+
+        resp = await client.get(f"/competition-formats?name={NAME}", headers=headers)
+        assert resp.status == 200
+        assert "application/json" in resp.headers[hdrs.CONTENT_TYPE]
+        body = await resp.json()
+        assert type(body) is list
+        assert body[0]["id"] == ID
+        assert body[0]["name"] == competition_format["name"]
+        assert body[0]["starting_order"] == competition_format["starting_order"]
+        assert body[0]["start_procedure"] == competition_format["start_procedure"]
+
+
+@pytest.mark.integration
 async def test_update_competition_format_by_id(
     client: _TestClient,
     mocker: MockFixture,
@@ -547,6 +582,32 @@ async def test_get_competition_format_not_found(
 
         resp = await client.get(f"/competition-formats/{ID}", headers=headers)
         assert resp.status == 404
+
+
+@pytest.mark.integration
+async def test_get_competition_formats_by_name_not_found(
+    client: _TestClient, mocker: MockFixture, token: MockFixture
+) -> None:
+    """Should return 200 OK and empty list."""
+    NAME = "does-not-exist"
+    mocker.patch(
+        "event_service.adapters.competition_formats_adapter.CompetitionFormatsAdapter.get_competition_formats_by_name",  # noqa: B950
+        return_value=[],
+    )
+    headers = MultiDict(
+        {
+            hdrs.AUTHORIZATION: f"Bearer {token}",
+        },
+    )
+
+    with aioresponses(passthrough=["http://127.0.0.1"]) as m:
+        m.post("http://example.com:8081/authorize", status=204)
+
+        resp = await client.get(f"/competition-formats?name={NAME}", headers=headers)
+        assert resp.status == 200
+        body = await resp.json()
+        assert type(body) is list
+        assert len(body) == 0
 
 
 @pytest.mark.integration

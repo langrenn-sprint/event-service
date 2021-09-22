@@ -86,6 +86,19 @@ class CompetitionFormatsService:
         ) from None
 
     @classmethod
+    async def get_competition_formats_by_name(
+        cls: Any, db: Any, name: str
+    ) -> List[CompetitionFormat]:
+        """Get competition_format by name function."""
+        competition_formats: List[CompetitionFormat] = []
+        _competition_formats = (
+            await CompetitionFormatsAdapter.get_competition_formats_by_name(db, name)
+        )
+        for e in _competition_formats:
+            competition_formats.append(CompetitionFormat.from_dict(e))
+        return competition_formats
+
+    @classmethod
     async def update_competition_format(
         cls: Any, db: Any, id: str, competition_format: CompetitionFormat
     ) -> Optional[str]:
