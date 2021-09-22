@@ -141,6 +141,35 @@ async def test_get_competition_format_by_id(
 
 @pytest.mark.contract
 @pytest.mark.asyncio
+async def test_get_competition_format_by_name(
+    http_service: Any, token: MockFixture, competition_format: dict
+) -> None:
+    """Should return OK and an competition_format as json."""
+    url = f"{http_service}/competition-formats"
+
+    headers = {
+        hdrs.AUTHORIZATION: f"Bearer {token}",
+    }
+
+    async with ClientSession() as session:
+        async with session.get(url, headers=headers) as response:
+            competition_formats = await response.json()
+        name = competition_formats[0]["name"]
+        url = f"{url}?name={name}"
+        async with session.get(url, headers=headers) as response:
+            body = await response.json()
+
+    assert response.status == 200
+    assert "application/json" in response.headers[hdrs.CONTENT_TYPE]
+    assert type(body) is list
+    assert body[0]["id"]
+    assert body[0]["name"] == competition_format["name"]
+    assert body[0]["starting_order"] == competition_format["starting_order"]
+    assert body[0]["start_procedure"] == competition_format["start_procedure"]
+
+
+@pytest.mark.contract
+@pytest.mark.asyncio
 async def test_update_competition_format(
     http_service: Any, token: MockFixture, competition_format: dict
 ) -> None:

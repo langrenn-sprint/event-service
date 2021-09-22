@@ -306,6 +306,14 @@
         tags:
         - competition-format
         description: Get a list of competition formats
+        parameters:
+        - name: name
+          in: query
+          description: competition format name
+          required: false
+        schema:
+          type: string
+          format: uuid
         responses:
           200:
             description: Ok
