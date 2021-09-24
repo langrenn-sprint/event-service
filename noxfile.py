@@ -93,6 +93,8 @@ def contract_tests(session: Session) -> None:
             "USERS_HOST_SERVER": "localhost",
             "USERS_HOST_PORT": "8081",
             "JWT_EXP_DELTA_SECONDS": "60",
+            "DB_USER": "event-service",
+            "DB_PASSWORD": "password",
         },
     )
 
