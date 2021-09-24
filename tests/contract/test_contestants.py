@@ -50,7 +50,8 @@ async def event_id(http_service: Any, token: MockFixture) -> Optional[str]:
     }
     request_body = {
         "name": "Oslo Skagen sprint",
-        "date_of_event": date(2021, 8, 31).isoformat(),
+        "date_of_event": "2021-08-31",
+        "time_of_event": "09:00:00",
         "organiser": "Lyn Ski",
         "webpage": "https://example.com",
         "information": "Testarr for å teste den nye løysinga.",
