@@ -41,6 +41,7 @@ async def competition_format() -> dict:
         "name": "Interval start",
         "starting_order": "Draw",
         "start_procedure": "Interval start",
+        "intervals": "00:00:30",
     }
 
 
@@ -137,6 +138,7 @@ async def test_get_competition_format_by_id(
     assert body["name"] == competition_format["name"]
     assert body["starting_order"] == competition_format["starting_order"]
     assert body["start_procedure"] == competition_format["start_procedure"]
+    assert body["intervals"] == competition_format["intervals"]
 
 
 @pytest.mark.contract
