@@ -36,6 +36,7 @@ async def competition_format() -> dict[str, str]:
         "name": "Interval start",
         "starting_order": "Draw",
         "start_procedure": "Interval start",
+        "intervals": "0:0:30",
     }
 
 
@@ -107,6 +108,7 @@ async def test_get_competition_format_by_id(
         assert body["name"] == competition_format["name"]
         assert body["starting_order"] == competition_format["starting_order"]
         assert body["start_procedure"] == competition_format["start_procedure"]
+        assert body["intervals"] == competition_format["intervals"]
 
 
 @pytest.mark.integration
@@ -142,6 +144,7 @@ async def test_get_competition_formats_by_name(
         assert body[0]["name"] == competition_format["name"]
         assert body[0]["starting_order"] == competition_format["starting_order"]
         assert body[0]["start_procedure"] == competition_format["start_procedure"]
+        assert body[0]["intervals"] == competition_format["intervals"]
 
 
 @pytest.mark.integration
