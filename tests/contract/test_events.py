@@ -38,7 +38,7 @@ async def event() -> dict:
     return {
         "name": "Oslo Skagen sprint",
         "competition_format": "Individual sprint",
-        "date_of_event": "2021-8-31",
+        "date_of_event": "2021-08-31",
         "time_of_event": "09:00:00",
         "organiser": "Lyn Ski",
         "webpage": "https://example.com",
