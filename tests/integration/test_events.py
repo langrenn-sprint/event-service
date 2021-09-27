@@ -1,6 +1,5 @@
 """Integration test cases for the events route."""
 from copy import deepcopy
-from datetime import date
 import os
 
 from aiohttp import hdrs
@@ -36,7 +35,7 @@ async def event() -> dict[str, str]:
     return {
         "name": "Oslo Skagen sprint",
         "competition_format": "Individual sprint",
-        "date_of_event": date(2021, 8, 31).isoformat(),
+        "date_of_event": "2021-08-31",
         "organiser": "Lyn Ski",
         "webpage": "https://example.com",
         "information": "Testarr for å teste den nye løysinga.",
@@ -339,6 +338,132 @@ async def test_update_event_by_id_different_id_in_body(
 
         resp = await client.put(f"/events/{ID}", headers=headers, json=request_body)
         assert resp.status == 422
+
+
+@pytest.mark.integration
+async def test_create_event_invalid_date(
+    client: _TestClient, mocker: MockFixture, token: MockFixture, event: dict
+) -> None:
+    """Should return 400 Bad request."""
+    ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
+    mocker.patch(
+        "event_service.services.events_service.create_id",
+        return_value=ID,
+    )
+    mocker.patch(
+        "event_service.adapters.events_adapter.EventsAdapter.create_event",
+        return_value=ID,
+    )
+
+    event_invalid_date = deepcopy(event)
+    event_invalid_date["date_of_event"] = "9999-99-99"
+
+    headers = MultiDict(
+        {
+            hdrs.CONTENT_TYPE: "application/json",
+            hdrs.AUTHORIZATION: f"Bearer {token}",
+        },
+    )
+
+    with aioresponses(passthrough=["http://127.0.0.1"]) as m:
+        m.post("http://example.com:8081/authorize", status=204)
+        resp = await client.post("/events", headers=headers, json=event_invalid_date)
+        assert resp.status == 400
+
+
+@pytest.mark.integration
+async def test_create_event_invalid_time(
+    client: _TestClient, mocker: MockFixture, token: MockFixture, event: dict
+) -> None:
+    """Should return 400 Bad request."""
+    ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
+    mocker.patch(
+        "event_service.services.events_service.create_id",
+        return_value=ID,
+    )
+    mocker.patch(
+        "event_service.adapters.events_adapter.EventsAdapter.create_event",
+        return_value=ID,
+    )
+
+    event_invalid_time = deepcopy(event)
+    event_invalid_time["time_of_event"] = "99:99:99"
+
+    headers = MultiDict(
+        {
+            hdrs.CONTENT_TYPE: "application/json",
+            hdrs.AUTHORIZATION: f"Bearer {token}",
+        },
+    )
+
+    with aioresponses(passthrough=["http://127.0.0.1"]) as m:
+        m.post("http://example.com:8081/authorize", status=204)
+        resp = await client.post("/events", headers=headers, json=event_invalid_time)
+        assert resp.status == 400
+
+
+@pytest.mark.integration
+async def test_update_event_invalid_date(
+    client: _TestClient, mocker: MockFixture, token: MockFixture, event: dict
+) -> None:
+    """Should return 400 Bad request."""
+    ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
+    mocker.patch(
+        "event_service.adapters.events_adapter.EventsAdapter.get_event_by_id",
+        return_value={"id": ID} | event,  # type: ignore
+    )
+    mocker.patch(
+        "event_service.adapters.events_adapter.EventsAdapter.update_event",
+        return_value={"id": ID} | event,  # type: ignore
+    )
+
+    headers = MultiDict(
+        {
+            hdrs.CONTENT_TYPE: "application/json",
+            hdrs.AUTHORIZATION: f"Bearer {token}",
+        },
+    )
+    request_body = deepcopy(event)
+    request_body["id"] = ID
+    request_body["date_of_event"] = "9999-99-99"
+
+    with aioresponses(passthrough=["http://127.0.0.1"]) as m:
+        m.post("http://example.com:8081/authorize", status=204)
+
+        resp = await client.put(f"/events/{ID}", headers=headers, json=request_body)
+        assert resp.status == 400
+
+
+@pytest.mark.integration
+async def test_update_event_invalid_time(
+    client: _TestClient, mocker: MockFixture, token: MockFixture, event: dict
+) -> None:
+    """Should return 400 Bad request."""
+    ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
+    mocker.patch(
+        "event_service.adapters.events_adapter.EventsAdapter.get_event_by_id",
+        return_value={"id": ID} | event,  # type: ignore
+    )
+    mocker.patch(
+        "event_service.adapters.events_adapter.EventsAdapter.update_event",
+        return_value={"id": ID} | event,  # type: ignore
+    )
+
+    headers = MultiDict(
+        {
+            hdrs.CONTENT_TYPE: "application/json",
+            hdrs.AUTHORIZATION: f"Bearer {token}",
+        },
+    )
+    request_body = deepcopy(event)
+    request_body["id"] = ID
+    request_body["time_of_event"] = "99:99:99"
+
+    with aioresponses(passthrough=["http://127.0.0.1"]) as m:
+        m.post("http://example.com:8081/authorize", status=204)
+
+        resp = await client.put(f"/events/{ID}", headers=headers, json=request_body)
+        assert resp.status == 400
 
 
 # Unauthorized cases:

@@ -20,6 +20,7 @@ from event_service.services import (
     EventNotFoundException,
     EventsService,
     IllegalValueException,
+    InvalidDateFormatException,
 )
 from .utils import extract_token_from_request
 
@@ -71,6 +72,8 @@ class EventsView(View):
             event_id = await EventsService.create_event(db, event)
         except IllegalValueException as e:
             raise HTTPUnprocessableEntity() from e
+        except InvalidDateFormatException as e:
+            raise HTTPBadRequest() from e
         if event_id:
             logging.debug(f"inserted document with event_id {event_id}")
             headers = MultiDict({hdrs.LOCATION: f"{BASE_URL}/events/{event_id}"})
@@ -129,6 +132,8 @@ class EventView(View):
             raise HTTPUnprocessableEntity() from e
         except EventNotFoundException as e:
             raise HTTPNotFound() from e
+        except InvalidDateFormatException as e:
+            raise HTTPBadRequest() from e
         return Response(status=204)
 
     async def delete(self) -> Response:
