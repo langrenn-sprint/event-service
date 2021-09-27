@@ -1,5 +1,7 @@
 """Contract test cases for ping."""
+import asyncio
 from copy import deepcopy
+from json import load
 import logging
 import os
 from typing import Any, AsyncGenerator
@@ -12,7 +14,15 @@ USERS_HOST_SERVER = os.getenv("USERS_HOST_SERVER")
 USERS_HOST_PORT = os.getenv("USERS_HOST_PORT")
 
 
-@pytest.fixture
+@pytest.fixture(scope="module")
+def event_loop(request: Any) -> Any:
+    """Redefine the event_loop fixture to have the same scope."""
+    loop = asyncio.get_event_loop_policy().new_event_loop()
+    yield loop
+    loop.close()
+
+
+@pytest.fixture(scope="module")
 @pytest.mark.asyncio
 async def clear_db(http_service: Any, token: MockFixture) -> AsyncGenerator:
     """Delete all events before we start."""
@@ -32,13 +42,13 @@ async def clear_db(http_service: Any, token: MockFixture) -> AsyncGenerator:
     yield
 
 
-@pytest.fixture
+@pytest.fixture(scope="module")
 async def event() -> dict:
     """An event object for testing."""
     return {
         "name": "Oslo Skagen sprint",
-        "competition_format": "Individual sprint",
-        "date_of_event": "2021-8-31",
+        "competition_format": "Interval start",
+        "date_of_event": "2021-08-31",
         "time_of_event": "09:00:00",
         "organiser": "Lyn Ski",
         "webpage": "https://example.com",
@@ -46,7 +56,7 @@ async def event() -> dict:
     }
 
 
-@pytest.fixture
+@pytest.fixture(scope="module")
 @pytest.mark.asyncio
 async def token(http_service: Any) -> str:
     """Create a valid token."""
@@ -65,26 +75,44 @@ async def token(http_service: Any) -> str:
     return body["token"]
 
 
+@pytest.fixture(scope="module")
+async def competition_format_interval_start() -> dict:
+    """An competition_format object for testing."""
+    with open("tests/files/competition_format.json", "r") as file:
+        competition_format = load(file)
+    return competition_format
+
+
 @pytest.mark.contract
 @pytest.mark.asyncio
 async def test_create_event(
-    http_service: Any, token: MockFixture, clear_db: AsyncGenerator, event: dict
+    http_service: Any,
+    token: MockFixture,
+    clear_db: AsyncGenerator,
+    event: dict,
+    competition_format_interval_start: dict,
 ) -> None:
     """Should return Created, location header and no body."""
-    url = f"{http_service}/events"
-    headers = {
-        hdrs.CONTENT_TYPE: "application/json",
-        hdrs.AUTHORIZATION: f"Bearer {token}",
-    }
-    request_body = event
+    async with ClientSession() as session:
+        headers = {
+            hdrs.CONTENT_TYPE: "application/json",
+            hdrs.AUTHORIZATION: f"Bearer {token}",
+        }
+        # We have to create a competition_format:
+        url = f"{http_service}/competition-formats"
+        request_body = competition_format_interval_start
+        async with session.post(url, headers=headers, json=request_body) as response:
+            status = response.status
+            assert status == 201
 
-    session = ClientSession()
-    async with session.post(url, headers=headers, json=request_body) as response:
-        status = response.status
-    await session.close()
+        url = f"{http_service}/events"
+        request_body = event
 
-    assert status == 201
-    assert "/events/" in response.headers[hdrs.LOCATION]
+        async with session.post(url, headers=headers, json=request_body) as response:
+            status = response.status
+
+        assert status == 201
+        assert "/events/" in response.headers[hdrs.LOCATION]
 
 
 @pytest.mark.contract

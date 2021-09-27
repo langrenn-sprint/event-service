@@ -5,7 +5,7 @@ from .competition_formats_service import (
 )
 from .contestants_service import ContestantNotFoundException, ContestantsService
 from .events_service import EventNotFoundException, EventsService
-from .exceptions import IllegalValueException
+from .exceptions import IllegalValueException, InvalidDateFormatException
 from .raceclasses_service import (
     RaceclassCreateException,
     RaceclassesService,

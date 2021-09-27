@@ -20,6 +20,7 @@ from event_service.services import (
     CompetitionFormatNotFoundException,
     CompetitionFormatsService,
     IllegalValueException,
+    InvalidDateFormatException,
 )
 from .utils import extract_token_from_request
 
@@ -88,6 +89,8 @@ class CompetitionFormatsView(View):
             )
         except IllegalValueException as e:
             raise HTTPUnprocessableEntity() from e
+        except InvalidDateFormatException as e:
+            raise HTTPBadRequest() from e
         if competition_format_id:
             logging.debug(
                 f"inserted document with competition_format_id {competition_format_id}"
@@ -162,6 +165,8 @@ class CompetitionFormatView(View):
             raise HTTPUnprocessableEntity() from e
         except CompetitionFormatNotFoundException as e:
             raise HTTPNotFound() from e
+        except InvalidDateFormatException as e:
+            raise HTTPBadRequest() from e
         return Response(status=204)
 
     async def delete(self) -> Response:
