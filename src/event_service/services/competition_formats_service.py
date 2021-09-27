@@ -1,11 +1,12 @@
 """Module for competition_formats service."""
+from datetime import time
 import logging
 from typing import Any, List, Optional
 import uuid
 
 from event_service.adapters import CompetitionFormatsAdapter
 from event_service.models import CompetitionFormat
-from .exceptions import IllegalValueException
+from .exceptions import IllegalValueException, InvalidDateFormatException
 
 
 def create_id() -> str:  # pragma: no cover
@@ -60,6 +61,8 @@ class CompetitionFormatsService:
         # create id
         id = create_id()
         competition_format.id = id
+        # Validation:
+        await validate_competition_format(competition_format)
         # insert new competition_format
         new_competition_format = competition_format.to_dict()
         result = await CompetitionFormatsAdapter.create_competition_format(
@@ -103,6 +106,8 @@ class CompetitionFormatsService:
         cls: Any, db: Any, id: str, competition_format: CompetitionFormat
     ) -> Optional[str]:
         """Get competition_format function."""
+        # Validate:
+        await validate_competition_format(competition_format)
         # get old document
         old_competition_format = (
             await CompetitionFormatsAdapter.get_competition_format_by_id(db, id)
@@ -137,4 +142,15 @@ class CompetitionFormatsService:
             f"CompetitionFormat with id {id} not found"
         ) from None
 
-    #   Commands:
+
+#   Validation:
+async def validate_competition_format(competition_format: CompetitionFormat) -> None:
+    """Validate the competition-format."""
+    # Validate intervals if set:
+    if competition_format.intervals:
+        try:
+            time.fromisoformat(competition_format.intervals)  # type: ignore
+        except ValueError as e:
+            raise InvalidDateFormatException(
+                'Time "{time_str}" has invalid format.'
+            ) from e

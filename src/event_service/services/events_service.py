@@ -1,11 +1,16 @@
 """Module for events service."""
+from datetime import date, time
 import logging
 from typing import Any, List, Optional
 import uuid
 
 from event_service.adapters import EventsAdapter
 from event_service.models import Event
-from .exceptions import IllegalValueException
+from .competition_formats_service import (
+    CompetitionFormatNotFoundException,
+    CompetitionFormatsService,
+)
+from .exceptions import IllegalValueException, InvalidDateFormatException
 
 
 def create_id() -> str:  # pragma: no cover
@@ -54,6 +59,8 @@ class EventsService:
         # create id
         id = create_id()
         event.id = id
+        # Validat:
+        await validate_event(db, event)
         # insert new event
         new_event = event.to_dict()
         result = await EventsAdapter.create_event(db, new_event)
@@ -74,6 +81,8 @@ class EventsService:
     @classmethod
     async def update_event(cls: Any, db: Any, id: str, event: Event) -> Optional[str]:
         """Get event function."""
+        # validate:
+        await validate_event(db, event)
         # get old document
         old_event = await EventsAdapter.get_event_by_id(db, id)
         # update the event if found:
@@ -96,4 +105,36 @@ class EventsService:
             return result
         raise EventNotFoundException(f"Event with id {id} not found") from None
 
-    #   Commands:
+
+#   Validation:
+async def validate_event(db: Any, event: Event) -> None:
+    """Validate the event."""
+    # Validate date_of_event if set:
+    if event.date_of_event:
+        try:
+            date.fromisoformat(event.date_of_event)  # type: ignore
+        except ValueError as e:
+            raise InvalidDateFormatException(
+                'Time "{time_str}" has invalid format.'
+            ) from e
+
+    # Validate time_of_event if set:
+    if event.time_of_event:
+        try:
+            time.fromisoformat(event.time_of_event)  # type: ignore
+        except ValueError as e:
+            raise InvalidDateFormatException(
+                'Time "{time_str}" has invalid format.'
+            ) from e
+
+    # Validate competition_format:
+    if event.competition_format:
+        competition_formats = (
+            await CompetitionFormatsService.get_competition_formats_by_name(
+                db, event.competition_format
+            )
+        )
+        if len(competition_formats) != 1:
+            raise CompetitionFormatNotFoundException(
+                f'Invalid competition_format "{event.competition_format}" for event.'
+            ) from None
