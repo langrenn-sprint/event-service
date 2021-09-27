@@ -17,6 +17,7 @@ from multidict import MultiDict
 from event_service.adapters import UsersAdapter
 from event_service.models import Event
 from event_service.services import (
+    CompetitionFormatNotFoundException,
     EventNotFoundException,
     EventsService,
     IllegalValueException,
@@ -72,7 +73,7 @@ class EventsView(View):
             event_id = await EventsService.create_event(db, event)
         except IllegalValueException as e:
             raise HTTPUnprocessableEntity() from e
-        except InvalidDateFormatException as e:
+        except (CompetitionFormatNotFoundException, InvalidDateFormatException) as e:
             raise HTTPBadRequest() from e
         if event_id:
             logging.debug(f"inserted document with event_id {event_id}")
@@ -132,7 +133,7 @@ class EventView(View):
             raise HTTPUnprocessableEntity() from e
         except EventNotFoundException as e:
             raise HTTPNotFound() from e
-        except InvalidDateFormatException as e:
+        except (CompetitionFormatNotFoundException, InvalidDateFormatException) as e:
             raise HTTPBadRequest() from e
         return Response(status=204)
 

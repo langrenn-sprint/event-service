@@ -6,6 +6,10 @@ import uuid
 
 from event_service.adapters import EventsAdapter
 from event_service.models import Event
+from .competition_formats_service import (
+    CompetitionFormatNotFoundException,
+    CompetitionFormatsService,
+)
 from .exceptions import IllegalValueException, InvalidDateFormatException
 
 
@@ -56,7 +60,7 @@ class EventsService:
         id = create_id()
         event.id = id
         # Validat:
-        await validate_event(event)
+        await validate_event(db, event)
         # insert new event
         new_event = event.to_dict()
         result = await EventsAdapter.create_event(db, new_event)
@@ -78,7 +82,7 @@ class EventsService:
     async def update_event(cls: Any, db: Any, id: str, event: Event) -> Optional[str]:
         """Get event function."""
         # validate:
-        await validate_event(event)
+        await validate_event(db, event)
         # get old document
         old_event = await EventsAdapter.get_event_by_id(db, id)
         # update the event if found:
@@ -103,8 +107,8 @@ class EventsService:
 
 
 #   Validation:
-async def validate_event(event: Event) -> None:
-    """Validate the competition-format."""
+async def validate_event(db: Any, event: Event) -> None:
+    """Validate the event."""
     # Validate date_of_event if set:
     if event.date_of_event:
         try:
@@ -122,3 +126,15 @@ async def validate_event(event: Event) -> None:
             raise InvalidDateFormatException(
                 'Time "{time_str}" has invalid format.'
             ) from e
+
+    # Validate competition_format:
+    if event.competition_format:
+        competition_formats = (
+            await CompetitionFormatsService.get_competition_formats_by_name(
+                db, event.competition_format
+            )
+        )
+        if len(competition_formats) != 1:
+            raise CompetitionFormatNotFoundException(
+                f'Invalid competition_format "{event.competition_format}" for event.'
+            ) from None
