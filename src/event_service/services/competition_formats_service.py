@@ -106,12 +106,12 @@ class CompetitionFormatsService:
         cls: Any, db: Any, id: str, competition_format: CompetitionFormat
     ) -> Optional[str]:
         """Get competition_format function."""
+        # Validate:
+        await validate_competition_format(competition_format)
         # get old document
         old_competition_format = (
             await CompetitionFormatsAdapter.get_competition_format_by_id(db, id)
         )
-        # Validate:
-        await validate_competition_format(competition_format)
         # update the competition_format if found:
         if old_competition_format:
             if competition_format.id != old_competition_format["id"]:
@@ -142,13 +142,15 @@ class CompetitionFormatsService:
             f"CompetitionFormat with id {id} not found"
         ) from None
 
-    #   Validation:
 
-
+#   Validation:
 async def validate_competition_format(competition_format: CompetitionFormat) -> None:
     """Validate the competition-format."""
-    # Validate intervals:
-    try:
-        time.fromisoformat(competition_format.intervals)  # type: ignore
-    except ValueError as e:
-        raise InvalidDateFormatException('Time "{time_str}" has invalid format.') from e
+    # Validate intervals if set:
+    if competition_format.intervals:
+        try:
+            time.fromisoformat(competition_format.intervals)  # type: ignore
+        except ValueError as e:
+            raise InvalidDateFormatException(
+                'Time "{time_str}" has invalid format.'
+            ) from e
