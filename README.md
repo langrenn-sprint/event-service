@@ -4,10 +4,10 @@ Backend service to create events, create raceclasses and assign bibs to contesta
 Supported [competition formats](https://assets.fis-ski.com/image/upload/v1624284540/fis-prod/assets/ICR_CrossCountry_2022_clean.pdf):
 
 in this version:
-- Interval start competition,
+- Interval Start competition,
 
 In next version:
-- Individual sprint competition without a qualification round,,
+- Individual sprint competition without a qualification round.
 
 In future versions:
 - Mass start competition,
