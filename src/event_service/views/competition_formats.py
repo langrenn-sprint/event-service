@@ -88,9 +88,9 @@ class CompetitionFormatsView(View):
                 )
             )
         except IllegalValueException as e:
-            raise HTTPUnprocessableEntity() from e
+            raise HTTPUnprocessableEntity(reason=e) from e
         except InvalidDateFormatException as e:
-            raise HTTPBadRequest() from e
+            raise HTTPBadRequest(reason=e) from e
         if competition_format_id:
             logging.debug(
                 f"inserted document with competition_format_id {competition_format_id}"
@@ -127,7 +127,7 @@ class CompetitionFormatView(View):
                 )
             )
         except CompetitionFormatNotFoundException as e:
-            raise HTTPNotFound() from e
+            raise HTTPNotFound(reason=e) from e
         logging.debug(f"Got competition_format: {competition_format}")
         body = competition_format.to_json()
         return Response(status=200, body=body, content_type="application/json")
@@ -162,11 +162,11 @@ class CompetitionFormatView(View):
                 db, competition_format_id, competition_format
             )
         except IllegalValueException as e:
-            raise HTTPUnprocessableEntity() from e
+            raise HTTPUnprocessableEntity(reason=e) from e
         except CompetitionFormatNotFoundException as e:
-            raise HTTPNotFound() from e
+            raise HTTPNotFound(reason=e) from e
         except InvalidDateFormatException as e:
-            raise HTTPBadRequest() from e
+            raise HTTPBadRequest(reason=e) from e
         return Response(status=204)
 
     async def delete(self) -> Response:
@@ -188,5 +188,5 @@ class CompetitionFormatView(View):
                 db, competition_format_id
             )
         except CompetitionFormatNotFoundException as e:
-            raise HTTPNotFound() from e
+            raise HTTPNotFound(reason=e) from e
         return Response(status=204)

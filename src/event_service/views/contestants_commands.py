@@ -46,9 +46,9 @@ class ContestantsAssignBibsView(View):
         try:
             await ContestantsCommands.assign_bibs(db, event_id)
         except (EventNotFoundException, NoRaceclassInEventException) as e:
-            raise HTTPNotFound() from e
+            raise HTTPNotFound(reason=e) from e
         except NoValueForOrderInRaceclassExcpetion as e:
-            raise HTTPBadRequest() from e
+            raise HTTPBadRequest(reason=e) from e
 
         headers = MultiDict(
             {hdrs.LOCATION: f"{BASE_URL}/events/{event_id}/contestants"}

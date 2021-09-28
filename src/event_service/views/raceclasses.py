@@ -83,7 +83,7 @@ class RaceclassesView(View):
                 db, event_id, raceclass
             )
         except IllegalValueException as e:
-            raise HTTPUnprocessableEntity() from e
+            raise HTTPUnprocessableEntity(reason=e) from e
         if raceclass_id:
             logging.debug(f"inserted document with id {raceclass_id}")
             headers = MultiDict(
@@ -131,7 +131,7 @@ class RaceclassView(View):
                 db, event_id, raceclass_id
             )
         except RaceclassNotFoundException as e:
-            raise HTTPNotFound() from e
+            raise HTTPNotFound(reason=e) from e
         logging.debug(f"Got raceclass: {raceclass}")
         body = raceclass.to_json()
         return Response(status=200, body=body, content_type="application/json")
@@ -164,9 +164,9 @@ class RaceclassView(View):
                 db, event_id, raceclass_id, raceclass
             )
         except IllegalValueException as e:
-            raise HTTPUnprocessableEntity() from e
+            raise HTTPUnprocessableEntity(reason=e) from e
         except RaceclassNotFoundException as e:
-            raise HTTPNotFound() from e
+            raise HTTPNotFound(reason=e) from e
         return Response(status=204)
 
     async def delete(self) -> Response:
@@ -185,5 +185,5 @@ class RaceclassView(View):
         try:
             await RaceclassesService.delete_raceclass(db, event_id, raceclass_id)
         except RaceclassNotFoundException as e:
-            raise HTTPNotFound() from e
+            raise HTTPNotFound(reason=e) from e
         return Response(status=204)
