@@ -82,7 +82,7 @@ class ContestantsView(View):
                     db, event_id, contestant
                 )
             except IllegalValueException as e:
-                raise HTTPUnprocessableEntity() from e
+                raise HTTPUnprocessableEntity(reason=e) from e
             if contestant_id:
                 logging.debug(f"inserted document with contestant_id {contestant_id}")
                 headers = MultiDict(
@@ -161,7 +161,7 @@ class ContestantView(View):
                 db, event_id, contestant_id
             )
         except ContestantNotFoundException as e:
-            raise HTTPNotFound() from e
+            raise HTTPNotFound(reason=e) from e
         logging.debug(f"Got contestant: {contestant}")
         body = contestant.to_json()
         return Response(status=200, body=body, content_type="application/json")
@@ -195,9 +195,9 @@ class ContestantView(View):
                 db, event_id, contestant_id, contestant
             )
         except IllegalValueException as e:
-            raise HTTPUnprocessableEntity() from e
+            raise HTTPUnprocessableEntity(reason=e) from e
         except ContestantNotFoundException as e:
-            raise HTTPNotFound() from e
+            raise HTTPNotFound(reason=e) from e
         return Response(status=204)
 
     async def delete(self) -> Response:
@@ -218,5 +218,5 @@ class ContestantView(View):
         try:
             await ContestantsService.delete_contestant(db, event_id, contestant_id)
         except ContestantNotFoundException as e:
-            raise HTTPNotFound() from e
+            raise HTTPNotFound(reason=e) from e
         return Response(status=204)
