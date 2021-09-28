@@ -38,9 +38,9 @@ async def clear_db(http_service: Any, token: MockFixture) -> AsyncGenerator:
 async def competition_format() -> dict:
     """An competition_format object for testing."""
     return {
-        "name": "Interval start",
+        "name": "Interval Start",
         "starting_order": "Draw",
-        "start_procedure": "Interval start",
+        "start_procedure": "Interval Start",
         "intervals": "00:00:30",
     }
 
@@ -189,7 +189,7 @@ async def test_update_competition_format(
         url = f"{url}/{id}"
 
         request_body = deepcopy(competition_format)
-        new_name = "Interval start updated"
+        new_name = "Interval Start updated"
         request_body["id"] = id
         request_body["name"] = new_name
 
