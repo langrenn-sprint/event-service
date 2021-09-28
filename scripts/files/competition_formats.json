@@ -2,7 +2,13 @@
   {
     "name": "Interval start",
     "starting_order": "Draw",
-    "start_procedure": "Interval start",
+    "start_procedure": "Interval Start",
     "intervals": "00:00:30"
-  }
+  },
+  {
+    "name": "Individual sprint without qualifying round",
+    "starting_order": "Draw",
+    "start_procedure": "Heat Start",
+    "intervals": "00:00:30"
+  },
 ]

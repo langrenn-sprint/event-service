@@ -46,9 +46,9 @@ async def event() -> dict[str, str]:
 async def competition_format() -> dict[str, str]:
     """An competition_format object for testing."""
     return {
-        "name": "Interval start",
+        "name": "Interval Start",
         "starting_order": "Draw",
-        "start_procedure": "Interval start",
+        "start_procedure": "Interval Start",
         "intervals": "00:00:30",
     }
 

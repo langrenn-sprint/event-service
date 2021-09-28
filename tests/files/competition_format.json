@@ -1,6 +1,6 @@
 {
-  "name": "Interval start",
+  "name": "Interval Start",
   "starting_order": "Draw",
-  "start_procedure": "Interval start",
+  "start_procedure": "Interval Start",
   "intervals": "00:00:30"
 }
