@@ -1,5 +1,9 @@
 {
   "name": "Oslo Skagen Sprint test",
-  "date_of_event": "2021-09-17"
-  "time_of_event": "09:00:00"
+  "date_of_event": "2021-09-17",
+  "time_of_event": "09:00:00",
+  "competition_format": "Interval start",
+  "organiser": "Lyn Ski",
+  "webpage": "https://lynski.no",
+  "information": "Test event"
 }
