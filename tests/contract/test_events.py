@@ -47,7 +47,7 @@ async def event() -> dict:
     """An event object for testing."""
     return {
         "name": "Oslo Skagen sprint",
-        "competition_format": "Interval start",
+        "competition_format": "Interval Start",
         "date_of_event": "2021-08-31",
         "time_of_event": "09:00:00",
         "organiser": "Lyn Ski",
