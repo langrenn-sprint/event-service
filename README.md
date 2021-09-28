@@ -1,7 +1,23 @@
 # event-service
-Backend service to adminster events, will generate racelists etc
+Backend service to create events, create raceclasses and assign bibs to contestants.
 
+Supported [competition formats](https://assets.fis-ski.com/image/upload/v1624284540/fis-prod/assets/ICR_CrossCountry_2022_clean.pdf):
 
+in this version:
+- Interval start competition,
+
+In next version:
+- Individual sprint competition without a qualification round,,
+
+In future versions:
+- Mass start competition,
+- Skiathlon competition,
+- Pursuit,
+- Individual sprint competition with a qualification round,
+- Team sprint competition, and
+- Relay competitions.
+
+## Usage example
 ```
 % curl -H "Content-Type: application/json" \
   -X POST \
@@ -15,6 +31,7 @@ Backend service to adminster events, will generate racelists etc
   http://localhost:8080/events
 % curl -H "Authorization: Bearer $ACCESS"  http://localhost:8080/events
 ```
+Look to the [openAPI specification](./specification.yaml) for the details.
 
 ## Running the API locally
 Start the server locally:
