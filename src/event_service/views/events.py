@@ -72,9 +72,9 @@ class EventsView(View):
         try:
             event_id = await EventsService.create_event(db, event)
         except IllegalValueException as e:
-            raise HTTPUnprocessableEntity() from e
+            raise HTTPUnprocessableEntity(reason=e) from e
         except (CompetitionFormatNotFoundException, InvalidDateFormatException) as e:
-            raise HTTPBadRequest() from e
+            raise HTTPBadRequest(reason=e) from e
         if event_id:
             logging.debug(f"inserted document with event_id {event_id}")
             headers = MultiDict({hdrs.LOCATION: f"{BASE_URL}/events/{event_id}"})
@@ -101,7 +101,7 @@ class EventView(View):
         try:
             event = await EventsService.get_event_by_id(db, event_id)
         except EventNotFoundException as e:
-            raise HTTPNotFound() from e
+            raise HTTPNotFound(reason=e) from e
         logging.debug(f"Got event: {event}")
         body = event.to_json()
         return Response(status=200, body=body, content_type="application/json")
@@ -130,11 +130,11 @@ class EventView(View):
         try:
             await EventsService.update_event(db, event_id, event)
         except IllegalValueException as e:
-            raise HTTPUnprocessableEntity() from e
+            raise HTTPUnprocessableEntity(reason=e) from e
         except EventNotFoundException as e:
-            raise HTTPNotFound() from e
+            raise HTTPNotFound(reason=e) from e
         except (CompetitionFormatNotFoundException, InvalidDateFormatException) as e:
-            raise HTTPBadRequest() from e
+            raise HTTPBadRequest(reason=e) from e
         return Response(status=204)
 
     async def delete(self) -> Response:
@@ -152,5 +152,5 @@ class EventView(View):
         try:
             await EventsService.delete_event(db, event_id)
         except EventNotFoundException as e:
-            raise HTTPNotFound() from e
+            raise HTTPNotFound(reason=e) from e
         return Response(status=204)

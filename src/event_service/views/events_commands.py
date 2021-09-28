@@ -46,11 +46,11 @@ class EventGenerateRaceclassesView(View):
         try:
             await EventsCommands.generate_raceclasses(db, event_id)
         except EventNotFoundException as e:
-            raise HTTPNotFound() from e
+            raise HTTPNotFound(reason=e) from e
         except RaceclassNotUniqueNameException as e:
-            raise HTTPUnprocessableEntity() from e
+            raise HTTPUnprocessableEntity(reason=e) from e
         except (RaceclassCreateException, RaceclassUpdateException) as e:
-            raise HTTPBadRequest() from e
+            raise HTTPBadRequest(reason=e) from e
         headers = MultiDict(
             {hdrs.LOCATION: f"{BASE_URL}/events/{event_id}/raceclasses"}
         )
