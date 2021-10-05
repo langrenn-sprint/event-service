@@ -37,7 +37,17 @@ class EventsService:
         _events = await EventsAdapter.get_all_events(db)
         for e in _events:
             events.append(Event.from_dict(e))
-        return events
+        _s = sorted(
+            events,
+            key=lambda k: (
+                k.date_of_event is not None,
+                k.date_of_event,
+                k.time_of_event is not None,
+                k.time_of_event,
+            ),
+            reverse=True,
+        )
+        return _s
 
     @classmethod
     async def create_event(cls: Any, db: Any, event: Event) -> Optional[str]:
