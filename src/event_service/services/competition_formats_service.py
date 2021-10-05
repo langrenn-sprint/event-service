@@ -35,7 +35,12 @@ class CompetitionFormatsService:
         )
         for e in _competition_formats:
             competition_formats.append(CompetitionFormat.from_dict(e))
-        return competition_formats
+        _s = sorted(
+            competition_formats,
+            key=lambda k: (k.name,),
+            reverse=False,
+        )
+        return _s
 
     @classmethod
     async def create_competition_format(
