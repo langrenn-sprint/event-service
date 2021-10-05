@@ -9,6 +9,7 @@ import pandas as pd
 
 from event_service.adapters import ContestantsAdapter
 from event_service.models import Contestant
+from .events_service import EventNotFoundException, EventsService
 from .exceptions import IllegalValueException
 
 
@@ -18,6 +19,15 @@ def create_id() -> str:  # pragma: no cover
 
 
 class ContestantNotFoundException(Exception):
+    """Class representing custom exception for fetch method."""
+
+    def __init__(self, message: str) -> None:
+        """Initialize the error."""
+        # Call the base class constructor with the parameters it needs
+        super().__init__(message)
+
+
+class ContestantAllreadyExistException(Exception):
     """Class representing custom exception for fetch method."""
 
     def __init__(self, message: str) -> None:
@@ -64,9 +74,22 @@ class ContestantsService:
             Optional[str]: The id of the created contestant. None otherwise.
 
         Raises:
+            EventNotFoundException: event does not exist
+            ContestantAllreadyExistException: contestant allready exists
             IllegalValueException: input object has illegal values
         """
         # Validation:
+        # First we have to check if the event exist:
+        try:
+            _ = await EventsService.get_event_by_id(db, event_id)
+        except EventNotFoundException as e:
+            raise e from e
+        # Check if contestant exist:
+        _contestant = await _contestant_exist(db, event_id, contestant)
+        if _contestant:
+            raise ContestantAllreadyExistException(
+                f"Contestant with {contestant.to_dict()} allready exist in event {event_id}. "
+            )
         if contestant.id:
             raise IllegalValueException(
                 "Cannot create contestant with input id."
@@ -105,7 +128,14 @@ class ContestantsService:
         Returns:
             dict: A short report of created, updated or failed attempts.
 
+        Raises:
+            EventNotFoundException: event does not exist
         """
+        # First we have to check if the event exist:
+        try:
+            _ = await EventsService.get_event_by_id(db, event_id)
+        except EventNotFoundException as e:
+            raise e from e
         # Parse str as csv:
         cols = [
             "Klasse",
@@ -252,7 +282,7 @@ class ContestantsService:
 async def _contestant_exist(
     db: Any, event_id: str, contestant: Contestant
 ) -> Optional[dict]:
-    """Checks if contestant exist and return id it it does. None otherwise."""
+    """Checks if contestant exist and return id if it does. None otherwise."""
     # if contestant has minidrett_id:
     if contestant.minidrett_id:
         _result = await ContestantsAdapter.get_contestant_by_minidrett_id(

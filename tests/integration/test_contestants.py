@@ -22,6 +22,20 @@ def token() -> str:
 
 
 @pytest.fixture
+async def event() -> dict[str, str]:
+    """An event object for testing."""
+    return {
+        "id": "ref_to_event",
+        "name": "Oslo Skagen sprint",
+        "competition_format": "Individual sprint",
+        "date_of_event": "2021-08-31",
+        "organiser": "Lyn Ski",
+        "webpage": "https://example.com",
+        "information": "Testarr for å teste den nye løysinga.",
+    }
+
+
+@pytest.fixture
 async def new_contestant() -> dict:
     """Create a mock contestant object."""
     return {
@@ -67,11 +81,27 @@ def token_unsufficient_role() -> str:
 
 @pytest.mark.integration
 async def test_create_contestant_good_case(
-    client: _TestClient, mocker: MockFixture, token: MockFixture, new_contestant: dict
+    client: _TestClient,
+    mocker: MockFixture,
+    token: MockFixture,
+    event: dict,
+    new_contestant: dict,
 ) -> None:
     """Should return Created, location header."""
     EVENT_ID = "event_id_1"
     CONTESTANT_ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
+    mocker.patch(
+        "event_service.adapters.events_adapter.EventsAdapter.get_event_by_id",  # noqa: B950
+        return_value=event,
+    )
+    mocker.patch(
+        "event_service.adapters.contestants_adapter.ContestantsAdapter.get_contestant_by_name",  # noqa: B950
+        return_value=None,
+    )
+    mocker.patch(
+        "event_service.adapters.contestants_adapter.ContestantsAdapter.get_contestant_by_minidrett_id",  # noqa: B950
+        return_value=None,
+    )
     mocker.patch(
         "event_service.services.contestants_service.create_id",
         return_value=CONTESTANT_ID,
@@ -103,12 +133,20 @@ async def test_create_contestant_good_case(
 
 
 @pytest.mark.integration
-async def test_create_contestant_good_case_csv(
-    client: _TestClient, mocker: MockFixture, token: MockFixture, new_contestant: dict
+async def test_create_contestants_csv_good_case(
+    client: _TestClient,
+    mocker: MockFixture,
+    token: MockFixture,
+    event: dict,
+    new_contestant: dict,
 ) -> None:
     """Should return 200 OK and simple result report in body."""
     EVENT_ID = "event_id_1"
     CONTESTANT_ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
+    mocker.patch(
+        "event_service.adapters.events_adapter.EventsAdapter.get_event_by_id",  # noqa: B950
+        return_value=event,
+    )
     mocker.patch(
         "event_service.services.contestants_service.create_id",
         return_value=CONTESTANT_ID,
@@ -153,12 +191,20 @@ async def test_create_contestant_good_case_csv(
 
 
 @pytest.mark.integration
-async def test_create_contestant_no_minidrett_id_existing_good_case_csv(
-    client: _TestClient, mocker: MockFixture, token: MockFixture, new_contestant: dict
+async def test_create_contestants_csv_no_minidrett_id_existing_good_case(
+    client: _TestClient,
+    mocker: MockFixture,
+    token: MockFixture,
+    event: dict,
+    new_contestant: dict,
 ) -> None:
     """Should return 200 OK and simple result report in body."""
     EVENT_ID = "event_id_1"
     CONTESTANT_ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
+    mocker.patch(
+        "event_service.adapters.events_adapter.EventsAdapter.get_event_by_id",  # noqa: B950
+        return_value=event,
+    )
     mocker.patch(
         "event_service.services.contestants_service.create_id",
         return_value=CONTESTANT_ID,
@@ -209,12 +255,20 @@ async def test_create_contestant_no_minidrett_id_existing_good_case_csv(
 
 
 @pytest.mark.integration
-async def test_create_contestant_minidrett_id_existing_good_case_csv(
-    client: _TestClient, mocker: MockFixture, token: MockFixture, new_contestant: dict
+async def test_create_contestants_csv_minidrett_id_existing_good_case(
+    client: _TestClient,
+    mocker: MockFixture,
+    token: MockFixture,
+    event: dict,
+    new_contestant: dict,
 ) -> None:
     """Should return 200 OK and simple result report in body."""
     EVENT_ID = "event_id_1"
     CONTESTANT_ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
+    mocker.patch(
+        "event_service.adapters.events_adapter.EventsAdapter.get_event_by_id",  # noqa: B950
+        return_value=event,
+    )
     mocker.patch(
         "event_service.services.contestants_service.create_id",
         return_value=CONTESTANT_ID,
@@ -259,12 +313,20 @@ async def test_create_contestant_minidrett_id_existing_good_case_csv(
 
 
 @pytest.mark.integration
-async def test_create_contestant_create_failures_good_case_csv(
-    client: _TestClient, mocker: MockFixture, token: MockFixture, new_contestant: dict
+async def test_create_contestants_csv_create_failures_good_case(
+    client: _TestClient,
+    mocker: MockFixture,
+    token: MockFixture,
+    event: dict,
+    new_contestant: dict,
 ) -> None:
     """Should return 200 OK and simple result report in body."""
     EVENT_ID = "event_id_1"
     CONTESTANT_ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
+    mocker.patch(
+        "event_service.adapters.events_adapter.EventsAdapter.get_event_by_id",  # noqa: B950
+        return_value=event,
+    )
     mocker.patch(
         "event_service.services.contestants_service.create_id",
         return_value=CONTESTANT_ID,
@@ -313,19 +375,19 @@ async def test_create_contestant_create_failures_good_case_csv(
 
 
 @pytest.mark.integration
-async def test_create_contestant_update_failures_good_case_csv(
-    client: _TestClient, mocker: MockFixture, token: MockFixture, new_contestant: dict
+async def test_create_contestants_csv_update_failures_good_case(
+    client: _TestClient,
+    mocker: MockFixture,
+    token: MockFixture,
+    event: dict,
+    new_contestant: dict,
 ) -> None:
     """Should return 200 OK and simple result report in body."""
     EVENT_ID = "event_id_1"
     CONTESTANT_ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
     mocker.patch(
-        "event_service.services.contestants_service.create_id",
-        return_value=CONTESTANT_ID,
-    )
-    mocker.patch(
-        "event_service.adapters.contestants_adapter.ContestantsAdapter.create_contestant",  # noqa: B950
-        return_value=CONTESTANT_ID,
+        "event_service.adapters.events_adapter.EventsAdapter.get_event_by_id",  # noqa: B950
+        return_value=event,
     )
     mocker.patch(
         "event_service.adapters.contestants_adapter.ContestantsAdapter.get_contestant_by_name",  # noqa: B950
@@ -334,6 +396,14 @@ async def test_create_contestant_update_failures_good_case_csv(
     mocker.patch(
         "event_service.adapters.contestants_adapter.ContestantsAdapter.get_contestant_by_minidrett_id",  # noqa: B950
         return_value={"id": CONTESTANT_ID},
+    )
+    mocker.patch(
+        "event_service.services.contestants_service.create_id",
+        return_value=CONTESTANT_ID,
+    )
+    mocker.patch(
+        "event_service.adapters.contestants_adapter.ContestantsAdapter.create_contestant",  # noqa: B950
+        return_value=CONTESTANT_ID,
     )
     mocker.patch(
         "event_service.adapters.contestants_adapter.ContestantsAdapter.update_contestant",  # noqa: B950
@@ -367,12 +437,28 @@ async def test_create_contestant_update_failures_good_case_csv(
 
 
 @pytest.mark.integration
-async def test_create_contestant_bad_case_csv(
-    client: _TestClient, mocker: MockFixture, token: MockFixture, new_contestant: dict
+async def test_create_contestants_csv_bad_case(
+    client: _TestClient,
+    mocker: MockFixture,
+    token: MockFixture,
+    event: dict,
+    new_contestant: dict,
 ) -> None:
     """Should return 400 Bad request."""
     EVENT_ID = "event_id_1"
     CONTESTANT_ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
+    mocker.patch(
+        "event_service.adapters.events_adapter.EventsAdapter.get_event_by_id",  # noqa: B950
+        return_value=event,
+    )
+    mocker.patch(
+        "event_service.adapters.contestants_adapter.ContestantsAdapter.get_contestant_by_name",  # noqa: B950
+        return_value={"id": CONTESTANT_ID},
+    )
+    mocker.patch(
+        "event_service.adapters.contestants_adapter.ContestantsAdapter.get_contestant_by_minidrett_id",  # noqa: B950
+        return_value={"id": CONTESTANT_ID},
+    )
     mocker.patch(
         "event_service.services.contestants_service.create_id",
         return_value=CONTESTANT_ID,
@@ -399,12 +485,28 @@ async def test_create_contestant_bad_case_csv(
 
 
 @pytest.mark.integration
-async def test_create_contestant_bad_case_csv_not_supported_content_type(
-    client: _TestClient, mocker: MockFixture, token: MockFixture, new_contestant: dict
+async def test_create_contestants_csv_not_supported_content_type(
+    client: _TestClient,
+    mocker: MockFixture,
+    token: MockFixture,
+    event: dict,
+    new_contestant: dict,
 ) -> None:
     """Should return 415 Unsupported Media Type."""
     EVENT_ID = "event_id_1"
     CONTESTANT_ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
+    mocker.patch(
+        "event_service.adapters.events_adapter.EventsAdapter.get_event_by_id",  # noqa: B950
+        return_value=event,
+    )
+    mocker.patch(
+        "event_service.adapters.contestants_adapter.ContestantsAdapter.get_contestant_by_name",  # noqa: B950
+        return_value={"id": CONTESTANT_ID},
+    )
+    mocker.patch(
+        "event_service.adapters.contestants_adapter.ContestantsAdapter.get_contestant_by_minidrett_id",  # noqa: B950
+        return_value={"id": CONTESTANT_ID},
+    )
     mocker.patch(
         "event_service.services.contestants_service.create_id",
         return_value=CONTESTANT_ID,
@@ -432,12 +534,20 @@ async def test_create_contestant_bad_case_csv_not_supported_content_type(
 
 
 @pytest.mark.integration
-async def test_create_contestant_good_case_octet_stream(
-    client: _TestClient, mocker: MockFixture, token: MockFixture, new_contestant: dict
+async def test_create_contestants_csv_good_case_octet_stream(
+    client: _TestClient,
+    mocker: MockFixture,
+    token: MockFixture,
+    event: dict,
+    new_contestant: dict,
 ) -> None:
     """Should return 200 OK and simple result report in body."""
     EVENT_ID = "event_id_1"
     CONTESTANT_ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
+    mocker.patch(
+        "event_service.adapters.events_adapter.EventsAdapter.get_event_by_id",  # noqa: B950
+        return_value=event,
+    )
     mocker.patch(
         "event_service.services.contestants_service.create_id",
         return_value=CONTESTANT_ID,
@@ -648,15 +758,216 @@ async def test_delete_all_contestants_in_event(
 
 
 # Bad cases
+# Event not found:
+@pytest.mark.integration
+async def test_create_contestant_event_not_found(
+    client: _TestClient,
+    mocker: MockFixture,
+    token: MockFixture,
+    new_contestant: dict,
+) -> None:
+    """Should return 404 Not found."""
+    EVENT_ID = "event_id_1"
+    CONTESTANT_ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
+    mocker.patch(
+        "event_service.adapters.events_adapter.EventsAdapter.get_event_by_id",  # noqa: B950
+        return_value=None,
+    )
+    mocker.patch(
+        "event_service.adapters.contestants_adapter.ContestantsAdapter.get_contestant_by_name",  # noqa: B950
+        return_value=None,
+    )
+    mocker.patch(
+        "event_service.adapters.contestants_adapter.ContestantsAdapter.get_contestant_by_minidrett_id",  # noqa: B950
+        return_value=None,
+    )
+    mocker.patch(
+        "event_service.services.contestants_service.create_id",
+        return_value=CONTESTANT_ID,
+    )
+    mocker.patch(
+        "event_service.adapters.contestants_adapter.ContestantsAdapter.create_contestant",  # noqa: B950
+        return_value=CONTESTANT_ID,
+    )
+
+    request_body = new_contestant
+
+    headers = MultiDict(
+        {
+            hdrs.CONTENT_TYPE: "application/json",
+            hdrs.AUTHORIZATION: f"Bearer {token}",
+        },
+    )
+
+    with aioresponses(passthrough=["http://127.0.0.1"]) as m:
+        m.post("http://example.com:8081/authorize", status=204)
+        resp = await client.post(
+            f"/events/{EVENT_ID}/contestants", headers=headers, json=request_body
+        )
+        assert resp.status == 404
+
+
+@pytest.mark.integration
+async def test_create_contestants_csv_event_not_found(
+    client: _TestClient,
+    mocker: MockFixture,
+    token: MockFixture,
+    event: dict,
+    new_contestant: dict,
+) -> None:
+    """Should return 404 Not found."""
+    EVENT_ID = "event_id_1"
+    CONTESTANT_ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
+    mocker.patch(
+        "event_service.adapters.events_adapter.EventsAdapter.get_event_by_id",  # noqa: B950
+        return_value=None,
+    )
+    mocker.patch(
+        "event_service.services.contestants_service.create_id",
+        return_value=CONTESTANT_ID,
+    )
+    mocker.patch(
+        "event_service.adapters.contestants_adapter.ContestantsAdapter.create_contestant",  # noqa: B950
+        return_value=CONTESTANT_ID,
+    )
+    mocker.patch(
+        "event_service.adapters.contestants_adapter.ContestantsAdapter.get_contestant_by_name",  # noqa: B950
+        return_value=None,
+    )
+    mocker.patch(
+        "event_service.adapters.contestants_adapter.ContestantsAdapter.get_contestant_by_minidrett_id",  # noqa: B950
+        return_value=None,
+    )
+
+    files = {"file": open("tests/files/contestants_eventid_364892.csv", "rb")}
+
+    headers = MultiDict(
+        {
+            hdrs.AUTHORIZATION: f"Bearer {token}",
+        },
+    )
+
+    with aioresponses(passthrough=["http://127.0.0.1"]) as m:
+        m.post("http://example.com:8081/authorize", status=204)
+        resp = await client.post(
+            f"/events/{EVENT_ID}/contestants", headers=headers, data=files
+        )
+        assert resp.status == 404
+
+
+@pytest.mark.integration
+async def test_create_contestants_csv_octet_stream_event_not_found(
+    client: _TestClient,
+    mocker: MockFixture,
+    token: MockFixture,
+    event: dict,
+    new_contestant: dict,
+) -> None:
+    """Should return 404 Not found."""
+    EVENT_ID = "event_id_1"
+    CONTESTANT_ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
+    mocker.patch(
+        "event_service.adapters.events_adapter.EventsAdapter.get_event_by_id",  # noqa: B950
+        return_value=None,
+    )
+    mocker.patch(
+        "event_service.services.contestants_service.create_id",
+        return_value=CONTESTANT_ID,
+    )
+    mocker.patch(
+        "event_service.adapters.contestants_adapter.ContestantsAdapter.create_contestant",  # noqa: B950
+        return_value=CONTESTANT_ID,
+    )
+    mocker.patch(
+        "event_service.adapters.contestants_adapter.ContestantsAdapter.get_contestant_by_name",  # noqa: B950
+        return_value=None,
+    )
+    mocker.patch(
+        "event_service.adapters.contestants_adapter.ContestantsAdapter.get_contestant_by_minidrett_id",  # noqa: B950
+        return_value=None,
+    )
+
+    with open("tests/files/contestants_eventid_364892.csv", "rb") as f:
+
+        headers = MultiDict(
+            {
+                hdrs.AUTHORIZATION: f"Bearer {token}",
+            },
+        )
+
+        with aioresponses(passthrough=["http://127.0.0.1"]) as m:
+            m.post("http://example.com:8081/authorize", status=204)
+            resp = await client.post(
+                f"/events/{EVENT_ID}/contestants", headers=headers, data=f
+            )
+            assert resp.status == 404
+
+
+# Contestant allready exist:
+@pytest.mark.integration
+async def test_create_contestant_allready_exist(
+    client: _TestClient,
+    mocker: MockFixture,
+    token: MockFixture,
+    event: dict,
+    new_contestant: dict,
+) -> None:
+    """Should return 400 Bad request."""
+    EVENT_ID = "event_id_1"
+    CONTESTANT_ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
+    mocker.patch(
+        "event_service.adapters.events_adapter.EventsAdapter.get_event_by_id",  # noqa: B950
+        return_value=event,
+    )
+    mocker.patch(
+        "event_service.adapters.contestants_adapter.ContestantsAdapter.get_contestant_by_name",  # noqa: B950
+        return_value=new_contestant,
+    )
+    mocker.patch(
+        "event_service.adapters.contestants_adapter.ContestantsAdapter.get_contestant_by_minidrett_id",  # noqa: B950
+        return_value=new_contestant,
+    )
+    mocker.patch(
+        "event_service.services.contestants_service.create_id",
+        return_value=CONTESTANT_ID,
+    )
+    mocker.patch(
+        "event_service.adapters.contestants_adapter.ContestantsAdapter.create_contestant",  # noqa: B950
+        return_value=CONTESTANT_ID,
+    )
+
+    request_body = new_contestant
+
+    headers = MultiDict(
+        {
+            hdrs.CONTENT_TYPE: "application/json",
+            hdrs.AUTHORIZATION: f"Bearer {token}",
+        },
+    )
+
+    with aioresponses(passthrough=["http://127.0.0.1"]) as m:
+        m.post("http://example.com:8081/authorize", status=204)
+        resp = await client.post(
+            f"/events/{EVENT_ID}/contestants", headers=headers, json=request_body
+        )
+        assert resp.status == 400
+
 
 # Mandatory properties missing at create and update:
 @pytest.mark.integration
 async def test_create_contestant_missing_mandatory_property(
-    client: _TestClient, mocker: MockFixture, token: MockFixture
+    client: _TestClient,
+    mocker: MockFixture,
+    token: MockFixture,
+    event: dict,
 ) -> None:
     """Should return 422 HTTPUnprocessableEntity."""
     EVENT_ID = "event_id_1"
     CONTESTANT_ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
+    mocker.patch(
+        "event_service.adapters.events_adapter.EventsAdapter.get_event_by_id",  # noqa: B950
+        return_value=event,
+    )
     mocker.patch(
         "event_service.services.contestants_service.create_id",
         return_value=CONTESTANT_ID,
@@ -683,11 +994,19 @@ async def test_create_contestant_missing_mandatory_property(
 
 @pytest.mark.integration
 async def test_create_contestant_with_input_id(
-    client: _TestClient, mocker: MockFixture, token: MockFixture, contestant: dict
+    client: _TestClient,
+    mocker: MockFixture,
+    token: MockFixture,
+    event: dict,
+    contestant: dict,
 ) -> None:
     """Should return 422 HTTPUnprocessableEntity."""
     EVENT_ID = "event_id_1"
     CONTESTANT_ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
+    mocker.patch(
+        "event_service.adapters.events_adapter.EventsAdapter.get_event_by_id",  # noqa: B950
+        return_value=event,
+    )
     mocker.patch(
         "event_service.services.contestants_service.create_id",
         return_value=CONTESTANT_ID,
@@ -695,6 +1014,10 @@ async def test_create_contestant_with_input_id(
     mocker.patch(
         "event_service.adapters.contestants_adapter.ContestantsAdapter.create_contestant",  # noqa: B950
         return_value=CONTESTANT_ID,
+    )
+    mocker.patch(
+        "event_service.adapters.contestants_adapter.ContestantsAdapter.get_contestant_by_name",  # noqa: B950
+        return_value=None,
     )
     request_body = contestant
     headers = MultiDict(
@@ -714,10 +1037,22 @@ async def test_create_contestant_with_input_id(
 
 @pytest.mark.integration
 async def test_create_contestant_adapter_fails(
-    client: _TestClient, mocker: MockFixture, token: MockFixture, new_contestant: dict
+    client: _TestClient,
+    mocker: MockFixture,
+    token: MockFixture,
+    event: dict,
+    new_contestant: dict,
 ) -> None:
     """Should return 400 HTTPBadRequest."""
     EVENT_ID = "event_id_1"
+    mocker.patch(
+        "event_service.adapters.events_adapter.EventsAdapter.get_event_by_id",  # noqa: B950
+        return_value=event,
+    )
+    mocker.patch(
+        "event_service.adapters.contestants_adapter.ContestantsAdapter.get_contestant_by_name",  # noqa: B950
+        return_value=None,
+    )
     mocker.patch(
         "event_service.services.contestants_service.create_id",
         return_value=None,
@@ -818,11 +1153,15 @@ async def test_update_contestant_by_id_different_id_in_body(
 
 @pytest.mark.integration
 async def test_create_contestant_no_authorization(
-    client: _TestClient, mocker: MockFixture, new_contestant: dict
+    client: _TestClient, mocker: MockFixture, event: dict, new_contestant: dict
 ) -> None:
     """Should return 401 Unauthorized."""
     EVENT_ID = "event_id_1"
     CONTESTANT_ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
+    mocker.patch(
+        "event_service.adapters.events_adapter.EventsAdapter.get_event_by_id",  # noqa: B950
+        return_value=event,
+    )
     mocker.patch(
         "event_service.services.contestants_service.create_id",
         return_value=CONTESTANT_ID,
@@ -956,11 +1295,16 @@ async def test_create_contestant_insufficient_role(
     client: _TestClient,
     mocker: MockFixture,
     token_unsufficient_role: MockFixture,
+    event: dict,
     new_contestant: dict,
 ) -> None:
     """Should return 403 Forbidden."""
     EVENT_ID = "event_id_1"
     CONTESTANT_ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
+    mocker.patch(
+        "event_service.adapters.events_adapter.EventsAdapter.get_event_by_id",  # noqa: B950
+        return_value=event,
+    )
     mocker.patch(
         "event_service.services.contestants_service.create_id",
         return_value=CONTESTANT_ID,

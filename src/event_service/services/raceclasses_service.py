@@ -5,6 +5,7 @@ import uuid
 
 from event_service.adapters import RaceclassesAdapter
 from event_service.models import Raceclass
+from .events_service import EventNotFoundException, EventsService
 from .exceptions import IllegalValueException
 
 
@@ -85,8 +86,14 @@ class RaceclassesService:
             Optional[str]: The id of the created raceclass. None otherwise.
 
         Raises:
+            EventNotFoundException: event does not exist
             IllegalValueException: input object has illegal values
         """
+        # First we have to check if the event exist:
+        try:
+            _ = await EventsService.get_event_by_id(db, event_id)
+        except EventNotFoundException as e:
+            raise e from e
         # Validation:
         if raceclass.id:
             raise IllegalValueException(
