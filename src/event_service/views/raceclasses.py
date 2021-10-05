@@ -17,6 +17,7 @@ from multidict import MultiDict
 from event_service.adapters import UsersAdapter
 from event_service.models import Raceclass
 from event_service.services import (
+    EventNotFoundException,
     IllegalValueException,
     RaceclassesService,
     RaceclassNotFoundException,
@@ -82,6 +83,8 @@ class RaceclassesView(View):
             raceclass_id = await RaceclassesService.create_raceclass(
                 db, event_id, raceclass
             )
+        except EventNotFoundException as e:
+            raise HTTPNotFound(reason=e) from e
         except IllegalValueException as e:
             raise HTTPUnprocessableEntity(reason=e) from e
         if raceclass_id:

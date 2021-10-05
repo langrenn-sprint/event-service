@@ -21,13 +21,27 @@ def token() -> str:
 
 
 @pytest.fixture
+async def event() -> dict[str, str]:
+    """An event object for testing."""
+    return {
+        "id": "event_id_1",
+        "name": "Oslo Skagen sprint",
+        "competition_format": "Individual sprint",
+        "date_of_event": "2021-08-31",
+        "organiser": "Lyn Ski",
+        "webpage": "https://example.com",
+        "information": "Testarr for å teste den nye løysinga.",
+    }
+
+
+@pytest.fixture
 async def new_raceclass() -> dict:
     """Create a mock raceclass object."""
     return {
         "name": "G16",
         "ageclass_name": "G 16 år",
         "order": 1,
-        "event_id": "ref_to_event",
+        "event_id": "event_id_1",
         "distance": "5km",
     }
 
@@ -40,18 +54,26 @@ async def raceclass() -> dict:
         "name": "G16",
         "ageclass_name": "G 16 år",
         "order": 1,
-        "event_id": "ref_to_event",
+        "event_id": "event_id_1",
         "distance": "5km",
     }
 
 
 @pytest.mark.integration
 async def test_create_raceclass(
-    client: _TestClient, mocker: MockFixture, token: MockFixture, new_raceclass: dict
+    client: _TestClient,
+    mocker: MockFixture,
+    token: MockFixture,
+    event: dict,
+    new_raceclass: dict,
 ) -> None:
     """Should return Created, location header."""
     EVENT_ID = "event_id_1"
     RACECLASS_ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
+    mocker.patch(
+        "event_service.adapters.events_adapter.EventsAdapter.get_event_by_id",  # noqa: B950
+        return_value=event,
+    )
     mocker.patch(
         "event_service.services.raceclasses_service.create_id",
         return_value=RACECLASS_ID,
@@ -274,14 +296,61 @@ async def test_delete_all_raceclasses_in_event(
 
 
 # Bad cases
+# Event not found
+@pytest.mark.integration
+async def test_create_raceclass_event_not_found(
+    client: _TestClient,
+    mocker: MockFixture,
+    token: MockFixture,
+    new_raceclass: dict,
+) -> None:
+    """Should return 404 Not found."""
+    EVENT_ID = "event_id_1"
+    RACECLASS_ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
+    mocker.patch(
+        "event_service.adapters.events_adapter.EventsAdapter.get_event_by_id",  # noqa: B950
+        return_value=None,
+    )
+    mocker.patch(
+        "event_service.services.raceclasses_service.create_id",
+        return_value=RACECLASS_ID,
+    )
+    mocker.patch(
+        "event_service.adapters.raceclasses_adapter.RaceclassesAdapter.create_raceclass",
+        return_value=RACECLASS_ID,
+    )
+
+    request_body = new_raceclass
+    headers = MultiDict(
+        {
+            hdrs.CONTENT_TYPE: "application/json",
+            hdrs.AUTHORIZATION: f"Bearer {token}",
+        },
+    )
+
+    with aioresponses(passthrough=["http://127.0.0.1"]) as m:
+        m.post("http://example.com:8081/authorize", status=204)
+        resp = await client.post(
+            f"/events/{EVENT_ID}/raceclasses", headers=headers, json=request_body
+        )
+        assert resp.status == 404
+
+
 # Mandatory properties missing at create and update:
 @pytest.mark.integration
 async def test_create_raceclass_missing_mandatory_property(
-    client: _TestClient, mocker: MockFixture, token: MockFixture
+    client: _TestClient,
+    mocker: MockFixture,
+    token: MockFixture,
+    event: dict,
 ) -> None:
     """Should return 422 HTTPUnprocessableEntity."""
     EVENT_ID = "event_id_1"
     RACECLASS_ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
+    mocker.patch(
+        "event_service.adapters.events_adapter.EventsAdapter.get_event_by_id",  # noqa: B950
+        return_value=event,
+    )
     mocker.patch(
         "event_service.services.raceclasses_service.create_id",
         return_value=RACECLASS_ID,
@@ -343,11 +412,19 @@ async def test_update_raceclass_by_id_missing_mandatory_property(
 
 @pytest.mark.integration
 async def test_create_raceclass_with_input_id(
-    client: _TestClient, mocker: MockFixture, token: MockFixture, raceclass: dict
+    client: _TestClient,
+    mocker: MockFixture,
+    token: MockFixture,
+    event: dict,
+    raceclass: dict,
 ) -> None:
     """Should return 422 HTTPUnprocessableEntity."""
     EVENT_ID = "event_id_1"
     RACECLASS_ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
+    mocker.patch(
+        "event_service.adapters.events_adapter.EventsAdapter.get_event_by_id",  # noqa: B950
+        return_value=event,
+    )
     mocker.patch(
         "event_service.services.raceclasses_service.create_id",
         return_value=RACECLASS_ID,
@@ -410,10 +487,18 @@ async def test_update_raceclass_by_id_different_id_in_body(
 
 @pytest.mark.integration
 async def test_create_raceclass_adapter_fails(
-    client: _TestClient, mocker: MockFixture, token: MockFixture, new_raceclass: dict
+    client: _TestClient,
+    mocker: MockFixture,
+    token: MockFixture,
+    event: dict,
+    new_raceclass: dict,
 ) -> None:
     """Should return 400 HTTPBadRequest."""
     EVENT_ID = "event_id_1"
+    mocker.patch(
+        "event_service.adapters.events_adapter.EventsAdapter.get_event_by_id",  # noqa: B950
+        return_value=event,
+    )
     mocker.patch(
         "event_service.services.raceclasses_service.create_id",
         return_value=None,
@@ -443,11 +528,15 @@ async def test_create_raceclass_adapter_fails(
 
 @pytest.mark.integration
 async def test_create_raceclass_no_authorization(
-    client: _TestClient, mocker: MockFixture, new_raceclass: dict
+    client: _TestClient, mocker: MockFixture, event: dict, new_raceclass: dict
 ) -> None:
     """Should return 401 Unauthorized."""
     EVENT_ID = "event_id_1"
     RACECLASS_ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
+    mocker.patch(
+        "event_service.adapters.events_adapter.EventsAdapter.get_event_by_id",  # noqa: B950
+        return_value=event,
+    )
     mocker.patch(
         "event_service.services.raceclasses_service.create_id",
         return_value=RACECLASS_ID,
