@@ -36,7 +36,18 @@ class ContestantsService:
         _contestants = await ContestantsAdapter.get_all_contestants(db, event_id)
         for c in _contestants:
             contestants.append(Contestant.from_dict(c))
-        return contestants
+        _s = sorted(
+            contestants,
+            key=lambda k: (
+                k.bib is not None,
+                k.bib,
+                k.ageclass,
+                k.last_name,
+                k.first_name,
+            ),
+            reverse=False,
+        )
+        return _s
 
     @classmethod
     async def create_contestant(
