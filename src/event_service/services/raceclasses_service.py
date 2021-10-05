@@ -59,7 +59,16 @@ class RaceclassesService:
         _raceclasses = await RaceclassesAdapter.get_all_raceclasses(db, event_id)
         for a in _raceclasses:
             raceclasses.append(Raceclass.from_dict(a))
-        return raceclasses
+        _s = sorted(
+            raceclasses,
+            key=lambda k: (
+                k.order is not None,
+                k.order,
+                k.name,
+            ),
+            reverse=False,
+        )
+        return _s
 
     @classmethod
     async def create_raceclass(
