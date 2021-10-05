@@ -34,11 +34,11 @@ In future versions:
   -H "Authorization: Bearer $ACCESS" \
   -X POST \
   -F "data=@tests/files/allcontestants_eventid_364892.csv; type=text/csv" \
-  http://localhost:8080/events/76083af9-8782-4d8a-882e-00ba7a0eaa55/contestants
+  http://localhost:8080/events/<event-id/contestants
 % curl \
   -H "Authorization: Bearer $ACCESS" \
   -X GET \
-  http://localhost:8080/events/e734d3b5-31c0-4c39-8215-c6ad10c1fa5c/contestants
+  http://localhost:8080/events/<event-id>/contestants
 ```
 Look to the [openAPI specification](./specification.yaml) for the details.
 
