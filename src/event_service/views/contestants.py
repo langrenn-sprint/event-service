@@ -18,8 +18,10 @@ from multidict import MultiDict
 from event_service.adapters import UsersAdapter
 from event_service.models import Contestant
 from event_service.services import (
+    ContestantAllreadyExistException,
     ContestantNotFoundException,
     ContestantsService,
+    EventNotFoundException,
     IllegalValueException,
 )
 from .utils import extract_token_from_request
@@ -81,8 +83,13 @@ class ContestantsView(View):
                 contestant_id = await ContestantsService.create_contestant(
                     db, event_id, contestant
                 )
+            except EventNotFoundException as e:
+                raise HTTPNotFound(reason=e) from e
             except IllegalValueException as e:
                 raise HTTPUnprocessableEntity(reason=e) from e
+            except ContestantAllreadyExistException as e:
+                raise HTTPBadRequest(reason=e) from e
+
             if contestant_id:
                 logging.debug(f"inserted document with contestant_id {contestant_id}")
                 headers = MultiDict(
@@ -104,9 +111,13 @@ class ContestantsView(View):
                     raise HTTPBadRequest(
                         reason=f"File's content-type {part.headers[hdrs.CONTENT_TYPE]} not supported."  # noqa: B950
                     ) from None
-                result = await ContestantsService.create_contestants(
-                    db, event_id, contestants
-                )
+                try:
+                    result = await ContestantsService.create_contestants(
+                        db, event_id, contestants
+                    )
+                except EventNotFoundException as e:
+                    raise HTTPNotFound(reason=e) from e
+
                 logging.debug(f"result:\n {result}")
                 body = json.dumps(result)
                 return Response(status=200, body=body, content_type="application/json")
@@ -114,9 +125,12 @@ class ContestantsView(View):
         elif "text/csv" in self.request.headers[hdrs.CONTENT_TYPE]:
             content = await self.request.content.read()
             contestants = content.decode()
-            result = await ContestantsService.create_contestants(
-                db, event_id, contestants
-            )
+            try:
+                result = await ContestantsService.create_contestants(
+                    db, event_id, contestants
+                )
+            except EventNotFoundException as e:
+                raise HTTPNotFound(reason=e) from e
             logging.debug(f"result:\n {result}")
             body = json.dumps(result)
             return Response(status=200, body=body, content_type="application/json")
