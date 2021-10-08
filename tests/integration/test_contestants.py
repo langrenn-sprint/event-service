@@ -1,5 +1,5 @@
 """Integration test cases for the contestant route."""
-import copy
+from copy import deepcopy
 from datetime import date
 import os
 
@@ -67,6 +67,7 @@ async def contestant() -> dict:
         "team": "Team Kollen",
         "email": "post@example.com",
         "event_id": "ref_to_event",
+        "bib": 1,
     }
 
 
@@ -654,7 +655,7 @@ async def test_update_contestant_by_id(
             hdrs.AUTHORIZATION: f"Bearer {token}",
         },
     )
-    request_body = copy.deepcopy(contestant)
+    request_body = deepcopy(contestant)
     request_body["last_name"] = "New_Last_Name"
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
@@ -993,6 +994,36 @@ async def test_create_contestant_missing_mandatory_property(
 
 
 @pytest.mark.integration
+async def test_list_contestants_by_id_when_bib_has_been_set_to_noninteger(
+    client: _TestClient, mocker: MockFixture, token: MockFixture, contestant: dict
+) -> None:
+    """Should return OK and a valid json body."""
+    EVENT_ID = "event_id_1"
+    contestant_2 = deepcopy(contestant)
+    contestant_2["bib"] = ""
+    mocker.patch(
+        "event_service.adapters.contestants_adapter.ContestantsAdapter.get_all_contestants",  # noqa: B950
+        return_value=[contestant, contestant_2],
+    )
+    headers = MultiDict(
+        {
+            hdrs.AUTHORIZATION: f"Bearer {token}",
+        },
+    )
+
+    with aioresponses(passthrough=["http://127.0.0.1"]) as m:
+        m.post("http://example.com:8081/authorize", status=204)
+        resp = await client.get(f"/events/{EVENT_ID}/contestants", headers=headers)
+        assert resp.status == 200
+        assert "application/json" in resp.headers[hdrs.CONTENT_TYPE]
+        contestants = await resp.json()
+        assert type(contestants) is list
+        assert len(contestants) == 2
+        assert contestant["bib"] == contestants[1]["bib"]
+        assert contestant_2["bib"] == contestants[0]["bib"]
+
+
+@pytest.mark.integration
 async def test_create_contestant_with_input_id(
     client: _TestClient,
     mocker: MockFixture,
@@ -1134,7 +1165,7 @@ async def test_update_contestant_by_id_different_id_in_body(
             hdrs.AUTHORIZATION: f"Bearer {token}",
         },
     )
-    request_body = copy.deepcopy(contestant)
+    request_body = deepcopy(contestant)
     request_body["id"] = "different_id"
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
