@@ -50,6 +50,7 @@ class ContestantsService:
             contestants,
             key=lambda k: (
                 k.bib is not None,
+                k.bib != "",
                 k.bib,
                 k.ageclass,
                 k.last_name,
