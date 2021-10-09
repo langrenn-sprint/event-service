@@ -77,6 +77,55 @@
         responses:
           204:
             description: No content
+    /events/{eventId}/format:
+      parameters:
+      - name: eventId
+        in: path
+        description: event id
+        required: true
+        schema:
+          type: string
+          format: uuid
+      post:
+        tags:
+        - format
+        security:
+        - bearerAuth: []
+        description: Add an event specific competition format
+        requestBody:
+          description: The new event specific competition format
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CompetitionFormat'
+        responses:
+          201:
+            description: Created
+      get:
+        tags:
+        - format
+        description: Get the event specific competition format
+        responses:
+          200:
+            description: Ok
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/CompetitionFormat'
+      put:
+        tags:
+        - format
+        description: Update the event specific competition format
+        responses:
+          204:
+            description: No content
+      delete:
+        tags:
+        - format
+        description: Delete the event speicific competition format
+        responses:
+          204:
+            description: No content
     /events/{eventId}/generate-raceclasses:
       parameters:
       - name: eventId
@@ -311,9 +360,9 @@
           in: query
           description: competition format name
           required: false
-        schema:
-          type: string
-          format: uuid
+          schema:
+            type: string
+            format: uuid
         responses:
           200:
             description: Ok
