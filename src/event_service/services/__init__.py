@@ -8,6 +8,7 @@ from .contestants_service import (
     ContestantNotFoundException,
     ContestantsService,
 )
+from .event_format_service import EventFormatNotFoundException, EventFormatService
 from .events_service import EventNotFoundException, EventsService
 from .exceptions import IllegalValueException, InvalidDateFormatException
 from .raceclasses_service import (
