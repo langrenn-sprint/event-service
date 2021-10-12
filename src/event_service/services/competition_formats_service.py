@@ -5,7 +5,11 @@ from typing import Any, List, Optional
 import uuid
 
 from event_service.adapters import CompetitionFormatsAdapter
-from event_service.models import CompetitionFormat
+from event_service.models import (
+    CompetitionFormat,
+    IndividualSprintFormat,
+    IntervalStartFormat,
+)
 from .exceptions import IllegalValueException, InvalidDateFormatException
 
 
@@ -34,7 +38,10 @@ class CompetitionFormatsService:
             await CompetitionFormatsAdapter.get_all_competition_formats(db)
         )
         for e in _competition_formats:
-            competition_formats.append(CompetitionFormat.from_dict(e))
+            if e["datatype"] == "interval_start":
+                competition_formats.append(IntervalStartFormat.from_dict(e))
+            elif e["datatype"] == "individual_sprint":
+                competition_formats.append(IndividualSprintFormat.from_dict(e))
         _s = sorted(
             competition_formats,
             key=lambda k: (k.name,),
@@ -88,7 +95,10 @@ class CompetitionFormatsService:
         )
         # return the document if found:
         if competition_format:
-            return CompetitionFormat.from_dict(competition_format)
+            if competition_format["datatype"] == "interval_start":
+                return IntervalStartFormat.from_dict(competition_format)
+            elif competition_format["datatype"] == "individual_sprint":
+                return IndividualSprintFormat.from_dict(competition_format)
         raise CompetitionFormatNotFoundException(
             f"CompetitionFormat with id {id} not found"
         ) from None
@@ -103,7 +113,10 @@ class CompetitionFormatsService:
             await CompetitionFormatsAdapter.get_competition_formats_by_name(db, name)
         )
         for e in _competition_formats:
-            competition_formats.append(CompetitionFormat.from_dict(e))
+            if e["datatype"] == "interval_start":
+                competition_formats.append(IntervalStartFormat.from_dict(e))
+            elif e["datatype"] == "individual_sprint":
+                competition_formats.append(IndividualSprintFormat.from_dict(e))
         return competition_formats
 
     @classmethod
@@ -152,7 +165,7 @@ class CompetitionFormatsService:
 async def validate_competition_format(competition_format: CompetitionFormat) -> None:
     """Validate the competition-format."""
     # Validate intervals if set:
-    if competition_format.intervals:
+    if hasattr(competition_format, "intervals"):
         try:
             time.fromisoformat(competition_format.intervals)  # type: ignore
         except ValueError as e:

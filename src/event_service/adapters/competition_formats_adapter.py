@@ -41,13 +41,14 @@ class CompetitionFormatsAdapter(Adapter):
         cls: Any, db: Any, competition_format_name: str
     ) -> List[dict]:  # pragma: no cover
         """Get competition_format by name function."""
+        logging.debug(f"Got request for name {competition_format_name}.")
         competition_formats: List = []
-        cursor = db.competition_formats_collection.find(
-            {"name": competition_format_name}
-        )
+        query = {"$regex": f".*{competition_format_name}.*", "$options": "i"}
+        logging.debug(f"Query: {query}.")
+        cursor = db.competition_formats_collection.find({"name": query})
         for competition_format in await cursor.to_list(None):
+            logging.debug(f"cursor - competition_format: {competition_format}")
             competition_formats.append(competition_format)
-            logging.debug(competition_format)
         return competition_formats
 
     @classmethod

@@ -50,6 +50,7 @@ async def competition_format() -> dict[str, str]:
         "starting_order": "Draw",
         "start_procedure": "Interval Start",
         "intervals": "00:00:30",
+        "datatype": "interval_start",
     }
 
 

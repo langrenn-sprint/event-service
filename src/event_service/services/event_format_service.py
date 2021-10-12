@@ -4,7 +4,11 @@ from typing import Any, Optional
 import uuid
 
 from event_service.adapters import EventFormatAdapter
-from event_service.models import CompetitionFormat
+from event_service.models import (
+    CompetitionFormat,
+    IndividualSprintFormat,
+    IntervalStartFormat,
+)
 from .events_service import EventNotFoundException, EventsService
 
 
@@ -69,7 +73,10 @@ class EventFormatService:
         event_format = await EventFormatAdapter.get_event_format(db, event_id)
         # return the document if found:
         if event_format:
-            return CompetitionFormat.from_dict(event_format)
+            if event_format["datatype"] == "interval_start":
+                return IntervalStartFormat.from_dict(event_format)
+            elif event_format["datatype"] == "individual_sprint":
+                return IndividualSprintFormat.from_dict(event_format)
         raise EventFormatNotFoundException(
             f"EventFormat with for event id {event_id} not found"
         ) from None
