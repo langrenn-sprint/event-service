@@ -35,34 +35,64 @@ async def event() -> dict[str, str]:
 
 
 @pytest.fixture
-async def new_event_format() -> dict:
+async def new_event_format_interval_start() -> dict:
     """Create a mock event_format object."""
     return {
         "name": "Interval Start",
         "starting_order": "Draw",
         "start_procedure": "Interval Start",
         "intervals": "00:00:30",
+        "datatype": "interval_start",
     }
 
 
 @pytest.fixture
-async def event_format() -> dict:
+async def new_event_format_individual_sprint() -> dict:
+    """Create a mock event_format object."""
+    return {
+        "name": "Individual Sprint",
+        "starting_order": "Draw",
+        "start_procedure": "Interval Start",
+        "time_between_rounds": "00:05:00",
+        "time_between_heats": "00:02:30",
+        "max_no_of_contestants": 80,
+        "datatype": "individual_sprint",
+    }
+
+
+@pytest.fixture
+async def event_format_interval_start() -> dict:
     """Create a mock event_format object."""
     return {
         "name": "Interval Start",
         "starting_order": "Draw",
         "start_procedure": "Interval Start",
         "intervals": "00:00:30",
+        "datatype": "interval_start",
+    }
+
+
+@pytest.fixture
+async def event_format_individual_sprint() -> dict:
+    """Create a mock event_format object."""
+    return {
+        "name": "Individual Sprint",
+        "starting_order": "Draw",
+        "start_procedure": "Interval Start",
+        "time_between_rounds": "00:05:00",
+        "time_between_heats": "00:02:30",
+        "max_no_of_contestants": 80,
+        "datatype": "individual_sprint",
     }
 
 
 @pytest.mark.integration
-async def test_create_event_format(
+async def test_create_event_format_interval_start(
     client: _TestClient,
     mocker: MockFixture,
     token: MockFixture,
     event: dict,
-    new_event_format: dict,
+    new_event_format_interval_start: dict,
 ) -> None:
     """Should return Created, location header."""
     EVENT_ID = "event_id_1"
@@ -80,7 +110,7 @@ async def test_create_event_format(
         return_value=RACECLASS_ID,
     )
 
-    request_body = new_event_format
+    request_body = new_event_format_interval_start
     headers = MultiDict(
         {
             hdrs.CONTENT_TYPE: "application/json",
@@ -98,14 +128,58 @@ async def test_create_event_format(
 
 
 @pytest.mark.integration
-async def test_get_event_format(
-    client: _TestClient, mocker: MockFixture, token: MockFixture, event_format: dict
+async def test_create_event_format_individual_sprint(
+    client: _TestClient,
+    mocker: MockFixture,
+    token: MockFixture,
+    event: dict,
+    new_event_format_individual_sprint: dict,
+) -> None:
+    """Should return Created, location header."""
+    EVENT_ID = "event_id_1"
+    RACECLASS_ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
+    mocker.patch(
+        "event_service.adapters.events_adapter.EventsAdapter.get_event_by_id",  # noqa: B950
+        return_value=event,
+    )
+    mocker.patch(
+        "event_service.services.event_format_service.create_id",
+        return_value=RACECLASS_ID,
+    )
+    mocker.patch(
+        "event_service.adapters.event_format_adapter.EventFormatAdapter.create_event_format",
+        return_value=RACECLASS_ID,
+    )
+
+    request_body = new_event_format_individual_sprint
+    headers = MultiDict(
+        {
+            hdrs.CONTENT_TYPE: "application/json",
+            hdrs.AUTHORIZATION: f"Bearer {token}",
+        },
+    )
+
+    with aioresponses(passthrough=["http://127.0.0.1"]) as m:
+        m.post("http://example.com:8081/authorize", status=204)
+        resp = await client.post(
+            f"/events/{EVENT_ID}/format", headers=headers, json=request_body
+        )
+        assert resp.status == 201
+        assert f"/events/{EVENT_ID}/format" in resp.headers[hdrs.LOCATION]
+
+
+@pytest.mark.integration
+async def test_get_event_format_interval_start(
+    client: _TestClient,
+    mocker: MockFixture,
+    token: MockFixture,
+    event_format_interval_start: dict,
 ) -> None:
     """Should return OK, and a body containing one event_format."""
     EVENT_ID = "event_id_1"
     mocker.patch(
         "event_service.adapters.event_format_adapter.EventFormatAdapter.get_event_format",
-        return_value=event_format,
+        return_value=event_format_interval_start,
     )
     headers = MultiDict(
         {
@@ -120,22 +194,72 @@ async def test_get_event_format(
         assert "application/json" in resp.headers[hdrs.CONTENT_TYPE]
         body = await resp.json()
         assert type(body) is dict
-        assert body["name"] == event_format["name"]
-        assert body["starting_order"] == event_format["starting_order"]
-        assert body["start_procedure"] == event_format["start_procedure"]
-        assert body["intervals"] == event_format["intervals"]
+        assert body["name"] == event_format_interval_start["name"]
+        assert body["starting_order"] == event_format_interval_start["starting_order"]
+        assert body["start_procedure"] == event_format_interval_start["start_procedure"]
+        assert body["intervals"] == event_format_interval_start["intervals"]
 
 
 @pytest.mark.integration
-async def test_update_event_format(
-    client: _TestClient, mocker: MockFixture, token: MockFixture, event_format: dict
+async def test_get_event_format_individual_sprint(
+    client: _TestClient,
+    mocker: MockFixture,
+    token: MockFixture,
+    event_format_individual_sprint: dict,
+) -> None:
+    """Should return OK, and a body containing one event_format."""
+    EVENT_ID = "event_id_1"
+    mocker.patch(
+        "event_service.adapters.event_format_adapter.EventFormatAdapter.get_event_format",
+        return_value=event_format_individual_sprint,
+    )
+    headers = MultiDict(
+        {
+            hdrs.AUTHORIZATION: f"Bearer {token}",
+        },
+    )
+
+    with aioresponses(passthrough=["http://127.0.0.1"]) as m:
+        m.post("http://example.com:8081/authorize", status=204)
+        resp = await client.get(f"/events/{EVENT_ID}/format", headers=headers)
+        assert resp.status == 200
+        assert "application/json" in resp.headers[hdrs.CONTENT_TYPE]
+        body = await resp.json()
+        assert type(body) is dict
+        assert body["name"] == event_format_individual_sprint["name"]
+        assert (
+            body["starting_order"] == event_format_individual_sprint["starting_order"]
+        )
+        assert (
+            body["start_procedure"] == event_format_individual_sprint["start_procedure"]
+        )
+        assert (
+            body["time_between_heats"]
+            == event_format_individual_sprint["time_between_heats"]
+        )
+        assert (
+            body["time_between_rounds"]
+            == event_format_individual_sprint["time_between_rounds"]
+        )
+        assert (
+            body["max_no_of_contestants"]
+            == event_format_individual_sprint["max_no_of_contestants"]
+        )
+
+
+@pytest.mark.integration
+async def test_update_event_format_interval_start(
+    client: _TestClient,
+    mocker: MockFixture,
+    token: MockFixture,
+    event_format_interval_start: dict,
 ) -> None:
     """Should return No Content."""
     EVENT_ID = "event_id_1"
     RACECLASS_ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
     mocker.patch(
         "event_service.adapters.event_format_adapter.EventFormatAdapter.get_event_format",  # noqa: B950
-        return_value=event_format,
+        return_value=event_format_interval_start,
     )
     mocker.patch(
         "event_service.adapters.event_format_adapter.EventFormatAdapter.update_event_format",
@@ -148,8 +272,46 @@ async def test_update_event_format(
             hdrs.AUTHORIZATION: f"Bearer {token}",
         },
     )
-    request_body = deepcopy(event_format)
-    request_body["distance"] = "New distance"
+    request_body = deepcopy(event_format_interval_start)
+    request_body["starting_order"] = "Manual Draw"
+
+    with aioresponses(passthrough=["http://127.0.0.1"]) as m:
+        m.post("http://example.com:8081/authorize", status=204)
+        resp = await client.put(
+            f"/events/{EVENT_ID}/format",
+            headers=headers,
+            json=request_body,
+        )
+        assert resp.status == 204
+
+
+@pytest.mark.integration
+async def test_update_event_format_individual_sprint(
+    client: _TestClient,
+    mocker: MockFixture,
+    token: MockFixture,
+    event_format_individual_sprint: dict,
+) -> None:
+    """Should return No Content."""
+    EVENT_ID = "event_id_1"
+    RACECLASS_ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
+    mocker.patch(
+        "event_service.adapters.event_format_adapter.EventFormatAdapter.get_event_format",  # noqa: B950
+        return_value=event_format_individual_sprint,
+    )
+    mocker.patch(
+        "event_service.adapters.event_format_adapter.EventFormatAdapter.update_event_format",
+        return_value=RACECLASS_ID,
+    )
+
+    headers = MultiDict(
+        {
+            hdrs.CONTENT_TYPE: "application/json",
+            hdrs.AUTHORIZATION: f"Bearer {token}",
+        },
+    )
+    request_body = deepcopy(event_format_individual_sprint)
+    request_body["starting_order"] = "Manual Draw"
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
         m.post("http://example.com:8081/authorize", status=204)
@@ -163,14 +325,17 @@ async def test_update_event_format(
 
 @pytest.mark.integration
 async def test_delete_event_format(
-    client: _TestClient, mocker: MockFixture, token: MockFixture, event_format: dict
+    client: _TestClient,
+    mocker: MockFixture,
+    token: MockFixture,
+    event_format_interval_start: dict,
 ) -> None:
     """Should return No Content."""
     EVENT_ID = "event_id_1"
     RACECLASS_ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
     mocker.patch(
         "event_service.adapters.event_format_adapter.EventFormatAdapter.get_event_format",  # noqa: B950
-        return_value=event_format,
+        return_value=event_format_interval_start,
     )
     mocker.patch(
         "event_service.adapters.event_format_adapter.EventFormatAdapter.delete_event_format",
@@ -195,7 +360,7 @@ async def test_create_event_format_event_not_found(
     client: _TestClient,
     mocker: MockFixture,
     token: MockFixture,
-    new_event_format: dict,
+    new_event_format_interval_start: dict,
 ) -> None:
     """Should return 404 Not found."""
     EVENT_ID = "event_id_1"
@@ -213,7 +378,7 @@ async def test_create_event_format_event_not_found(
         return_value=RACECLASS_ID,
     )
 
-    request_body = new_event_format
+    request_body = new_event_format_interval_start
     headers = MultiDict(
         {
             hdrs.CONTENT_TYPE: "application/json",
@@ -309,7 +474,7 @@ async def test_create_event_format_adapter_fails(
     mocker: MockFixture,
     token: MockFixture,
     event: dict,
-    new_event_format: dict,
+    new_event_format_interval_start: dict,
 ) -> None:
     """Should return 400 HTTPBadRequest."""
     EVENT_ID = "event_id_1"
@@ -325,7 +490,7 @@ async def test_create_event_format_adapter_fails(
         "event_service.adapters.event_format_adapter.EventFormatAdapter.create_event_format",  # noqa: B950
         return_value=None,
     )
-    request_body = new_event_format
+    request_body = new_event_format_interval_start
     headers = MultiDict(
         {
             hdrs.CONTENT_TYPE: "application/json",
@@ -346,7 +511,10 @@ async def test_create_event_format_adapter_fails(
 
 @pytest.mark.integration
 async def test_create_event_format_no_authorization(
-    client: _TestClient, mocker: MockFixture, event: dict, new_event_format: dict
+    client: _TestClient,
+    mocker: MockFixture,
+    event: dict,
+    new_event_format_interval_start: dict,
 ) -> None:
     """Should return 401 Unauthorized."""
     EVENT_ID = "event_id_1"
@@ -364,7 +532,7 @@ async def test_create_event_format_no_authorization(
         return_value=RACECLASS_ID,
     )
 
-    request_body = new_event_format
+    request_body = new_event_format_interval_start
     headers = MultiDict({hdrs.CONTENT_TYPE: "application/json"})
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
@@ -378,13 +546,13 @@ async def test_create_event_format_no_authorization(
 
 @pytest.mark.integration
 async def test_get_event_format_no_authorization(
-    client: _TestClient, mocker: MockFixture, event_format: dict
+    client: _TestClient, mocker: MockFixture, event_format_interval_start: dict
 ) -> None:
     """Should return 401 Unauthorized."""
     EVENT_ID = "event_id_1"
     mocker.patch(
         "event_service.adapters.event_format_adapter.EventFormatAdapter.get_event_format",
-        return_value=event_format,
+        return_value=event_format_interval_start,
     )
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
@@ -395,14 +563,14 @@ async def test_get_event_format_no_authorization(
 
 @pytest.mark.integration
 async def test_put_event_format_no_authorization(
-    client: _TestClient, mocker: MockFixture, event_format: dict
+    client: _TestClient, mocker: MockFixture, event_format_interval_start: dict
 ) -> None:
     """Should return 401 Unauthorizedt."""
     EVENT_ID = "event_id_1"
     RACECLASS_ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
     mocker.patch(
         "event_service.adapters.event_format_adapter.EventFormatAdapter.get_event_format",
-        return_value=event_format,
+        return_value=event_format_interval_start,
     )
     mocker.patch(
         "event_service.adapters.event_format_adapter.EventFormatAdapter.update_event_format",
@@ -414,7 +582,7 @@ async def test_put_event_format_no_authorization(
             hdrs.CONTENT_TYPE: "application/json",
         },
     )
-    request_body = event_format
+    request_body = event_format_interval_start
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
         m.post("http://example.com:8081/authorize", status=401)
@@ -428,13 +596,13 @@ async def test_put_event_format_no_authorization(
 
 @pytest.mark.integration
 async def test_list_event_format_no_authorization(
-    client: _TestClient, mocker: MockFixture, event_format: dict
+    client: _TestClient, mocker: MockFixture, event_format_interval_start: dict
 ) -> None:
     """Should return 401 Unauthorized."""
     EVENT_ID = "event_id_1"
     mocker.patch(
         "event_service.adapters.event_format_adapter.EventFormatAdapter.get_event_format",
-        return_value=[event_format],
+        return_value=[event_format_interval_start],
     )
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
@@ -445,14 +613,14 @@ async def test_list_event_format_no_authorization(
 
 @pytest.mark.integration
 async def test_delete_event_format_no_authorization(
-    client: _TestClient, mocker: MockFixture, event_format: dict
+    client: _TestClient, mocker: MockFixture, event_format_interval_start: dict
 ) -> None:
     """Should return 401 Unauthorized."""
     EVENT_ID = "event_id_1"
     RACECLASS_ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
     mocker.patch(
         "event_service.adapters.event_format_adapter.EventFormatAdapter.get_event_format",
-        return_value=event_format,
+        return_value=event_format_interval_start,
     )
     mocker.patch(
         "event_service.adapters.event_format_adapter.EventFormatAdapter.delete_event_format",
@@ -492,7 +660,10 @@ async def test_get_event_format_not_found(
 
 @pytest.mark.integration
 async def test_update_event_format_not_found(
-    client: _TestClient, mocker: MockFixture, token: MockFixture, event_format: dict
+    client: _TestClient,
+    mocker: MockFixture,
+    token: MockFixture,
+    event_format_interval_start: dict,
 ) -> None:
     """Should return 404 Not found."""
     EVENT_ID = "event_id_1"
@@ -511,7 +682,7 @@ async def test_update_event_format_not_found(
             hdrs.AUTHORIZATION: f"Bearer {token}",
         },
     )
-    request_body = event_format
+    request_body = event_format_interval_start
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
         m.post("http://example.com:8081/authorize", status=204)

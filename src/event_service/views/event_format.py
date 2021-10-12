@@ -14,7 +14,10 @@ from dotenv import load_dotenv
 from multidict import MultiDict
 
 from event_service.adapters import UsersAdapter
-from event_service.models import CompetitionFormat
+from event_service.models import (
+    IndividualSprintFormat,
+    IntervalStartFormat,
+)
 from event_service.services import (
     EventFormatNotFoundException,
     EventFormatService,
@@ -49,7 +52,10 @@ class EventFormatView(View):
         )
 
         try:
-            event_format = CompetitionFormat.from_dict(body)
+            if body["datatype"] == "interval_start":
+                event_format = IntervalStartFormat.from_dict(body)
+            elif body["datatype"] == "individual_sprint":
+                event_format = IndividualSprintFormat.from_dict(body)
         except KeyError as e:
             raise HTTPUnprocessableEntity(
                 reason=f"Mandatory property {e.args[0]} is missing."
@@ -106,7 +112,10 @@ class EventFormatView(View):
         )
 
         try:
-            event_format = CompetitionFormat.from_dict(body)
+            if body["datatype"] == "interval_start":
+                event_format = IntervalStartFormat.from_dict(body)
+            elif body["datatype"] == "individual_sprint":
+                event_format = IndividualSprintFormat.from_dict(body)
         except KeyError as e:
             raise HTTPUnprocessableEntity(
                 reason=f"Mandatory property {e.args[0]} is missing."
