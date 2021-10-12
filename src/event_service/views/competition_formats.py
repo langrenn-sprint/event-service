@@ -15,7 +15,10 @@ from dotenv import load_dotenv
 from multidict import MultiDict
 
 from event_service.adapters import UsersAdapter
-from event_service.models import CompetitionFormat
+from event_service.models import (
+    IndividualSprintFormat,
+    IntervalStartFormat,
+)
 from event_service.services import (
     CompetitionFormatNotFoundException,
     CompetitionFormatsService,
@@ -61,7 +64,7 @@ class CompetitionFormatsView(View):
         body = json.dumps(result, default=str, ensure_ascii=False)
         return Response(status=200, body=body, content_type="application/json")
 
-    async def post(self) -> Response:
+    async def post(self) -> Response:  # noqa: C901
         """Post route function."""
         db = self.request.app["db"]
         token = extract_token_from_request(self.request)
@@ -75,7 +78,10 @@ class CompetitionFormatsView(View):
             f"Got create request for competition_format {body} of type {type(body)}"
         )
         try:
-            competition_format = CompetitionFormat.from_dict(body)
+            if body["datatype"] == "interval_start":
+                competition_format = IntervalStartFormat.from_dict(body)
+            elif body["datatype"] == "individual_sprint":
+                competition_format = IndividualSprintFormat.from_dict(body)
         except KeyError as e:
             raise HTTPUnprocessableEntity(
                 reason=f"Mandatory property {e.args[0]} is missing."
@@ -132,7 +138,7 @@ class CompetitionFormatView(View):
         body = competition_format.to_json()
         return Response(status=200, body=body, content_type="application/json")
 
-    async def put(self) -> Response:
+    async def put(self) -> Response:  # noqa: C901
         """Put route function."""
         db = self.request.app["db"]
         token = extract_token_from_request(self.request)
@@ -151,7 +157,10 @@ class CompetitionFormatView(View):
             f"Got put request for competition_format {body} of type {type(body)}"
         )
         try:
-            competition_format = CompetitionFormat.from_dict(body)
+            if body["datatype"] == "interval_start":
+                competition_format = IntervalStartFormat.from_dict(body)
+            elif body["datatype"] == "individual_sprint":
+                competition_format = IndividualSprintFormat.from_dict(body)
         except KeyError as e:
             raise HTTPUnprocessableEntity(
                 reason=f"Mandatory property {e.args[0]} is missing."
