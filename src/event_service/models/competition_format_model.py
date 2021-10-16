@@ -38,9 +38,10 @@ class IntervalStartFormat(CompetitionFormat, DataClassJsonMixin):
 class IndividualSprintFormat(CompetitionFormat, DataClassJsonMixin):
     """Data class with details about a individual sprint format."""
 
+    max_no_of_contestants: int
+    time_between_groups: time
     time_between_rounds: time
     time_between_heats: time
-    max_no_of_contestants: int
     datatype: str = field(
         metadata=dict(marshmallow_field=Constant("individual_sprint")),
         default="individual_sprint",
