@@ -182,13 +182,39 @@ class CompetitionFormatsService:
 
 
 #   Validation:
-async def validate_competition_format(competition_format: CompetitionFormat) -> None:
+async def validate_competition_format(  # noqa: C901
+    competition_format: CompetitionFormat,
+) -> None:
     """Validate the competition-format."""
+    # Validate time_between_groups if set:
+    if hasattr(competition_format, "time_between_groups"):
+        try:
+            time.fromisoformat(competition_format.time_between_groups)  # type: ignore
+        except ValueError as e:
+            raise InvalidDateFormatException(
+                f'time_between_groups "{competition_format.time_between_groups}" has invalid time format.'  # noqa: B950
+            ) from e
     # Validate intervals if set:
     if hasattr(competition_format, "intervals"):
         try:
             time.fromisoformat(competition_format.intervals)  # type: ignore
         except ValueError as e:
             raise InvalidDateFormatException(
-                'Time "{time_str}" has invalid format.'
+                f'intervals "{competition_format.intervals}" has invalid time format.'
+            ) from e
+    # Validate time_between_rounds if set:
+    if hasattr(competition_format, "time_between_rounds"):
+        try:
+            time.fromisoformat(competition_format.time_between_rounds)  # type: ignore
+        except ValueError as e:
+            raise InvalidDateFormatException(
+                f'intervals "{competition_format.time_between_rounds}" has invalid time format.'
+            ) from e
+    # Validate time_between_rounds if set:
+    if hasattr(competition_format, "time_between_heats"):
+        try:
+            time.fromisoformat(competition_format.time_between_heats)  # type: ignore
+        except ValueError as e:
+            raise InvalidDateFormatException(
+                f'intervals "{competition_format.time_between_heats}" has invalid time format.'
             ) from e

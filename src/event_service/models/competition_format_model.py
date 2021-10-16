@@ -26,6 +26,7 @@ class CompetitionFormat(DataClassJsonMixin, ABC):
 class IntervalStartFormat(CompetitionFormat, DataClassJsonMixin):
     """Data class with details about a interval start format."""
 
+    time_between_groups: time
     intervals: time
     datatype: str = field(
         metadata=dict(marshmallow_field=Constant("interval_start")),

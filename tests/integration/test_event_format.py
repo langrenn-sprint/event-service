@@ -41,6 +41,7 @@ async def new_event_format_interval_start() -> dict:
         "name": "Interval Start",
         "starting_order": "Draw",
         "start_procedure": "Interval Start",
+        "time_between_groups": "00:10:00",
         "intervals": "00:00:30",
         "datatype": "interval_start",
     }
@@ -68,6 +69,7 @@ async def event_format_interval_start() -> dict:
         "name": "Interval Start",
         "starting_order": "Draw",
         "start_procedure": "Interval Start",
+        "time_between_groups": "00:10:00",
         "intervals": "00:00:30",
         "datatype": "interval_start",
     }

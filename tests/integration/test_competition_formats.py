@@ -37,6 +37,7 @@ async def competition_format_interval_start() -> dict[str, str]:
         "name": "Interval Start",
         "starting_order": "Draw",
         "start_procedure": "Interval Start",
+        "time_between_groups": "00:10:00",
         "intervals": "00:00:30",
         "datatype": "interval_start",
     }
@@ -728,6 +729,144 @@ async def test_create_competition_format_invalid_intervals(
             "/competition-formats",
             headers=headers,
             json=competition_format_with_invalid_intervals,
+        )
+        assert resp.status == 400
+
+
+@pytest.mark.integration
+async def test_create_competition_format_invalid_time_between_groups(
+    client: _TestClient,
+    mocker: MockFixture,
+    token: MockFixture,
+    competition_format_interval_start: dict,
+) -> None:
+    """Should return 400 Bad request."""
+    ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
+    mocker.patch(
+        "event_service.services.competition_formats_service.create_id",
+        return_value=ID,
+    )
+    mocker.patch(
+        "event_service.adapters.competition_formats_adapter.CompetitionFormatsAdapter.get_competition_formats_by_name",  # noqa: B950
+        return_value=[],
+    )
+    mocker.patch(
+        "event_service.adapters.competition_formats_adapter.CompetitionFormatsAdapter.create_competition_format",  # noqa: B950
+        return_value=ID,
+    )
+
+    competition_format_with_invalid_time_between_groups = deepcopy(
+        competition_format_interval_start
+    )
+    competition_format_with_invalid_time_between_groups[
+        "time_between_groups"
+    ] = "99:99:99"
+
+    headers = MultiDict(
+        {
+            hdrs.CONTENT_TYPE: "application/json",
+            hdrs.AUTHORIZATION: f"Bearer {token}",
+        },
+    )
+
+    with aioresponses(passthrough=["http://127.0.0.1"]) as m:
+        m.post("http://example.com:8081/authorize", status=204)
+        resp = await client.post(
+            "/competition-formats",
+            headers=headers,
+            json=competition_format_with_invalid_time_between_groups,
+        )
+        assert resp.status == 400
+
+
+@pytest.mark.integration
+async def test_create_competition_format_invalid_time_between_rounds(
+    client: _TestClient,
+    mocker: MockFixture,
+    token: MockFixture,
+    competition_format_individual_sprint: dict,
+) -> None:
+    """Should return 400 Bad request."""
+    ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
+    mocker.patch(
+        "event_service.services.competition_formats_service.create_id",
+        return_value=ID,
+    )
+    mocker.patch(
+        "event_service.adapters.competition_formats_adapter.CompetitionFormatsAdapter.get_competition_formats_by_name",  # noqa: B950
+        return_value=[],
+    )
+    mocker.patch(
+        "event_service.adapters.competition_formats_adapter.CompetitionFormatsAdapter.create_competition_format",  # noqa: B950
+        return_value=ID,
+    )
+
+    competition_format_with_invalid_time_between_rounds = deepcopy(
+        competition_format_individual_sprint
+    )
+    competition_format_with_invalid_time_between_rounds[
+        "time_between_rounds"
+    ] = "99:99:99"
+
+    headers = MultiDict(
+        {
+            hdrs.CONTENT_TYPE: "application/json",
+            hdrs.AUTHORIZATION: f"Bearer {token}",
+        },
+    )
+
+    with aioresponses(passthrough=["http://127.0.0.1"]) as m:
+        m.post("http://example.com:8081/authorize", status=204)
+        resp = await client.post(
+            "/competition-formats",
+            headers=headers,
+            json=competition_format_with_invalid_time_between_rounds,
+        )
+        assert resp.status == 400
+
+
+@pytest.mark.integration
+async def test_create_competition_format_invalid_time_between_heats(
+    client: _TestClient,
+    mocker: MockFixture,
+    token: MockFixture,
+    competition_format_individual_sprint: dict,
+) -> None:
+    """Should return 400 Bad request."""
+    ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
+    mocker.patch(
+        "event_service.services.competition_formats_service.create_id",
+        return_value=ID,
+    )
+    mocker.patch(
+        "event_service.adapters.competition_formats_adapter.CompetitionFormatsAdapter.get_competition_formats_by_name",  # noqa: B950
+        return_value=[],
+    )
+    mocker.patch(
+        "event_service.adapters.competition_formats_adapter.CompetitionFormatsAdapter.create_competition_format",  # noqa: B950
+        return_value=ID,
+    )
+
+    competition_format_with_invalid_time_between_heats = deepcopy(
+        competition_format_individual_sprint
+    )
+    competition_format_with_invalid_time_between_heats[
+        "time_between_heats"
+    ] = "99:99:99"
+
+    headers = MultiDict(
+        {
+            hdrs.CONTENT_TYPE: "application/json",
+            hdrs.AUTHORIZATION: f"Bearer {token}",
+        },
+    )
+
+    with aioresponses(passthrough=["http://127.0.0.1"]) as m:
+        m.post("http://example.com:8081/authorize", status=204)
+        resp = await client.post(
+            "/competition-formats",
+            headers=headers,
+            json=competition_format_with_invalid_time_between_heats,
         )
         assert resp.status == 400
 
