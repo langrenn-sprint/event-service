@@ -64,6 +64,7 @@ class RaceclassesService:
             raceclasses,
             key=lambda k: (
                 k.order is not None,
+                k.group,
                 k.order,
                 k.name,
             ),
