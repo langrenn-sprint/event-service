@@ -70,6 +70,10 @@ async def test_create_competition_format_interval_start(
         return_value=ID,
     )
     mocker.patch(
+        "event_service.adapters.competition_formats_adapter.CompetitionFormatsAdapter.get_competition_formats_by_name",  # noqa: B950
+        return_value=[],
+    )
+    mocker.patch(
         "event_service.adapters.competition_formats_adapter.CompetitionFormatsAdapter.create_competition_format",  # noqa: B950
         return_value=ID,
     )
@@ -104,6 +108,10 @@ async def test_create_competition_format_individual_sprint(
     mocker.patch(
         "event_service.services.competition_formats_service.create_id",
         return_value=ID,
+    )
+    mocker.patch(
+        "event_service.adapters.competition_formats_adapter.CompetitionFormatsAdapter.get_competition_formats_by_name",  # noqa: B950
+        return_value=[],
     )
     mocker.patch(
         "event_service.adapters.competition_formats_adapter.CompetitionFormatsAdapter.create_competition_format",  # noqa: B950
@@ -458,16 +466,63 @@ async def test_delete_competition_format_by_id(
 
 # Bad cases
 
+
+@pytest.mark.integration
+async def test_create_competition_format_interval_start_allready_exist(
+    client: _TestClient,
+    mocker: MockFixture,
+    token: MockFixture,
+    competition_format_interval_start: dict,
+) -> None:
+    """Should return 422 HTTPUnprocessable entity."""
+    ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
+    mocker.patch(
+        "event_service.services.competition_formats_service.create_id",
+        return_value=ID,
+    )
+    mocker.patch(
+        "event_service.adapters.competition_formats_adapter.CompetitionFormatsAdapter.get_competition_formats_by_name",  # noqa: B950
+        return_value=[{id: ID} | competition_format_interval_start],  # type: ignore
+    )
+    mocker.patch(
+        "event_service.adapters.competition_formats_adapter.CompetitionFormatsAdapter.create_competition_format",  # noqa: B950
+        return_value=ID,
+    )
+
+    request_body = competition_format_interval_start
+
+    headers = MultiDict(
+        {
+            hdrs.CONTENT_TYPE: "application/json",
+            hdrs.AUTHORIZATION: f"Bearer {token}",
+        },
+    )
+
+    with aioresponses(passthrough=["http://127.0.0.1"]) as m:
+        m.post("http://example.com:8081/authorize", status=204)
+        resp = await client.post(
+            "/competition-formats", headers=headers, json=request_body
+        )
+        assert resp.status == 422
+
+
 # Mandatory properties missing at create and update:
 @pytest.mark.integration
 async def test_create_competition_format_missing_mandatory_property(
-    client: _TestClient, mocker: MockFixture, token: MockFixture
+    client: _TestClient,
+    mocker: MockFixture,
+    token: MockFixture,
+    competition_format_interval_start: dict,
 ) -> None:
     """Should return 422 HTTPUnprocessableEntity."""
     ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
     mocker.patch(
         "event_service.services.competition_formats_service.create_id",
         return_value=ID,
+    )
+    mocker.patch(
+        "event_service.adapters.competition_formats_adapter.CompetitionFormatsAdapter.get_competition_formats_by_name",  # noqa: B950
+        return_value=[{"id": ID} | competition_format_interval_start],  # type: ignore
     )
     mocker.patch(
         "event_service.adapters.competition_formats_adapter.CompetitionFormatsAdapter.create_competition_format",  # noqa: B950
@@ -503,6 +558,10 @@ async def test_create_competition_format_with_input_id(
         return_value=ID,
     )
     mocker.patch(
+        "event_service.adapters.competition_formats_adapter.CompetitionFormatsAdapter.get_competition_formats_by_name",  # noqa: B950
+        return_value=[{"id": ID} | competition_format_interval_start],  # type: ignore
+    )
+    mocker.patch(
         "event_service.adapters.competition_formats_adapter.CompetitionFormatsAdapter.create_competition_format",  # noqa: B950
         return_value=ID,
     )
@@ -533,6 +592,10 @@ async def test_create_competition_format_adapter_fails(
     mocker.patch(
         "event_service.services.competition_formats_service.create_id",
         return_value=None,
+    )
+    mocker.patch(
+        "event_service.adapters.competition_formats_adapter.CompetitionFormatsAdapter.get_competition_formats_by_name",  # noqa: B950
+        return_value=[],
     )
     mocker.patch(
         "event_service.adapters.competition_formats_adapter.CompetitionFormatsAdapter.create_competition_format",  # noqa: B950
@@ -638,6 +701,10 @@ async def test_create_competition_format_invalid_intervals(
         return_value=ID,
     )
     mocker.patch(
+        "event_service.adapters.competition_formats_adapter.CompetitionFormatsAdapter.get_competition_formats_by_name",  # noqa: B950
+        return_value=[],
+    )
+    mocker.patch(
         "event_service.adapters.competition_formats_adapter.CompetitionFormatsAdapter.create_competition_format",  # noqa: B950
         return_value=ID,
     )
@@ -708,13 +775,17 @@ async def test_update_competition_format_invalid_interval(
 
 @pytest.mark.integration
 async def test_create_competition_format_no_authorization(
-    client: _TestClient, mocker: MockFixture
+    client: _TestClient, mocker: MockFixture, competition_format_interval_start: dict
 ) -> None:
     """Should return 401 Unauthorized."""
     ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
     mocker.patch(
         "event_service.services.competition_formats_service.create_id",
         return_value=ID,
+    )
+    mocker.patch(
+        "event_service.adapters.competition_formats_adapter.CompetitionFormatsAdapter.get_competition_formats_by_name",  # noqa: B950
+        return_value=[{"id": ID} | competition_format_interval_start],  # type: ignore
     )
     mocker.patch(
         "event_service.adapters.competition_formats_adapter.CompetitionFormatsAdapter.create_competition_format",  # noqa: B950
@@ -823,13 +894,20 @@ async def test_delete_competition_format_by_id_no_authorization(
 # Forbidden:
 @pytest.mark.integration
 async def test_create_competition_format_insufficient_role(
-    client: _TestClient, mocker: MockFixture, token_unsufficient_role: MockFixture
+    client: _TestClient,
+    mocker: MockFixture,
+    token_unsufficient_role: MockFixture,
+    competition_format_interval_start: dict,
 ) -> None:
     """Should return 403 Forbidden."""
     ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
     mocker.patch(
         "event_service.services.competition_formats_service.create_id",
         return_value=ID,
+    )
+    mocker.patch(
+        "event_service.adapters.competition_formats_adapter.CompetitionFormatsAdapter.get_competition_formats_by_name",  # noqa: B950
+        return_value=[{"id": ID} | competition_format_interval_start],  # type: ignore
     )
     mocker.patch(
         "event_service.adapters.competition_formats_adapter.CompetitionFormatsAdapter.create_competition_format",  # noqa: B950

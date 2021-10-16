@@ -20,6 +20,7 @@ from event_service.models import (
     IntervalStartFormat,
 )
 from event_service.services import (
+    CompetitionFormatAllreadyExistException,
     CompetitionFormatNotFoundException,
     CompetitionFormatsService,
     IllegalValueException,
@@ -93,7 +94,7 @@ class CompetitionFormatsView(View):
                     db, competition_format
                 )
             )
-        except IllegalValueException as e:
+        except (IllegalValueException, CompetitionFormatAllreadyExistException) as e:
             raise HTTPUnprocessableEntity(reason=e) from e
         except InvalidDateFormatException as e:
             raise HTTPBadRequest(reason=e) from e

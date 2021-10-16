@@ -27,6 +27,15 @@ class CompetitionFormatNotFoundException(Exception):
         super().__init__(message)
 
 
+class CompetitionFormatAllreadyExistException(Exception):
+    """Class representing custom exception for fetch method."""
+
+    def __init__(self, message: str) -> None:
+        """Initialize the error."""
+        # Call the base class constructor with the parameters it needs
+        super().__init__(message)
+
+
 class CompetitionFormatsService:
     """Class representing a service for competition_formats."""
 
@@ -63,12 +72,23 @@ class CompetitionFormatsService:
             Optional[str]: The id of the created competition_format. None otherwise.
 
         Raises:
+            CompetitionFormatAllreadyExistException: A format with the same name allready exist
             IllegalValueException: input object has illegal values
         """
         # Validation:
         if competition_format.id:
             raise IllegalValueException(
                 "Cannot create competition_format with input id."
+            ) from None
+        # Check if it exists:
+        _competition_formats = (
+            await CompetitionFormatsAdapter.get_competition_formats_by_name(
+                db, competition_format.name
+            )
+        )
+        if _competition_formats:
+            raise CompetitionFormatAllreadyExistException(
+                f"Competition-format with name {competition_format.name} allready exist."
             ) from None
         # create id
         id = create_id()
