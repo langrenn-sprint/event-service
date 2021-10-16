@@ -14,5 +14,6 @@ class Raceclass(DataClassJsonMixin):
     event_id: str
     no_of_contestants: int = 0
     distance: Optional[str] = field(default=None)
+    group: Optional[int] = field(default=None)
     order: Optional[int] = field(default=None)
     id: Optional[str] = field(default=None)

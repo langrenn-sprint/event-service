@@ -420,9 +420,12 @@
           name:
             type: string
             description: human readable name of raceclass
+          group:
+            type: integer
+            description: group in starting order
           order:
             type: integer
-            description: position in starting order
+            description: position in group in starting order
           ageclass_name:
             type: string
             description: name of the corresponding ageclass

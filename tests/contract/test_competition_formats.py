@@ -69,6 +69,7 @@ async def competition_format_individual_sprint() -> dict:
         "name": "Individual Sprint",
         "starting_order": "Draw",
         "start_procedure": "Heat Start",
+        "time_between_groups": "00:10:00",
         "time_between_rounds": "00:05:00",
         "time_between_heats": "00:02:30",
         "max_no_of_contestants": 80,
