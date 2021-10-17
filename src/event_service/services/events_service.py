@@ -144,7 +144,13 @@ async def validate_event(db: Any, event: Event) -> None:
                 db, event.competition_format
             )
         )
-        if len(competition_formats) != 1:
+        if len(competition_formats) == 1:
+            pass
+        elif len(competition_formats) == 0:
             raise CompetitionFormatNotFoundException(
-                f'Invalid competition_format "{event.competition_format}" for event.'
+                f'Competition_format "{event.competition_format}" for event not found.'
+            ) from None
+        else:
+            raise CompetitionFormatNotFoundException(
+                f'Competition_format "{event.competition_format}" for event is ambigous.'
             ) from None
