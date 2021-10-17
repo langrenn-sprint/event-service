@@ -496,6 +496,44 @@ async def test_update_event_invalid_time(
 
 
 @pytest.mark.integration
+async def test_create_event_multiple_competition_formats(
+    client: _TestClient,
+    mocker: MockFixture,
+    token: MockFixture,
+    event: dict,
+    competition_format: dict,
+) -> None:
+    """Should return 400 Bad request."""
+    ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
+    mocker.patch(
+        "event_service.services.events_service.create_id",
+        return_value=ID,
+    )
+    mocker.patch(
+        "event_service.adapters.events_adapter.EventsAdapter.create_event",
+        return_value=ID,
+    )
+    mocker.patch(
+        "event_service.adapters.competition_formats_adapter.CompetitionFormatsAdapter.get_competition_formats_by_name",  # noqa: B950
+        return_value=[competition_format, competition_format],
+    )
+
+    request_body = event
+
+    headers = MultiDict(
+        {
+            hdrs.CONTENT_TYPE: "application/json",
+            hdrs.AUTHORIZATION: f"Bearer {token}",
+        },
+    )
+
+    with aioresponses(passthrough=["http://127.0.0.1"]) as m:
+        m.post("http://example.com:8081/authorize", status=204)
+        resp = await client.post("/events", headers=headers, json=request_body)
+        assert resp.status == 400
+
+
+@pytest.mark.integration
 async def test_create_event_invalid_competition_format(
     client: _TestClient, mocker: MockFixture, token: MockFixture, event: dict
 ) -> None:
