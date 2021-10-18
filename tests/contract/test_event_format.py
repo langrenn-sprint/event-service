@@ -121,6 +121,11 @@ async def test_get_event_specific_format(
     assert "application/json" in response.headers[hdrs.CONTENT_TYPE]
     assert type(body) is dict
     assert body["name"] == competition_format["name"]
+    assert body["starting_order"] == competition_format["starting_order"]
+    assert body["start_procedure"] == competition_format["start_procedure"]
+    assert body["time_between_groups"] == competition_format["time_between_groups"]
+    assert body["intervals"] == competition_format["intervals"]
+    assert body["datatype"] == competition_format["datatype"]
 
 
 @pytest.mark.contract
