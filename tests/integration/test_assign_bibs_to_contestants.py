@@ -36,7 +36,30 @@ async def raceclasses() -> List[dict]:
             "name": "G12",
             "ageclass_name": "G 12 år",
             "event_id": "ref_to_event",
+            "group": 1,
             "order": 1,
+        },
+        {
+            "id": "99999999-99999-9999-9999-99999999999",
+            "name": "J12",
+            "ageclass_name": "J 12 år",
+            "event_id": "ref_to_event",
+            "group": 1,
+            "order": 2,
+        },
+    ]
+
+
+@pytest.fixture
+async def raceclasses_without_group() -> List[dict]:
+    """Create a mock raceclasses object."""
+    return [
+        {
+            "id": "11111111-11111-1111-1111-11111111111",
+            "name": "G12",
+            "ageclass_name": "G 12 år",
+            "event_id": "ref_to_event",
+            "order": 2,
         },
         {
             "id": "99999999-99999-9999-9999-99999999999",
@@ -57,12 +80,14 @@ async def raceclasses_without_order() -> List[dict]:
             "name": "G12",
             "ageclass_name": "G 12 år",
             "event_id": "ref_to_event",
+            "group": 1,
         },
         {
             "id": "99999999-99999-9999-9999-99999999999",
             "name": "J12",
             "ageclass_name": "J 12 år",
             "event_id": "ref_to_event",
+            "group": 1,
         },
     ]
 
@@ -235,6 +260,52 @@ async def test_assign_bibs_to_contestants_no_raceclasses(
             f"/events/{event_id}/contestants/assign-bibs", headers=headers
         )
         assert resp.status == 404
+
+
+@pytest.mark.integration
+async def test_assign_bibs_to_contestants_raceclasses_without_group(
+    client: _TestClient,
+    mocker: MockFixture,
+    token: MockFixture,
+    event: dict,
+    raceclasses_without_group: List[dict],
+    contestants: List[dict],
+) -> None:
+    """Should return 400 Bad request."""
+    mocker.patch(
+        "event_service.adapters.events_adapter.EventsAdapter.get_event_by_id",
+        return_value=event,
+    )
+    mocker.patch(
+        "event_service.adapters.raceclasses_adapter.RaceclassesAdapter.get_all_raceclasses",
+        return_value=raceclasses_without_group,
+    )
+    mocker.patch(
+        "event_service.adapters.contestants_adapter.ContestantsAdapter.get_all_contestants",
+        return_value=contestants,
+    )
+    mocker.patch(
+        "event_service.adapters.contestants_adapter.ContestantsAdapter.get_contestant_by_id",
+        side_effect=get_contestant_by_id,
+    )
+    mocker.patch(
+        "event_service.adapters.contestants_adapter.ContestantsAdapter.update_contestant",
+        side_effect=update_contestant,
+    )
+
+    headers = MultiDict(
+        {
+            hdrs.CONTENT_TYPE: "application/json",
+            hdrs.AUTHORIZATION: f"Bearer {token}",
+        },
+    )
+    event_id = event["id"]
+    with aioresponses(passthrough=["http://127.0.0.1"]) as m:
+        m.post("http://example.com:8081/authorize", status=204)
+        resp = await client.post(
+            f"/events/{event_id}/contestants/assign-bibs", headers=headers
+        )
+        assert resp.status == 400
 
 
 @pytest.mark.integration

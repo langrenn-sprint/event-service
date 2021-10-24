@@ -1,9 +1,10 @@
 """Contract test cases for contestants."""
 import asyncio
 from datetime import date
+import json
 import logging
 import os
-from typing import Any, AsyncGenerator, Optional
+from typing import Any, AsyncGenerator, List, Optional
 
 from aiohttp import ClientSession, hdrs
 import pytest
@@ -119,6 +120,15 @@ async def delete_raceclasses(
     await session.close()
 
 
+@pytest.fixture
+async def expected_contestants() -> List[dict]:
+    """Create a mock raceplan object."""
+    with open("tests/files/expected_contestants_list.json", "r") as file:
+        contestants = json.load(file)
+
+    return contestants
+
+
 @pytest.mark.contract
 @pytest.mark.asyncio
 async def test_assign_bibs(
@@ -126,6 +136,7 @@ async def test_assign_bibs(
     token: MockFixture,
     event_id: str,
     clear_db: None,
+    expected_contestants: List[dict],
 ) -> None:
     """Should return 201 Created and a location header with url to contestants."""
     headers = {
@@ -157,15 +168,16 @@ async def test_assign_bibs(
         async with session.get(url, headers=headers) as response:
             assert response.status == 200
             raceclasses = await response.json()
-            order = 0
             for raceclass in raceclasses:
-                order += 1
-                raceclass["order"] = order
-                raceclass_id = raceclass["id"]
+                id = raceclass["id"]
+                raceclass["group"], raceclass["order"] = await _decide_group_and_order(
+                    raceclass
+                )
                 async with session.put(
-                    f"{url}/{raceclass_id}", headers=headers, json=raceclass
+                    f"{url}/{id}", headers=headers, json=raceclass
                 ) as response:
                     assert response.status == 204
+        await _print_raceclasses(raceclasses)
 
         # Finally assign bibs to all contestants:
         url = f"{http_service}/events/{event_id}/contestants/assign-bibs"
@@ -181,5 +193,79 @@ async def test_assign_bibs(
             assert "application/json" in response.headers[hdrs.CONTENT_TYPE]
             assert type(contestants) is list
             assert len(contestants) > 0
+
+            await _print_contestants(contestants)
+            await _dump_contestants_to_json(contestants)
+
+            i = 0
             for c in contestants:
-                assert c["bib"] > 0
+                assert type(c["bib"]) is int
+                assert c["bib"] == expected_contestants[i]["bib"]
+                assert c["ageclass"] == expected_contestants[i]["ageclass"]
+                i += 1
+
+
+# ---
+async def _decide_group_and_order(raceclass: dict) -> tuple[int, int]:  # noqa: C901
+    if raceclass["name"] == "G16":  # race-order: 1
+        return (1, 1)
+    elif raceclass["name"] == "J16":  # race-order: 2
+        return (1, 2)
+    elif raceclass["name"] == "G15":  # race-order: 3
+        return (1, 3)
+    elif raceclass["name"] == "J15":  # race-order: 4
+        return (1, 4)
+    elif raceclass["name"] == "G14":  # race-order: 5
+        return (2, 1)
+    elif raceclass["name"] == "J14":  # race-order: 6
+        return (2, 2)
+    elif raceclass["name"] == "G13":  # race-order: 7
+        return (2, 3)
+    elif raceclass["name"] == "J13":  # race-order: 8
+        return (2, 4)
+    elif raceclass["name"] == "G12":  # race-order: 9
+        return (3, 1)
+    elif raceclass["name"] == "J12":  # race-order: 10
+        return (3, 2)
+    elif raceclass["name"] == "G11":  # race-order: 11
+        return (3, 3)
+    elif raceclass["name"] == "J11":  # race-order: 12
+        return (3, 4)
+    return (0, 0)  # should not reach this point
+
+
+async def _print_raceclasses(raceclasses: list[dict]) -> None:
+    # print("--- RACECLASSES ---")
+    # print("group;order;name;ageclass_name;no_of_contestants;distance;event_id")
+    # for raceclass in raceclasses:
+    #     print(
+    #         str(raceclass["group"])
+    #         + ";"
+    #         + str(raceclass["order"])
+    #         + ";"
+    #         + raceclass["name"]
+    #         + ";"
+    #         + raceclass["ageclass_name"]
+    #         + ";"
+    #         + str(raceclass["no_of_contestants"])
+    #         + ";"
+    #         + str(raceclass["distance"])
+    #         + ";"
+    #         + raceclass["event_id"]
+    #     )
+    pass
+
+
+async def _print_contestants(contestants: List[dict]) -> None:
+    # print("--- CONTESTANTS ---")
+    # print(f"Number of contestants: {len(contestants)}.")
+    # print("bib;ageclass")
+    # for contestant in contestants:
+    #     print(str(contestant["bib"]) + ";" + str(contestant["ageclass"]))
+    pass
+
+
+async def _dump_contestants_to_json(contestants: List[dict]) -> None:
+    # with open("tests/files/tmp_startlist.json", "w") as file:
+    #     json.dump(contestants, file)
+    pass

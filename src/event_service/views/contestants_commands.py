@@ -15,6 +15,7 @@ from event_service.adapters import UsersAdapter
 from event_service.commands import (
     ContestantsCommands,
     NoRaceclassInEventException,
+    NoValueForGroupInRaceclassExcpetion,
     NoValueForOrderInRaceclassExcpetion,
 )
 from event_service.services import (
@@ -47,7 +48,10 @@ class ContestantsAssignBibsView(View):
             await ContestantsCommands.assign_bibs(db, event_id)
         except (EventNotFoundException, NoRaceclassInEventException) as e:
             raise HTTPNotFound(reason=e) from e
-        except NoValueForOrderInRaceclassExcpetion as e:
+        except (
+            NoValueForGroupInRaceclassExcpetion,
+            NoValueForOrderInRaceclassExcpetion,
+        ) as e:
             raise HTTPBadRequest(reason=e) from e
 
         headers = MultiDict(

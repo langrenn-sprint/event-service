@@ -28,11 +28,20 @@ class NoValueForOrderInRaceclassExcpetion(Exception):
         super().__init__(message)
 
 
+class NoValueForGroupInRaceclassExcpetion(Exception):
+    """Class representing custom exception for fetch method."""
+
+    def __init__(self, message: str) -> None:
+        """Initialize the error."""
+        # Call the base class constructor with the parameters it needs
+        super().__init__(message)
+
+
 class ContestantsCommands:
     """Class representing a commands on contestants."""
 
     @classmethod
-    async def assign_bibs(cls: Any, db: Any, event_id: str) -> None:
+    async def assign_bibs(cls: Any, db: Any, event_id: str) -> None:  # noqa: C901
         """Assign bibs function.
 
         This function will
@@ -47,6 +56,7 @@ class ContestantsCommands:
         Raises:
             EventNotFoundException: event not found
             NoRaceclassInEventException: there are no raceclasses in event
+            NoValueForGroupInRaceclassExcpetion: raceclass does not have value for group
             NoValueForOrderInRaceclassExcpetion: raceclass does not have value for order
         """
         # Check if event exists:
@@ -62,6 +72,12 @@ class ContestantsCommands:
                 f"Event {event_id} has no raceclasses. Not able to assign bibs."
             ) from None
 
+        # Check if all raceclasses has value for group|:
+        for raceclass in raceclasses:
+            if not raceclass.group:
+                raise NoValueForGroupInRaceclassExcpetion(
+                    f"Raceclass {raceclass.name} does not have value for group."
+                )
         # Check if all raceclasses has value for order:
         for raceclass in raceclasses:
             if not raceclass.order:
@@ -78,14 +94,18 @@ class ContestantsCommands:
         _list: List[dict] = list()
         for c in contestants:
             c_dict = c.to_dict()
+            c_dict["raceclass_group"] = next(
+                item for item in raceclasses if item.ageclass_name == c_dict["ageclass"]
+            ).group
             c_dict["raceclass_order"] = next(
                 item for item in raceclasses if item.ageclass_name == c_dict["ageclass"]
             ).order
             _list.append(c_dict)
 
-        # Sort on racelass_order:
-        _list_sorted_on_raceclass = sorted(_list, key=lambda k: k["raceclass_order"])
-
+        # Sort on racelass_group and racelass_order:
+        _list_sorted_on_raceclass = sorted(
+            _list, key=lambda k: (k["raceclass_group"], k["raceclass_order"])
+        )
         # For every contestant, assign unique bib
         bib_no = 0
         for d in _list_sorted_on_raceclass:
