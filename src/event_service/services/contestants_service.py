@@ -7,10 +7,10 @@ import uuid
 import numpy as np
 import pandas as pd
 
-from event_service.adapters import ContestantsAdapter
+from event_service.adapters import ContestantsAdapter, RaceclassesAdapter
 from event_service.models import Contestant
 from .events_service import EventNotFoundException, EventsService
-from .exceptions import IllegalValueException
+from .exceptions import IllegalValueException, RaceclassNotFoundException
 
 
 def create_id() -> str:  # pragma: no cover
@@ -46,6 +46,39 @@ class ContestantsService:
         _contestants = await ContestantsAdapter.get_all_contestants(db, event_id)
         for c in _contestants:
             contestants.append(Contestant.from_dict(c))
+        _s = sorted(
+            contestants,
+            key=lambda k: (
+                k.bib is not None,
+                k.bib != "",
+                k.bib,
+                k.ageclass,
+                k.last_name,
+                k.first_name,
+            ),
+            reverse=False,
+        )
+        return _s
+
+    @classmethod
+    async def get_contestants_by_raceclass(
+        cls: Any, db: Any, event_id: str, raceclass: str
+    ) -> List[Contestant]:
+        """Get all contestants function filter by raceclass."""
+        contestants = []
+        # Need to get the raceclass, to get the corresponding ageclasses:
+        raceclasses = await RaceclassesAdapter.get_raceclass_by_name(
+            db, event_id, raceclass
+        )
+        if raceclasses == []:
+            raise RaceclassNotFoundException(f'Raceclass "{raceclass}" not found.')
+        # FIXME: this has to change when ageclass_anme on raceclass becomes a list
+        ageclasses = [raceclass["ageclass_name"] for raceclass in raceclasses]
+        # Then filter contestants on ageclasses:
+        _contestants = await ContestantsAdapter.get_all_contestants(db, event_id)
+        for _c in _contestants:
+            if _c["ageclass"] in ageclasses:
+                contestants.append(Contestant.from_dict(_c))
         _s = sorted(
             contestants,
             key=lambda k: (
