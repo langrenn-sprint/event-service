@@ -39,6 +39,25 @@ class RaceclassesAdapter(Adapter):
         return result
 
     @classmethod
+    async def get_raceclass_by_name(
+        cls: Any, db: Any, event_id: str, name: str
+    ) -> List[dict]:  # pragma: no cover
+        """Get raceclass by name function."""
+        raceclasses: List = []
+        cursor = db.raceclasses_collection.find(
+            {
+                "$and": [
+                    {"event_id": event_id},
+                    {"name": name},
+                ]
+            }
+        )
+        for raceclass in await cursor.to_list(None):
+            raceclasses.append(raceclass)
+            logging.debug(raceclass)
+        return raceclasses
+
+    @classmethod
     async def get_raceclass_by_ageclass_name(
         cls: Any, db: Any, event_id: str, ageclass_name: str
     ) -> List[dict]:  # pragma: no cover
