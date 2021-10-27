@@ -107,7 +107,7 @@ async def test_create_raceclass(
 async def test_get_raceclass_by_id(
     client: _TestClient, mocker: MockFixture, token: MockFixture, raceclass: dict
 ) -> None:
-    """Should return OK, and a body containing one raceclass."""
+    """Should return OK, and a list containing one raceclass."""
     EVENT_ID = "event_id_1"
     RACECLASS_ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
     mocker.patch(
@@ -135,6 +135,41 @@ async def test_get_raceclass_by_id(
         assert body["ageclass_name"] == raceclass["ageclass_name"]
         assert body["event_id"] == raceclass["event_id"]
         assert body["distance"] == raceclass["distance"]
+
+
+@pytest.mark.integration
+async def test_get_raceclass_by_name(
+    client: _TestClient, mocker: MockFixture, token: MockFixture, raceclass: dict
+) -> None:
+    """Should return 200 OK, and a list containing one raceclass."""
+    EVENT_ID = "event_id_1"
+    mocker.patch(
+        "event_service.adapters.raceclasses_adapter.RaceclassesAdapter.get_raceclass_by_name",  # noqa: B950
+        return_value=[raceclass],
+    )
+    headers = MultiDict(
+        {
+            hdrs.AUTHORIZATION: f"Bearer {token}",
+        },
+    )
+
+    name = raceclass["name"]
+    with aioresponses(passthrough=["http://127.0.0.1"]) as m:
+        m.post("http://example.com:8081/authorize", status=204)
+        resp = await client.get(
+            f"/events/{EVENT_ID}/raceclasses?name={name}",
+            headers=headers,
+        )
+        assert resp.status == 200
+        assert "application/json" in resp.headers[hdrs.CONTENT_TYPE]
+        body = await resp.json()
+        assert type(body) is list
+        assert body[0]["id"] == raceclass["id"]
+        assert body[0]["name"] == raceclass["name"]
+        assert body[0]["order"] == raceclass["order"]
+        assert body[0]["ageclass_name"] == raceclass["ageclass_name"]
+        assert body[0]["event_id"] == raceclass["event_id"]
+        assert body[0]["distance"] == raceclass["distance"]
 
 
 @pytest.mark.integration

@@ -4,6 +4,7 @@ from copy import deepcopy
 import logging
 import os
 from typing import Any, Optional
+from urllib.parse import quote
 
 from aiohttp import ClientSession, hdrs
 import pytest
@@ -120,6 +121,58 @@ async def test_get_all_raceclasses(
     assert "application/json" in response.headers[hdrs.CONTENT_TYPE]
     assert type(raceclasses) is list
     assert len(raceclasses) == 1
+
+
+@pytest.mark.contract
+@pytest.mark.asyncio
+async def test_get_all_raceclasses_by_name(
+    http_service: Any, token: MockFixture, event_id: str
+) -> None:
+    """Should return OK and a list of raceclasses as json."""
+    name_parameter = "G16"
+    url = f"{http_service}/events/{event_id}/raceclasses?name={name_parameter}"
+    headers = {
+        hdrs.AUTHORIZATION: f"Bearer {token}",
+    }
+
+    session = ClientSession()
+    async with session.get(url, headers=headers) as response:
+        raceclasses = await response.json()
+    await session.close()
+
+    assert response.status == 200
+    assert "application/json" in response.headers[hdrs.CONTENT_TYPE]
+    assert type(raceclasses) is list
+    assert len(raceclasses) == 1
+    assert raceclasses[0]["name"] == name_parameter
+
+
+@pytest.mark.contract
+@pytest.mark.asyncio
+async def test_get_all_raceclasses_by_ageclass_name(
+    http_service: Any, token: MockFixture, event_id: str
+) -> None:
+    """Should return OK and a list of raceclasses as json."""
+    ageclass_name = "G 16 år"
+    ageclass_name_parameter = quote(ageclass_name)
+    url = (
+        f"{http_service}/events/{event_id}/raceclasses?ageclass-name"
+        f"={ageclass_name_parameter}"
+    )
+    headers = {
+        hdrs.AUTHORIZATION: f"Bearer {token}",
+    }
+
+    session = ClientSession()
+    async with session.get(url, headers=headers) as response:
+        raceclasses = await response.json()
+    await session.close()
+
+    assert response.status == 200
+    assert "application/json" in response.headers[hdrs.CONTENT_TYPE]
+    assert type(raceclasses) is list
+    assert len(raceclasses) == 1
+    assert raceclasses[0]["ageclass_name"] == ageclass_name
 
 
 @pytest.mark.contract

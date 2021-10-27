@@ -44,7 +44,12 @@ class RaceclassesView(View):
             raise e from e
 
         event_id = self.request.match_info["eventId"]
-        if "ageclass-name" in self.request.rel_url.query:
+        if "name" in self.request.rel_url.query:
+            name = self.request.rel_url.query["name"]
+            raceclasses = await RaceclassesService.get_raceclass_by_name(
+                db, event_id, name
+            )
+        elif "ageclass-name" in self.request.rel_url.query:
             ageclass_name = self.request.rel_url.query["ageclass-name"]
             raceclasses = await RaceclassesService.get_raceclass_by_ageclass_name(
                 db, event_id, ageclass_name
