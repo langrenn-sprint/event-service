@@ -6,21 +6,12 @@ import uuid
 from event_service.adapters import RaceclassesAdapter
 from event_service.models import Raceclass
 from .events_service import EventNotFoundException, EventsService
-from .exceptions import IllegalValueException
+from .exceptions import IllegalValueException, RaceclassNotFoundException
 
 
 def create_id() -> str:  # pragma: no cover
     """Creates an uuid."""
     return str(uuid.uuid4())
-
-
-class RaceclassNotFoundException(Exception):
-    """Class representing custom exception for fetch method."""
-
-    def __init__(self, message: str) -> None:
-        """Initialize the error."""
-        # Call the base class constructor with the parameters it needs
-        super().__init__(message)
 
 
 class RaceclassCreateException(Exception):

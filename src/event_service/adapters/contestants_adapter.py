@@ -1,5 +1,4 @@
 """Module for contestant adapter."""
-import logging
 from typing import Any, List, Optional
 
 from .adapter import Adapter
@@ -17,7 +16,6 @@ class ContestantsAdapter(Adapter):
         cursor = db.contestants_collection.find({"event_id": event_id})
         for contestant in await cursor.to_list(None):  # we ask for all contestants
             contestants.append(contestant)
-            logging.debug(contestant)
         return contestants
 
     @classmethod

@@ -23,6 +23,7 @@ from event_service.services import (
     ContestantsService,
     EventNotFoundException,
     IllegalValueException,
+    RaceclassNotFoundException,
 )
 from .utils import extract_token_from_request
 
@@ -45,7 +46,16 @@ class ContestantsView(View):
             raise e from e
 
         event_id = self.request.match_info["eventId"]
-        contestants = await ContestantsService.get_all_contestants(db, event_id)
+        if "raceclass" in self.request.rel_url.query:
+            raceclass = self.request.rel_url.query["raceclass"]
+            try:
+                contestants = await ContestantsService.get_contestants_by_raceclass(
+                    db, event_id, raceclass
+                )
+            except RaceclassNotFoundException as e:
+                raise HTTPBadRequest(reason=e) from e
+        else:
+            contestants = await ContestantsService.get_all_contestants(db, event_id)
         list = []
         for _c in contestants:
             list.append(_c.to_dict())
