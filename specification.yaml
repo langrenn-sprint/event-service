@@ -173,13 +173,18 @@
         - raceclass
         description: Get a list of raceclasses
         parameters:
-        - name: ageclass-name
+        - name: name
           in: query
-          description: ageclass-name of raceclass
-          required: false
+          description: name of the raceclass
+          example: "J15"
           schema:
             type: string
-            format: uuid
+        - name: ageclass-name
+          in: query
+          description: ageclass-name of raceclass url-encoded
+          example: "J 15 år"
+          schema:
+            type: string
         responses:
           200:
             description: Ok

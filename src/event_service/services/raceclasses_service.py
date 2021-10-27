@@ -134,10 +134,23 @@ class RaceclassesService:
         ) from None
 
     @classmethod
+    async def get_raceclass_by_name(
+        cls: Any, db: Any, event_id: str, name: str
+    ) -> List[Raceclass]:
+        """Get raceclass by name function."""
+        raceclasses: List[Raceclass] = []
+        _raceclasses = await RaceclassesAdapter.get_raceclass_by_name(
+            db, event_id, name
+        )
+        for a in _raceclasses:
+            raceclasses.append(Raceclass.from_dict(a))
+        return raceclasses
+
+    @classmethod
     async def get_raceclass_by_ageclass_name(
         cls: Any, db: Any, event_id: str, ageclass_name: str
     ) -> List[Raceclass]:
-        """Get raceclass by name function."""
+        """Get raceclass by ageclass_name function."""
         raceclasses: List[Raceclass] = []
         _raceclasses = await RaceclassesAdapter.get_raceclass_by_ageclass_name(
             db, event_id, ageclass_name
