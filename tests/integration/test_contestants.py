@@ -670,7 +670,7 @@ async def test_update_contestant_by_id(
 
 
 @pytest.mark.integration
-async def test_list_contestants(
+async def test_get_all_contestants(
     client: _TestClient, mocker: MockFixture, token: MockFixture, contestant: dict
 ) -> None:
     """Should return OK and a valid json body."""
@@ -694,6 +694,40 @@ async def test_list_contestants(
         assert type(contestants) is list
         assert len(contestants) == 1
         assert contestant["id"] == contestants[0]["id"]
+
+
+@pytest.mark.integration
+async def test_get_all_contestants_by_raceclass(
+    client: _TestClient, mocker: MockFixture, token: MockFixture, contestant: dict
+) -> None:
+    """Should return OK and a valid json body."""
+    EVENT_ID = "event_id_1"
+    mocker.patch(
+        "event_service.adapters.contestants_adapter.ContestantsAdapter.get_all_contestants",  # noqa: B950
+        return_value=[contestant],
+    )
+    mocker.patch(
+        "event_service.adapters.raceclasses_adapter.RaceclassesAdapter.get_raceclass_by_name",  # noqa: B950
+        return_value=[{"id": "1", "name": "G12", "ageclass_name": "G 12 år"}],
+    )
+    headers = MultiDict(
+        {
+            hdrs.AUTHORIZATION: f"Bearer {token}",
+        },
+    )
+    raceclass = "G12"
+    with aioresponses(passthrough=["http://127.0.0.1"]) as m:
+        m.post("http://example.com:8081/authorize", status=204)
+        resp = await client.get(
+            f"/events/{EVENT_ID}/contestants?raceclass={raceclass}", headers=headers
+        )
+        assert resp.status == 200
+        assert "application/json" in resp.headers[hdrs.CONTENT_TYPE]
+        contestants = await resp.json()
+        assert type(contestants) is list
+        assert len(contestants) == 1
+        assert contestant["id"] == contestants[0]["id"]
+        assert contestant["ageclass"] == contestants[0]["ageclass"]
 
 
 @pytest.mark.integration
@@ -994,7 +1028,7 @@ async def test_create_contestant_missing_mandatory_property(
 
 
 @pytest.mark.integration
-async def test_list_contestants_by_id_when_bib_has_been_set_to_noninteger(
+async def test_get_all_contestants_by_id_when_bib_has_been_set_to_noninteger(
     client: _TestClient, mocker: MockFixture, token: MockFixture, contestant: dict
 ) -> None:
     """Should return OK and a valid json body."""
@@ -1021,6 +1055,34 @@ async def test_list_contestants_by_id_when_bib_has_been_set_to_noninteger(
         assert len(contestants) == 2
         assert contestant["bib"] == contestants[1]["bib"]
         assert contestant_2["bib"] == contestants[0]["bib"]
+
+
+@pytest.mark.integration
+async def test_get_all_contestants_by_raceclass_raceclass_does_not_exist(
+    client: _TestClient, mocker: MockFixture, token: MockFixture, contestant: dict
+) -> None:
+    """Should return 400 Bad request."""
+    EVENT_ID = "event_id_1"
+    mocker.patch(
+        "event_service.adapters.contestants_adapter.ContestantsAdapter.get_all_contestants",  # noqa: B950
+        return_value=[contestant],
+    )
+    mocker.patch(
+        "event_service.adapters.raceclasses_adapter.RaceclassesAdapter.get_raceclass_by_name",  # noqa: B950
+        return_value=[],
+    )
+    headers = MultiDict(
+        {
+            hdrs.AUTHORIZATION: f"Bearer {token}",
+        },
+    )
+    raceclass = "G12"
+    with aioresponses(passthrough=["http://127.0.0.1"]) as m:
+        m.post("http://example.com:8081/authorize", status=204)
+        resp = await client.get(
+            f"/events/{EVENT_ID}/contestants?raceclass={raceclass}", headers=headers
+        )
+        assert resp.status == 400
 
 
 @pytest.mark.integration
@@ -1268,7 +1330,7 @@ async def test_update_contestant_by_id_no_authorization(
 
 
 @pytest.mark.integration
-async def test_list_contestants_no_authorization(
+async def test_get_all_contestants_no_authorization(
     client: _TestClient, mocker: MockFixture, contestant: dict
 ) -> None:
     """Should return 401 Unauthorized."""

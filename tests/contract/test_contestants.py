@@ -68,22 +68,59 @@ async def event_id(http_service: Any, token: MockFixture) -> Optional[str]:
         return None
 
 
-@pytest.fixture
+@pytest.fixture(scope="module")
 @pytest.mark.asyncio
 async def clear_db(
     http_service: Any, token: MockFixture, event_id: str
 ) -> AsyncGenerator:
-    """Delete all contestants and perform test."""
+    """Clear db before and after tests."""
+    await delete_contestants(http_service, token)
+    await delete_raceplans(http_service, token)
+    logging.info(" --- Testing starts. ---")
+    yield
+    logging.info(" --- Testing finished. ---")
+    logging.info(" --- Cleaning db after testing. ---")
+    await delete_raceplans(http_service, token)
+    await delete_contestants(http_service, token)
+    logging.info(" --- Cleaning db done. ---")
+
+
+async def delete_contestants(http_service: Any, token: MockFixture) -> None:
+    """Delete all contestants."""
     url = f"{http_service}/events/{event_id}/contestants"
     headers = {
         hdrs.AUTHORIZATION: f"Bearer {token}",
     }
 
-    session = ClientSession()
-    async with session.delete(url, headers=headers) as response:
-        assert response.status == 204
-    await session.close()
-    yield
+    async with ClientSession() as session:
+        async with session.get(url, headers=headers) as response:
+            contestants = await response.json()
+            for contestant in contestants:
+                contestant_id = contestant["id"]
+                async with session.delete(
+                    f"{url}/{contestant_id}", headers=headers
+                ) as response:
+                    pass
+    logging.info("Clear_db: Deleted all contestants.")
+
+
+async def delete_raceplans(http_service: Any, token: MockFixture) -> None:
+    """Delete all raceclasses."""
+    url = f"{http_service}/events/{event_id}/raceclasses"
+    headers = {
+        hdrs.AUTHORIZATION: f"Bearer {token}",
+    }
+
+    async with ClientSession() as session:
+        async with session.get(url, headers=headers) as response:
+            raceclasses = await response.json()
+            for raceclass in raceclasses:
+                raceclass_id = raceclass["id"]
+                async with session.delete(
+                    f"{url}/{raceclass_id}", headers=headers
+                ) as response:
+                    pass
+    logging.info("Clear_db: Deleted all raceclasses.")
 
 
 @pytest.fixture(scope="module")
@@ -304,6 +341,35 @@ async def test_get_all_contestants_in_given_event(
     assert "application/json" in response.headers[hdrs.CONTENT_TYPE]
     assert type(contestants) is list
     assert len(contestants) == 333
+
+
+@pytest.mark.contract
+@pytest.mark.asyncio
+async def test_get_all_contestants_in_given_event_by_raceclass(
+    http_service: Any, token: MockFixture, event_id: str
+) -> None:
+    """Should return OK and a list of contestants as json."""
+    headers = {
+        hdrs.AUTHORIZATION: f"Bearer {token}",
+    }
+    # In this case we have to generate raceclasses first:
+    async with ClientSession() as session:
+        url = f"{http_service}/events/{event_id}/generate-raceclasses"
+        async with session.post(url, headers=headers) as response:
+            assert response.status == 201
+
+        raceclass_parameter = "J15"
+        url = f"{http_service}/events/{event_id}/contestants?raceclass={raceclass_parameter}"
+
+        async with session.get(url, headers=headers) as response:
+            contestants = await response.json()
+
+    assert response.status == 200
+    assert "application/json" in response.headers[hdrs.CONTENT_TYPE]
+    assert type(contestants) is list
+    assert len(contestants) == 42
+    for contestant in contestants:
+        assert contestant["ageclass"] == "J 15 år"
 
 
 @pytest.mark.contract

@@ -242,6 +242,12 @@
         schema:
           type: string
           format: uuid
+      - name: raceclass
+        in: query
+        description: raceclass name
+        schema:
+          type: string
+        example: "J15"
       post:
         tags:
         - contestant
