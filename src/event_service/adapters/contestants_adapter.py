@@ -53,6 +53,16 @@ class ContestantsAdapter(Adapter):
         return result
 
     @classmethod
+    async def get_contestant_by_bib(
+        cls: Any, db: Any, event_id: str, bib: int
+    ) -> dict:  # pragma: no cover
+        """Get contestant by bib function."""
+        result = await db.contestants_collection.find_one(
+            {"$and": [{"event_id": event_id}, {"bib": bib}]}
+        )
+        return result
+
+    @classmethod
     async def get_contestant_by_minidrett_id(
         cls: Any, db: Any, event_id: str, minidrett_id: str
     ) -> dict:  # pragma: no cover

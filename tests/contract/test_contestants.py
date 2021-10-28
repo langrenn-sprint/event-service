@@ -352,8 +352,8 @@ async def test_get_all_contestants_in_given_event_by_raceclass(
     headers = {
         hdrs.AUTHORIZATION: f"Bearer {token}",
     }
-    # In this case we have to generate raceclasses first:
     async with ClientSession() as session:
+        # In this case we have to generate raceclasses first:
         url = f"{http_service}/events/{event_id}/generate-raceclasses"
         async with session.post(url, headers=headers) as response:
             assert response.status == 201
@@ -370,6 +370,59 @@ async def test_get_all_contestants_in_given_event_by_raceclass(
     assert len(contestants) == 42
     for contestant in contestants:
         assert contestant["ageclass"] == "J 15 år"
+
+
+@pytest.mark.contract
+@pytest.mark.asyncio
+async def test_get_all_contestants_in_given_event_by_bib(
+    http_service: Any, token: MockFixture, event_id: str
+) -> None:
+    """Should return OK and a list with exactly contestant as json."""
+    bib = 1
+
+    headers = {
+        hdrs.AUTHORIZATION: f"Bearer {token}",
+    }
+
+    async with ClientSession() as session:
+
+        # Also we need to set order for all raceclasses:
+        url = f"{http_service}/events/{event_id}/raceclasses"
+        async with session.get(url, headers=headers) as response:
+            assert response.status == 200
+            raceclasses = await response.json()
+            for raceclass in raceclasses:
+                id = raceclass["id"]
+                raceclass["group"], raceclass["order"] = await _decide_group_and_order(
+                    raceclass
+                )
+                async with session.put(
+                    f"{url}/{id}", headers=headers, json=raceclass
+                ) as response:
+                    assert response.status == 204
+
+        # Finally assign bibs to all contestants:
+        url = f"{http_service}/events/{event_id}/contestants/assign-bibs"
+        async with session.post(url, headers=headers) as response:
+            assert response.status == 201
+            assert f"/events/{event_id}/contestants" in response.headers[hdrs.LOCATION]
+
+        # We can now get the contestants
+        url = f"{http_service}/events/{event_id}/contestants"
+        async with session.get(url, headers=headers) as response:
+            contestants = await response.json()
+        assert response.status == 200
+        assert len(contestants) > 0
+        # We can now get the contestant by bib.
+        url = f"{http_service}/events/{event_id}/contestants?bib={bib}"
+        async with session.get(url, headers=headers) as response:
+            contestants_with_bib = await response.json()
+
+        assert response.status == 200
+        assert "application/json" in response.headers[hdrs.CONTENT_TYPE]
+        assert type(contestants_with_bib) is list
+        assert len(contestants_with_bib) == 1
+        assert contestants_with_bib[0]["bib"] == 1
 
 
 @pytest.mark.contract
@@ -391,3 +444,32 @@ async def test_delete_all_contestant(
             assert response.status == 200
             contestants = await response.json()
             assert len(contestants) == 0
+
+
+# ---
+async def _decide_group_and_order(raceclass: dict) -> tuple[int, int]:  # noqa: C901
+    if raceclass["name"] == "G16":  # race-order: 1
+        return (1, 1)
+    elif raceclass["name"] == "J16":  # race-order: 2
+        return (1, 2)
+    elif raceclass["name"] == "G15":  # race-order: 3
+        return (1, 3)
+    elif raceclass["name"] == "J15":  # race-order: 4
+        return (1, 4)
+    elif raceclass["name"] == "G14":  # race-order: 5
+        return (2, 1)
+    elif raceclass["name"] == "J14":  # race-order: 6
+        return (2, 2)
+    elif raceclass["name"] == "G13":  # race-order: 7
+        return (2, 3)
+    elif raceclass["name"] == "J13":  # race-order: 8
+        return (2, 4)
+    elif raceclass["name"] == "G12":  # race-order: 9
+        return (3, 1)
+    elif raceclass["name"] == "J12":  # race-order: 10
+        return (3, 2)
+    elif raceclass["name"] == "G11":  # race-order: 11
+        return (3, 3)
+    elif raceclass["name"] == "J11":  # race-order: 12
+        return (3, 4)
+    return (0, 0)  # should not reach this point

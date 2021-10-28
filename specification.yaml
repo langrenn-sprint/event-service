@@ -248,6 +248,12 @@
         schema:
           type: string
         example: "J15"
+      - name: bib
+        in: query
+        description: bib number
+        schema:
+          type: integer
+        example: 1
       post:
         tags:
         - contestant

@@ -94,6 +94,17 @@ class ContestantsService:
         return _s
 
     @classmethod
+    async def get_contestant_by_bib(
+        cls: Any, db: Any, event_id: str, bib: int
+    ) -> List[Contestant]:
+        """Get all contestants by bib function."""
+        contestants = []
+        _contestant = await ContestantsAdapter.get_contestant_by_bib(db, event_id, bib)
+        if _contestant:
+            contestants.append(Contestant.from_dict(_contestant))
+        return contestants
+
+    @classmethod
     async def create_contestant(
         cls: Any, db: Any, event_id: str, contestant: Contestant
     ) -> Optional[str]:
