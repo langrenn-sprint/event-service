@@ -731,6 +731,36 @@ async def test_get_all_contestants_by_raceclass(
 
 
 @pytest.mark.integration
+async def test_get_all_contestants_by_bib(
+    client: _TestClient, mocker: MockFixture, token: MockFixture, contestant: dict
+) -> None:
+    """Should return OK and a valid json body."""
+    EVENT_ID = "event_id_1"
+    mocker.patch(
+        "event_service.adapters.contestants_adapter.ContestantsAdapter.get_contestant_by_bib",  # noqa: B950
+        return_value=contestant,
+    )
+    headers = MultiDict(
+        {
+            hdrs.AUTHORIZATION: f"Bearer {token}",
+        },
+    )
+    bib = 1
+    with aioresponses(passthrough=["http://127.0.0.1"]) as m:
+        m.post("http://example.com:8081/authorize", status=204)
+        resp = await client.get(
+            f"/events/{EVENT_ID}/contestants?bib={bib}", headers=headers
+        )
+        assert resp.status == 200
+        assert "application/json" in resp.headers[hdrs.CONTENT_TYPE]
+        contestants = await resp.json()
+        assert type(contestants) is list
+        assert len(contestants) == 1
+        assert contestant["id"] == contestants[0]["id"]
+        assert contestant["bib"] == contestants[0]["bib"]
+
+
+@pytest.mark.integration
 async def test_delete_contestant_by_id(
     client: _TestClient, mocker: MockFixture, token: MockFixture, contestant: dict
 ) -> None:
@@ -1081,6 +1111,30 @@ async def test_get_all_contestants_by_raceclass_raceclass_does_not_exist(
         m.post("http://example.com:8081/authorize", status=204)
         resp = await client.get(
             f"/events/{EVENT_ID}/contestants?raceclass={raceclass}", headers=headers
+        )
+        assert resp.status == 400
+
+
+@pytest.mark.integration
+async def test_get_all_contestants_by_bib_wrong_paramter_type(
+    client: _TestClient, mocker: MockFixture, token: MockFixture, contestant: dict
+) -> None:
+    """Should return 400 Bad request."""
+    EVENT_ID = "event_id_1"
+    mocker.patch(
+        "event_service.adapters.contestants_adapter.ContestantsAdapter.get_contestant_by_bib",  # noqa: B950
+        return_value=contestant,
+    )
+    headers = MultiDict(
+        {
+            hdrs.AUTHORIZATION: f"Bearer {token}",
+        },
+    )
+    bib = "one"
+    with aioresponses(passthrough=["http://127.0.0.1"]) as m:
+        m.post("http://example.com:8081/authorize", status=204)
+        resp = await client.get(
+            f"/events/{EVENT_ID}/contestants?bib={bib}", headers=headers
         )
         assert resp.status == 400
 

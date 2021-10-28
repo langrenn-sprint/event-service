@@ -1,5 +1,4 @@
 """Module for raceclass adapter."""
-import logging
 from typing import Any, List, Optional
 
 from .adapter import Adapter
@@ -17,7 +16,6 @@ class RaceclassesAdapter(Adapter):
         cursor = db.raceclasses_collection.find({"event_id": event_id})
         for raceclass in await cursor.to_list(None):
             raceclasses.append(raceclass)
-            logging.debug(raceclass)
         return raceclasses
 
     @classmethod
@@ -54,7 +52,6 @@ class RaceclassesAdapter(Adapter):
         )
         for raceclass in await cursor.to_list(None):
             raceclasses.append(raceclass)
-            logging.debug(raceclass)
         return raceclasses
 
     @classmethod
@@ -73,7 +70,6 @@ class RaceclassesAdapter(Adapter):
         )
         for raceclass in await cursor.to_list(None):
             raceclasses.append(raceclass)
-            logging.debug(raceclass)
         return raceclasses
 
     @classmethod
