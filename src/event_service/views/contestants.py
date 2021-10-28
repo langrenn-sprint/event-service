@@ -54,6 +54,17 @@ class ContestantsView(View):
                 )
             except RaceclassNotFoundException as e:
                 raise HTTPBadRequest(reason=e) from e
+        elif "bib" in self.request.rel_url.query:
+            bib_param = self.request.rel_url.query["bib"]
+            try:
+                bib = int(bib_param)
+            except ValueError as e:
+                raise HTTPBadRequest(
+                    reason=f"Query-param bib {bib_param} must be a valid int."
+                ) from e
+            contestants = await ContestantsService.get_contestant_by_bib(
+                db, event_id, bib
+            )
         else:
             contestants = await ContestantsService.get_all_contestants(db, event_id)
         list = []

@@ -17,7 +17,6 @@ class CompetitionFormatsAdapter(Adapter):
         cursor = db.competition_formats_collection.find()
         for competition_format in await cursor.to_list(None):
             competition_formats.append(competition_format)
-            logging.debug(competition_format)
         return competition_formats
 
     @classmethod

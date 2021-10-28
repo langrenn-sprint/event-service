@@ -1,5 +1,4 @@
 """Module for event adapter."""
-import logging
 from typing import Any, List, Optional
 
 from .adapter import Adapter
@@ -15,7 +14,6 @@ class EventsAdapter(Adapter):
         cursor = db.events_collection.find()
         for event in await cursor.to_list(None):
             events.append(event)
-            logging.debug(event)
         return events
 
     @classmethod
