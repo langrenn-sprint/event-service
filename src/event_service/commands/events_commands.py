@@ -41,7 +41,7 @@ class EventsCommands:
                 ) from None
             else:
                 raceclass = raceclasses[0]
-            # Update counter if found:
+            # Update counter if raceclass exist:
             if raceclass_exist and raceclass.id:
                 raceclass.no_of_contestants += 1
                 result = await RaceclassesService.update_raceclass(
@@ -51,7 +51,7 @@ class EventsCommands:
                     raise RaceclassUpdateException(
                         f"Create of raceclass with id {raceclass.id} failed."
                     ) from None
-            # Otherwise: create
+            # If not found, we create the raceclass:
             else:
                 new_raceclass = Raceclass(
                     event_id=event_id,
