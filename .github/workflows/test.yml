@@ -24,7 +24,7 @@ jobs:
 
       - name: Configure docker to use the gcloud command-line tool as a credential helper
         run: |-
-          gcloud auth configure-docker gcr.io
+          gcloud auth configure-docker ghcr.io
 
       - name: Set up Python 3.9
         uses: actions/setup-python@v1
