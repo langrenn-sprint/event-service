@@ -8,23 +8,12 @@ env:
 
 jobs:
   build-and-deploy:
-    name: Build, test and deploy to Google Cloud Registry
+    name: Build, test and deploy to GitHub Container registry
     runs-on: ubuntu-latest
     if: github.event.pull_request.draft == false
 
     steps:
       - uses: actions/checkout@v2
-
-      - name: Setup gcloud CLI
-        uses: google-github-actions/setup-gcloud@master
-        with:
-          project_id: ${{ secrets.GCP_PROJECT_ID }}
-          service_account_key: ${{ secrets.GCP_SA_KEY }}
-          export_default_credentials: true
-
-      - name: Configure docker to use the gcloud command-line tool as a credential helper
-        run: |-
-          gcloud auth configure-docker gcr.io
 
       - name: Set up Python 3.9
         uses: actions/setup-python@v1
@@ -48,10 +37,13 @@ jobs:
           DB_USER: ${{ secrets.DB_USER }}
           DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
 
+      - name: Log in to registry
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
 
-      - name: Tag and publish docker image to Google Cloud
+      - name: Tag and publish docker image to Github Container registry
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
         run: |-
-          docker tag gcr.io/$PROJECT_ID/event-service:test gcr.io/$PROJECT_ID/event-service:$GITHUB_SHA
-          docker tag gcr.io/$PROJECT_ID/event-service:test gcr.io/$PROJECT_ID/event-service:latest
-          docker rmi gcr.io/$PROJECT_ID/event-service:test
-          docker -- push gcr.io/$PROJECT_ID/event-service -a
+          docker tag ghcr.io/$PROJECT_ID/event-service:test ghcr.io/$PROJECT_ID/event-service:latest
+          docker rmi ghcr.io/$PROJECT_ID/event-service:test
+          docker push ghcr.io/$PROJECT_ID/event-service
