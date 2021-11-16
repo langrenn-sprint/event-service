@@ -21,8 +21,8 @@ nox.options.sessions = (
 def unit_tests(session: Session) -> None:
     """Run the unit test suite."""
     args = session.posargs
+    session.install(".")
     session.install(
-        ".",
         "pytest",
         "pytest-mock",
         "pytest-aiohttp",
@@ -42,8 +42,8 @@ def unit_tests(session: Session) -> None:
 def integration_tests(session: Session) -> None:
     """Run the integration test suite."""
     args = session.posargs or ["--cov"]
+    session.install(".")
     session.install(
-        ".",
         "coverage[toml]",
         "pytest",
         "pytest-cov",
@@ -72,8 +72,8 @@ def integration_tests(session: Session) -> None:
 def contract_tests(session: Session) -> None:
     """Run the contract test suite."""
     args = session.posargs
+    session.install(".")
     session.install(
-        ".",
         "pytest",
         "pytest-docker",
         "pytest_mock",
@@ -164,14 +164,16 @@ def pytype(session: Session) -> None:
 def xdoctest(session: Session) -> None:
     """Run examples with xdoctest."""
     args = session.posargs or ["all"]
-    session.install(".", "xdoctest")
+    session.install(".")
+    session.install("xdoctest")
     session.run("python", "-m", "xdoctest", package, *args)
 
 
 @session
 def docs(session: Session) -> None:
     """Build the documentation."""
-    session.install(".", "sphinx", "sphinx_autodoc_typehints")
+    session.install(".")
+    session.install("sphinx", "sphinx_autodoc_typehints")
     session.run("sphinx-build", "docs", "docs/_build")
 
 
