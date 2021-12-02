@@ -5,6 +5,8 @@ from datetime import date
 import logging
 import os
 from typing import Any, AsyncGenerator, Optional
+from urllib.parse import quote
+
 
 from aiohttp import ClientSession, hdrs
 import pytest
@@ -362,6 +364,29 @@ async def test_get_all_contestants_in_given_event_by_raceclass(
         url = f"{http_service}/events/{event_id}/contestants?raceclass={raceclass_parameter}"
 
         async with session.get(url, headers=headers) as response:
+            contestants = await response.json()
+
+    assert response.status == 200
+    assert "application/json" in response.headers[hdrs.CONTENT_TYPE]
+    assert type(contestants) is list
+    assert len(contestants) == 42
+    for contestant in contestants:
+        assert contestant["ageclass"] == "J 15 år"
+
+
+@pytest.mark.contract
+@pytest.mark.asyncio
+async def test_get_all_contestants_in_given_event_by_ageclass(
+    http_service: Any, token: MockFixture, event_id: str
+) -> None:
+    """Should return OK and a list of contestants as json."""
+    headers = {
+        hdrs.AUTHORIZATION: f"Bearer {token}",
+    }
+    async with ClientSession() as session:
+        query_param = f'ageclass={quote("J 15 år")}'
+        url = f"{http_service}/events/{event_id}/contestants"
+        async with session.get(f"{url}?{query_param}", headers=headers) as response:
             contestants = await response.json()
 
     assert response.status == 200

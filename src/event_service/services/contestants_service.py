@@ -94,6 +94,30 @@ class ContestantsService:
         return _s
 
     @classmethod
+    async def get_contestants_by_ageclass(
+        cls: Any, db: Any, event_id: str, ageclass: str
+    ) -> List[Contestant]:
+        """Get all contestants function filter by ageclass."""
+        contestants = []
+        _contestants = await ContestantsAdapter.get_all_contestants(db, event_id)
+        for _c in _contestants:
+            if _c["ageclass"] == ageclass:
+                contestants.append(Contestant.from_dict(_c))
+        _s = sorted(
+            contestants,
+            key=lambda k: (
+                k.bib is not None,
+                k.bib != "",
+                k.bib,
+                k.ageclass,
+                k.last_name,
+                k.first_name,
+            ),
+            reverse=False,
+        )
+        return _s
+
+    @classmethod
     async def get_contestant_by_bib(
         cls: Any, db: Any, event_id: str, bib: int
     ) -> List[Contestant]:
