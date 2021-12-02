@@ -1,50 +1,50 @@
-  openapi: 3.0.3
-  info:
-    title: Event service
-    description: The event service let you administrate the main domain objects event, startlist and racelist
-    version: '1.0'
-    license:
-        name: Apache 2.0
-        url: 'http://www.apache.org/licenses/LICENSE-2.0.html'
-  tags:
-    - name: contestant
-      description: contestant in event operations
-    - name: event
-      description: event operations
-    - name: raceclass
-      description: raceclass operations
-    - name: competition-format
-      description: competition format operations
-  paths:
-    /events:
-      post:
-        tags:
+openapi: 3.0.3
+info:
+  title: Event service
+  description: The event service let you administrate the main domain objects event, startlist and racelist
+  version: "1.0"
+  license:
+    name: Apache 2.0
+    url: "http://www.apache.org/licenses/LICENSE-2.0.html"
+tags:
+  - name: contestant
+    description: contestant in event operations
+  - name: event
+    description: event operations
+  - name: raceclass
+    description: raceclass operations
+  - name: competition-format
+    description: competition format operations
+paths:
+  /events:
+    post:
+      tags:
         - event
-        security:
+      security:
         - bearerAuth: []
-        description: Add a new event
-        requestBody:
-          description: The new event to be created
+      description: Add a new event
+      requestBody:
+        description: The new event to be created
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Event"
+      responses:
+        201:
+          description: Created
+    get:
+      tags:
+        - event
+      description: Get a list of events
+      responses:
+        200:
+          description: Ok
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Event'
-        responses:
-          201:
-            description: Created
-      get:
-        tags:
-        - event
-        description: Get a list of events
-        responses:
-          200:
-            description: Ok
-            content:
-              application/json:
-                schema:
-                  $ref: '#/components/schemas/EventCollection'
-    /events/{eventId}:
-      parameters:
+                $ref: "#/components/schemas/EventCollection"
+  /events/{eventId}:
+    parameters:
       - name: eventId
         in: path
         description: event id
@@ -52,82 +52,33 @@
         schema:
           type: string
           format: uuid
-      get:
-        tags:
+    get:
+      tags:
         - event
-        description: Get a unique event
-        responses:
-          200:
-            description: Ok
-            content:
-              application/json:
-                schema:
-                  $ref: '#/components/schemas/Event'
-      put:
-        tags:
-        - event
-        description: Update an event
-        responses:
-          204:
-            description: No content
-      delete:
-        tags:
-        - event
-        description: Delete an event
-        responses:
-          204:
-            description: No content
-    /events/{eventId}/format:
-      parameters:
-      - name: eventId
-        in: path
-        description: event id
-        required: true
-        schema:
-          type: string
-          format: uuid
-      post:
-        tags:
-        - format
-        security:
-        - bearerAuth: []
-        description: Add an event specific competition format
-        requestBody:
-          description: The new event specific competition format
+      description: Get a unique event
+      responses:
+        200:
+          description: Ok
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/CompetitionFormat'
-        responses:
-          201:
-            description: Created
-      get:
-        tags:
-        - format
-        description: Get the event specific competition format
-        responses:
-          200:
-            description: Ok
-            content:
-              application/json:
-                schema:
-                  $ref: '#/components/schemas/CompetitionFormat'
-      put:
-        tags:
-        - format
-        description: Update the event specific competition format
-        responses:
-          204:
-            description: No content
-      delete:
-        tags:
-        - format
-        description: Delete the event speicific competition format
-        responses:
-          204:
-            description: No content
-    /events/{eventId}/generate-raceclasses:
-      parameters:
+                $ref: "#/components/schemas/Event"
+    put:
+      tags:
+        - event
+      description: Update an event
+      responses:
+        204:
+          description: No content
+    delete:
+      tags:
+        - event
+      description: Delete an event
+      responses:
+        204:
+          description: No content
+  /events/{eventId}/format:
+    parameters:
       - name: eventId
         in: path
         description: event id
@@ -135,44 +86,93 @@
         schema:
           type: string
           format: uuid
-      post:
-        tags:
-        - raceclass
-        security:
+    post:
+      tags:
+        - format
+      security:
         - bearerAuth: []
-        description: command to generate raceclasses based on contestants in event
-        responses:
-          201:
-            description: Created
-    /events/{eventId}/raceclasses:
-      parameters:
-      - name: eventId
-        in: path
-        description: event id
-        required: true
-        schema:
-          type: string
-          format: uuid
-      post:
-        tags:
-        - raceclass
-        security:
-        - bearerAuth: []
-        description: Add a new raceclass
-        requestBody:
-          description: The new raceclass to be created
+      description: Add an event specific competition format
+      requestBody:
+        description: The new event specific competition format
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CompetitionFormat"
+      responses:
+        201:
+          description: Created
+    get:
+      tags:
+        - format
+      description: Get the event specific competition format
+      responses:
+        200:
+          description: Ok
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Raceclass'
-        responses:
-          201:
-            description: Created
-      get:
-        tags:
+                $ref: "#/components/schemas/CompetitionFormat"
+    put:
+      tags:
+        - format
+      description: Update the event specific competition format
+      responses:
+        204:
+          description: No content
+    delete:
+      tags:
+        - format
+      description: Delete the event speicific competition format
+      responses:
+        204:
+          description: No content
+  /events/{eventId}/generate-raceclasses:
+    parameters:
+      - name: eventId
+        in: path
+        description: event id
+        required: true
+        schema:
+          type: string
+          format: uuid
+    post:
+      tags:
         - raceclass
-        description: Get a list of raceclasses
-        parameters:
+      security:
+        - bearerAuth: []
+      description: command to generate raceclasses based on contestants in event
+      responses:
+        201:
+          description: Created
+  /events/{eventId}/raceclasses:
+    parameters:
+      - name: eventId
+        in: path
+        description: event id
+        required: true
+        schema:
+          type: string
+          format: uuid
+    post:
+      tags:
+        - raceclass
+      security:
+        - bearerAuth: []
+      description: Add a new raceclass
+      requestBody:
+        description: The new raceclass to be created
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Raceclass"
+      responses:
+        201:
+          description: Created
+    get:
+      tags:
+        - raceclass
+      description: Get a list of raceclasses
+      parameters:
         - name: name
           in: query
           description: name of the raceclass
@@ -185,15 +185,15 @@
           example: "J 15 år"
           schema:
             type: string
-        responses:
-          200:
-            description: Ok
-            content:
-              application/json:
-                schema:
-                  $ref: '#/components/schemas/RaceclassCollection'
-    /events/{eventId}/raceclasses/{raceclassId}:
-      parameters:
+      responses:
+        200:
+          description: Ok
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RaceclassCollection"
+  /events/{eventId}/raceclasses/{raceclassId}:
+    parameters:
       - name: eventId
         in: path
         description: event id
@@ -208,33 +208,33 @@
         schema:
           type: string
           format: uuid
-      get:
-        tags:
+    get:
+      tags:
         - raceclass
-        description: Get a unique raceclass
-        responses:
-          200:
-            description: Ok
-            content:
-              application/json:
-                schema:
-                  $ref: '#/components/schemas/Raceclass'
-      put:
-        tags:
+      description: Get a unique raceclass
+      responses:
+        200:
+          description: Ok
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Raceclass"
+    put:
+      tags:
         - raceclass
-        description: Update an raceclass
-        responses:
-          204:
-            description: No content
-      delete:
-        tags:
+      description: Update an raceclass
+      responses:
+        204:
+          description: No content
+    delete:
+      tags:
         - raceclass
-        description: Delete an raceclass
-        responses:
-          204:
-            description: No content
-    /events/{eventId}/contestants:
-      parameters:
+      description: Delete an raceclass
+      responses:
+        204:
+          description: No content
+  /events/{eventId}/contestants:
+    parameters:
       - name: eventId
         in: path
         description: event id
@@ -248,45 +248,51 @@
         schema:
           type: string
         example: "J15"
+      - name: ageclass
+        in: query
+        description: ageclass name
+        schema:
+          type: string
+        example: "J 15 år"
       - name: bib
         in: query
         description: bib number
         schema:
           type: integer
         example: 1
-      post:
-        tags:
+    post:
+      tags:
         - contestant
-        description: create new contestant
-        requestBody:
-          description: the new contestant to be created
+      description: create new contestant
+      requestBody:
+        description: the new contestant to be created
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Contestant"
+      responses:
+        201:
+          description: Created
+    get:
+      tags:
+        - contestant
+      description: Get a list of contestants
+      responses:
+        200:
+          description: Ok
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Contestant'
-        responses:
-          201:
-            description: Created
-      get:
-        tags:
+                $ref: "#/components/schemas/ContestantCollection"
+    delete:
+      tags:
         - contestant
-        description: Get a list of contestants
-        responses:
-          200:
-            description: Ok
-            content:
-              application/json:
-                schema:
-                  $ref: '#/components/schemas/ContestantCollection'
-      delete:
-        tags:
-        - contestant
-        description: Delete all contestants in event
-        responses:
-          204:
-            description: No content
-    /events/{eventId}/contestants/assign-bibs:
-      parameters:
+      description: Delete all contestants in event
+      responses:
+        204:
+          description: No content
+  /events/{eventId}/contestants/assign-bibs:
+    parameters:
       - name: eventId
         in: path
         description: event id
@@ -294,15 +300,15 @@
         schema:
           type: string
           format: uuid
-      post:
-        tags:
+    post:
+      tags:
         - contestant
-        description: command to generate assign bibs to all contestants in event
-        responses:
-          201:
-            description: Bibs assigned
-    /events/{eventId}/contestants/{contestantId}:
-      parameters:
+      description: command to generate assign bibs to all contestants in event
+      responses:
+        201:
+          description: Bibs assigned
+  /events/{eventId}/contestants/{contestantId}:
+    parameters:
       - name: eventId
         in: path
         description: event id
@@ -317,62 +323,62 @@
         schema:
           type: string
           format: uuid
-      get:
-        tags:
+    get:
+      tags:
         - contestant
-        description: Get a unique contestant
-        responses:
-          200:
-            description: Ok
-            content:
-              application/json:
-                schema:
-                  $ref: '#/components/schemas/Contestant'
-      put:
-        tags:
-        - contestant
-        description: Update a contestant
-        requestBody:
-          description: the new contestant data
+      description: Get a unique contestant
+      responses:
+        200:
+          description: Ok
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Contestant'
-        responses:
-          200:
-            description: Ok
-            content:
-              application/json:
-                schema:
-                  $ref: '#/components/schemas/Contestant'
-      delete:
-        tags:
+                $ref: "#/components/schemas/Contestant"
+    put:
+      tags:
         - contestant
-        description: Delete a contestant given by id
-        responses:
-          204:
-            description: No content
-    /competition-formats:
-      post:
-        tags:
+      description: Update a contestant
+      requestBody:
+        description: the new contestant data
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Contestant"
+      responses:
+        200:
+          description: Ok
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Contestant"
+    delete:
+      tags:
+        - contestant
+      description: Delete a contestant given by id
+      responses:
+        204:
+          description: No content
+  /competition-formats:
+    post:
+      tags:
         - competition-format
-        security:
+      security:
         - bearerAuth: []
-        description: Add a new competition format
-        requestBody:
-          description: The new format to be created
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/CompetitionFormat'
-        responses:
-          201:
-            description: Created
-      get:
-        tags:
+      description: Add a new competition format
+      requestBody:
+        description: The new format to be created
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CompetitionFormat"
+      responses:
+        201:
+          description: Created
+    get:
+      tags:
         - competition-format
-        description: Get a list of competition formats
-        parameters:
+      description: Get a list of competition formats
+      parameters:
         - name: name
           in: query
           description: competition format name
@@ -380,15 +386,15 @@
           schema:
             type: string
             format: uuid
-        responses:
-          200:
-            description: Ok
-            content:
-              application/json:
-                schema:
-                  $ref: '#/components/schemas/CompetitionFormatCollection'
-    /competition-formats/{id}:
-      parameters:
+      responses:
+        200:
+          description: Ok
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CompetitionFormatCollection"
+  /competition-formats/{id}:
+    parameters:
       - name: id
         in: path
         description: competition format id
@@ -396,157 +402,157 @@
         schema:
           type: string
           format: uuid
-      get:
-        tags:
+    get:
+      tags:
         - competition-format
-        description: Get a unique competition format
-        responses:
-          200:
-            description: Ok
-            content:
-              application/json:
-                schema:
-                  $ref: '#/components/schemas/CompetitionFormat'
-      put:
-        tags:
+      description: Get a unique competition format
+      responses:
+        200:
+          description: Ok
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CompetitionFormat"
+    put:
+      tags:
         - competition-format
-        description: Update a competition format
-        responses:
-          204:
-            description: No content
-      delete:
-        tags:
+      description: Update a competition format
+      responses:
+        204:
+          description: No content
+    delete:
+      tags:
         - competition-format
-        description: Delete acompetition format
-        responses:
-          204:
-            description: No content
-  components:
-    schemas:
-      RaceclassCollection:
-        type: object
-        properties:
-          raceclasses:
-            type: array
-            items:
-              $ref: '#/components/schemas/Raceclass'
-      Raceclass:
-        properties:
-          id:
-            type: string
-          name:
-            type: string
-            description: human readable name of raceclass
-          group:
-            type: integer
-            description: group in starting order
-          order:
-            type: integer
-            description: position in group in starting order
-          ageclass_name:
-            type: string
-            description: name of the corresponding ageclass
-          event_id:
-            type: string
-            description: identifier of the event
-          distance:
-            type: string
-            description: name of distance the raceclass competes in
-          noOfContestants:
-            type: integer
-            description: number of contestants in raceclass
-      EventCollection:
-        type: object
-        properties:
-          events:
-            type: array
-            items:
-              $ref: '#/components/schemas/Event'
-      Event:
-        properties:
-          id:
-            type: string
-          name:
-            type: string
-            description: The event's name.
-          competition-format:
-            type: string
-            description: Name of competition format.
-          dateOfEvent:
-            type: string
-            format: date
-            description: The date on which the event takes place.
-          organiser:
-            type: string
-            description: Name of organiser
-          webpage:
-            type: string
-            format: uri
-            description: URL to the event's webpake
-          information:
-            type: string
-            description: Additional information
-      ContestantCollection:
-        type: object
-        properties:
-          contestants:
-            type: array
-            items:
-              $ref: '#/components/schemas/Contestant'
-      Contestant:
-        properties:
-          id:
-            description: system generated unique id
-            type: string
-          firstName:
-            type: string
-          lastName:
-            type: string
-          birthDate:
-            type: string
-            format: date
-          gender:
-            type: string
-          ageClass:
-            type: string
-          region:
-            type: string
-          club:
-            type: string
-          eventId:
-            type: string
-            format: uuid
-            description: id of event contestant is part of
-          email:
-            type: string
-          team:
-            type: string
-          minIdrettId:
-            type: string
-          bib:
-            type: integer
-      CompetitionFormatCollection:
-        type: object
-        properties:
-          events:
-            type: array
-            items:
-              $ref: '#/components/schemas/CompetitionFormat'
-      CompetitionFormat:
-        properties:
-          id:
-            type: string
-          name:
-            type: string
-            description: The competition-format's name.
-          startingOrder:
-            type: string
-            description: starting order describing how the start list should be created
-          startProcedure:
-            type: string
-            description: the start procuedure to be used for the competition
-    securitySchemes:
-      bearerAuth:
-        type: http
-        scheme: bearer
-        bearerFormat: JWT
+      description: Delete acompetition format
+      responses:
+        204:
+          description: No content
+components:
+  schemas:
+    RaceclassCollection:
+      type: object
+      properties:
+        raceclasses:
+          type: array
+          items:
+            $ref: "#/components/schemas/Raceclass"
+    Raceclass:
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+          description: human readable name of raceclass
+        group:
+          type: integer
+          description: group in starting order
+        order:
+          type: integer
+          description: position in group in starting order
+        ageclass_name:
+          type: string
+          description: name of the corresponding ageclass
+        event_id:
+          type: string
+          description: identifier of the event
+        distance:
+          type: string
+          description: name of distance the raceclass competes in
+        noOfContestants:
+          type: integer
+          description: number of contestants in raceclass
+    EventCollection:
+      type: object
+      properties:
+        events:
+          type: array
+          items:
+            $ref: "#/components/schemas/Event"
+    Event:
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+          description: The event's name.
+        competition-format:
+          type: string
+          description: Name of competition format.
+        dateOfEvent:
+          type: string
+          format: date
+          description: The date on which the event takes place.
+        organiser:
+          type: string
+          description: Name of organiser
+        webpage:
+          type: string
+          format: uri
+          description: URL to the event's webpake
+        information:
+          type: string
+          description: Additional information
+    ContestantCollection:
+      type: object
+      properties:
+        contestants:
+          type: array
+          items:
+            $ref: "#/components/schemas/Contestant"
+    Contestant:
+      properties:
+        id:
+          description: system generated unique id
+          type: string
+        firstName:
+          type: string
+        lastName:
+          type: string
+        birthDate:
+          type: string
+          format: date
+        gender:
+          type: string
+        ageClass:
+          type: string
+        region:
+          type: string
+        club:
+          type: string
+        eventId:
+          type: string
+          format: uuid
+          description: id of event contestant is part of
+        email:
+          type: string
+        team:
+          type: string
+        minIdrettId:
+          type: string
+        bib:
+          type: integer
+    CompetitionFormatCollection:
+      type: object
+      properties:
+        events:
+          type: array
+          items:
+            $ref: "#/components/schemas/CompetitionFormat"
+    CompetitionFormat:
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+          description: The competition-format's name.
+        startingOrder:
+          type: string
+          description: starting order describing how the start list should be created
+        startProcedure:
+          type: string
+          description: the start procuedure to be used for the competition
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
