@@ -36,7 +36,7 @@ BASE_URL = f"http://{HOST_SERVER}:{HOST_PORT}"
 class ContestantsView(View):
     """Class representing contestants resource."""
 
-    async def get(self) -> Response:
+    async def get(self) -> Response:  # noqa: C901
         """Get route function."""
         db = self.request.app["db"]
         token = extract_token_from_request(self.request)
@@ -54,6 +54,11 @@ class ContestantsView(View):
                 )
             except RaceclassNotFoundException as e:
                 raise HTTPBadRequest(reason=e) from e
+        elif "ageclass" in self.request.rel_url.query:
+            ageclass = self.request.rel_url.query["ageclass"]
+            contestants = await ContestantsService.get_contestants_by_ageclass(
+                db, event_id, ageclass
+            )
         elif "bib" in self.request.rel_url.query:
             bib_param = self.request.rel_url.query["bib"]
             try:
@@ -67,6 +72,7 @@ class ContestantsView(View):
             )
         else:
             contestants = await ContestantsService.get_all_contestants(db, event_id)
+
         list = []
         for _c in contestants:
             list.append(_c.to_dict())
@@ -156,9 +162,11 @@ class ContestantsView(View):
             body = json.dumps(result)
             return Response(status=200, body=body, content_type="application/json")
         else:
-            raise HTTPUnsupportedMediaType(
-                reason=f"multipart/* content type expected, got {self.request.headers[hdrs.CONTENT_TYPE]}."  # noqa: B950
-            ) from None
+            pass
+
+        raise HTTPUnsupportedMediaType(
+            reason=f"multipart/* content type expected, got {self.request.headers[hdrs.CONTENT_TYPE]}."  # noqa: B950
+        ) from None
 
     async def delete(self) -> Response:
         """Delete route function."""
