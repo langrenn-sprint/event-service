@@ -76,6 +76,8 @@ async def competition_format(event_id: str) -> dict:
         "start_procedure": "Interval Start",
         "time_between_groups": "00:10:00",
         "intervals": "00:00:30",
+        "max_no_of_contestants_in_raceclass": 9999,
+        "max_no_of_contestants_in_race": 9999,
         "datatype": "interval_start",
     }
 
@@ -125,6 +127,14 @@ async def test_get_event_specific_format(
     assert body["start_procedure"] == competition_format["start_procedure"]
     assert body["time_between_groups"] == competition_format["time_between_groups"]
     assert body["intervals"] == competition_format["intervals"]
+    assert (
+        body["max_no_of_contestants_in_raceclass"]
+        == competition_format["max_no_of_contestants_in_raceclass"]
+    )
+    assert (
+        body["max_no_of_contestants_in_race"]
+        == competition_format["max_no_of_contestants_in_race"]
+    )
     assert body["datatype"] == competition_format["datatype"]
 
 

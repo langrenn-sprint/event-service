@@ -20,6 +20,8 @@ class CompetitionFormat(DataClassJsonMixin, ABC):
     name: str
     start_procedure: str
     starting_order: str
+    max_no_of_contestants_in_raceclass: int
+    max_no_of_contestants_in_race: int
 
 
 @dataclass
@@ -39,7 +41,6 @@ class IntervalStartFormat(CompetitionFormat, DataClassJsonMixin):
 class IndividualSprintFormat(CompetitionFormat, DataClassJsonMixin):
     """Data class with details about a individual sprint format."""
 
-    max_no_of_contestants: int
     time_between_groups: time
     time_between_rounds: time
     time_between_heats: time
