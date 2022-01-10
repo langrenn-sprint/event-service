@@ -43,6 +43,8 @@ async def new_event_format_interval_start() -> dict:
         "start_procedure": "Interval Start",
         "time_between_groups": "00:10:00",
         "intervals": "00:00:30",
+        "max_no_of_contestants_in_raceclass": 9999,
+        "max_no_of_contestants_in_race": 9999,
         "datatype": "interval_start",
     }
 
@@ -57,7 +59,8 @@ async def new_event_format_individual_sprint() -> dict:
         "time_between_groups": "00:10:00",
         "time_between_rounds": "00:05:00",
         "time_between_heats": "00:02:30",
-        "max_no_of_contestants": 80,
+        "max_no_of_contestants_in_raceclass": 80,
+        "max_no_of_contestants_in_race": 10,
         "datatype": "individual_sprint",
     }
 
@@ -71,6 +74,8 @@ async def event_format_interval_start() -> dict:
         "start_procedure": "Interval Start",
         "time_between_groups": "00:10:00",
         "intervals": "00:00:30",
+        "max_no_of_contestants_in_raceclass": 9999,
+        "max_no_of_contestants_in_race": 9999,
         "datatype": "interval_start",
     }
 
@@ -85,7 +90,8 @@ async def event_format_individual_sprint() -> dict:
         "time_between_groups": "00:10:00",
         "time_between_rounds": "00:05:00",
         "time_between_heats": "00:02:30",
-        "max_no_of_contestants": 80,
+        "max_no_of_contestants_in_raceclass": 80,
+        "max_no_of_contestants_in_race": 10,
         "datatype": "individual_sprint",
     }
 
@@ -246,8 +252,12 @@ async def test_get_event_format_individual_sprint(
             == event_format_individual_sprint["time_between_rounds"]
         )
         assert (
-            body["max_no_of_contestants"]
-            == event_format_individual_sprint["max_no_of_contestants"]
+            body["max_no_of_contestants_in_raceclass"]
+            == event_format_individual_sprint["max_no_of_contestants_in_raceclass"]
+        )
+        assert (
+            body["max_no_of_contestants_in_race"]
+            == event_format_individual_sprint["max_no_of_contestants_in_race"]
         )
 
 

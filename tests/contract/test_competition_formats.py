@@ -59,6 +59,8 @@ async def competition_format_interval_start() -> dict:
         "start_procedure": "Interval Start",
         "time_between_groups": "00:10:00",
         "intervals": "00:00:30",
+        "max_no_of_contestants_in_raceclass": 9999,
+        "max_no_of_contestants_in_race": 9999,
         "datatype": "interval_start",
     }
 
@@ -73,7 +75,8 @@ async def competition_format_individual_sprint() -> dict:
         "time_between_groups": "00:10:00",
         "time_between_rounds": "00:05:00",
         "time_between_heats": "00:02:30",
-        "max_no_of_contestants": 80,
+        "max_no_of_contestants_in_raceclass": 80,
+        "max_no_of_contestants_in_race": 10,
         "datatype": "individual_sprint",
     }
 
@@ -113,12 +116,13 @@ async def test_create_competition_format_interval_start(
     }
     request_body = competition_format_interval_start
 
-    session = ClientSession()
-    async with session.post(url, headers=headers, json=request_body) as response:
-        status = response.status
-    await session.close()
+    async with ClientSession() as session:
+        async with session.post(url, headers=headers, json=request_body) as response:
+            status = response.status
+            if status != 201:
+                body = await response.json()
 
-    assert status == 201
+    assert status == 201, f"body:{body}"
     assert "/competition-formats/" in response.headers[hdrs.LOCATION]
 
 
@@ -138,12 +142,13 @@ async def test_create_competition_format_individual_sprint(
     }
     request_body = competition_format_individual_sprint
 
-    session = ClientSession()
-    async with session.post(url, headers=headers, json=request_body) as response:
-        status = response.status
-    await session.close()
+    async with ClientSession() as session:
+        async with session.post(url, headers=headers, json=request_body) as response:
+            status = response.status
+            if status != 201:
+                body = await response.json()
 
-    assert status == 201
+    assert status == 201, f"body:{body}"
     assert "/competition-formats/" in response.headers[hdrs.LOCATION]
 
 
@@ -211,8 +216,12 @@ async def test_get_competition_format_by_id(
         == competition_format_individual_sprint["time_between_heats"]
     )
     assert (
-        body["max_no_of_contestants"]
-        == competition_format_individual_sprint["max_no_of_contestants"]
+        body["max_no_of_contestants_in_raceclass"]
+        == competition_format_individual_sprint["max_no_of_contestants_in_raceclass"]
+    )
+    assert (
+        body["max_no_of_contestants_in_race"]
+        == competition_format_individual_sprint["max_no_of_contestants_in_race"]
     )
 
 
