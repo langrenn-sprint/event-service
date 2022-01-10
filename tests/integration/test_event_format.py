@@ -1,6 +1,7 @@
 """Integration test cases for the event_format route."""
 from copy import deepcopy
 import os
+from typing import Dict
 
 from aiohttp import hdrs
 from aiohttp.test_utils import TestClient as _TestClient
@@ -21,7 +22,7 @@ def token() -> str:
 
 
 @pytest.fixture
-async def event() -> dict[str, str]:
+async def event() -> Dict[str, str]:
     """An event object for testing."""
     return {
         "id": "event_id_1",
@@ -121,12 +122,10 @@ async def test_create_event_format_interval_start(
     )
 
     request_body = new_event_format_interval_start
-    headers = MultiDict(
-        {
-            hdrs.CONTENT_TYPE: "application/json",
-            hdrs.AUTHORIZATION: f"Bearer {token}",
-        },
-    )
+    headers = {
+        hdrs.CONTENT_TYPE: "application/json",
+        hdrs.AUTHORIZATION: f"Bearer {token}",
+    }
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
         m.post("http://example.com:8081/authorize", status=204)
@@ -162,12 +161,10 @@ async def test_create_event_format_individual_sprint(
     )
 
     request_body = new_event_format_individual_sprint
-    headers = MultiDict(
-        {
-            hdrs.CONTENT_TYPE: "application/json",
-            hdrs.AUTHORIZATION: f"Bearer {token}",
-        },
-    )
+    headers = {
+        hdrs.CONTENT_TYPE: "application/json",
+        hdrs.AUTHORIZATION: f"Bearer {token}",
+    }
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
         m.post("http://example.com:8081/authorize", status=204)
@@ -191,11 +188,9 @@ async def test_get_event_format_interval_start(
         "event_service.adapters.event_format_adapter.EventFormatAdapter.get_event_format",
         return_value=event_format_interval_start,
     )
-    headers = MultiDict(
-        {
-            hdrs.AUTHORIZATION: f"Bearer {token}",
-        },
-    )
+    headers = {
+        hdrs.AUTHORIZATION: f"Bearer {token}",
+    }
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
         m.post("http://example.com:8081/authorize", status=204)
@@ -223,11 +218,9 @@ async def test_get_event_format_individual_sprint(
         "event_service.adapters.event_format_adapter.EventFormatAdapter.get_event_format",
         return_value=event_format_individual_sprint,
     )
-    headers = MultiDict(
-        {
-            hdrs.AUTHORIZATION: f"Bearer {token}",
-        },
-    )
+    headers = {
+        hdrs.AUTHORIZATION: f"Bearer {token}",
+    }
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
         m.post("http://example.com:8081/authorize", status=204)
@@ -280,12 +273,10 @@ async def test_update_event_format_interval_start(
         return_value=RACECLASS_ID,
     )
 
-    headers = MultiDict(
-        {
-            hdrs.CONTENT_TYPE: "application/json",
-            hdrs.AUTHORIZATION: f"Bearer {token}",
-        },
-    )
+    headers = {
+        hdrs.CONTENT_TYPE: "application/json",
+        hdrs.AUTHORIZATION: f"Bearer {token}",
+    }
     request_body = deepcopy(event_format_interval_start)
     request_body["starting_order"] = "Manual Draw"
 
@@ -318,12 +309,10 @@ async def test_update_event_format_individual_sprint(
         return_value=RACECLASS_ID,
     )
 
-    headers = MultiDict(
-        {
-            hdrs.CONTENT_TYPE: "application/json",
-            hdrs.AUTHORIZATION: f"Bearer {token}",
-        },
-    )
+    headers = {
+        hdrs.CONTENT_TYPE: "application/json",
+        hdrs.AUTHORIZATION: f"Bearer {token}",
+    }
     request_body = deepcopy(event_format_individual_sprint)
     request_body["starting_order"] = "Manual Draw"
 
@@ -355,11 +344,9 @@ async def test_delete_event_format(
         "event_service.adapters.event_format_adapter.EventFormatAdapter.delete_event_format",
         return_value=RACECLASS_ID,
     )
-    headers = MultiDict(
-        {
-            hdrs.AUTHORIZATION: f"Bearer {token}",
-        },
-    )
+    headers = {
+        hdrs.AUTHORIZATION: f"Bearer {token}",
+    }
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
         m.post("http://example.com:8081/authorize", status=204)
@@ -393,12 +380,10 @@ async def test_create_event_format_event_not_found(
     )
 
     request_body = new_event_format_interval_start
-    headers = MultiDict(
-        {
-            hdrs.CONTENT_TYPE: "application/json",
-            hdrs.AUTHORIZATION: f"Bearer {token}",
-        },
-    )
+    headers = {
+        hdrs.CONTENT_TYPE: "application/json",
+        hdrs.AUTHORIZATION: f"Bearer {token}",
+    }
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
         m.post("http://example.com:8081/authorize", status=204)
@@ -433,12 +418,10 @@ async def test_create_event_format_missing_mandatory_property(
     )
 
     request_body = {"id": RACECLASS_ID, "optional_property": "Optional_property"}
-    headers = MultiDict(
-        {
-            hdrs.CONTENT_TYPE: "application/json",
-            hdrs.AUTHORIZATION: f"Bearer {token}",
-        },
-    )
+    headers = {
+        hdrs.CONTENT_TYPE: "application/json",
+        hdrs.AUTHORIZATION: f"Bearer {token}",
+    }
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
         m.post("http://example.com:8081/authorize", status=204)
@@ -464,12 +447,10 @@ async def test_update_event_format_missing_mandatory_property(
         return_value=RACECLASS_ID,
     )
 
-    headers = MultiDict(
-        {
-            hdrs.CONTENT_TYPE: "application/json",
-            hdrs.AUTHORIZATION: f"Bearer {token}",
-        },
-    )
+    headers = {
+        hdrs.CONTENT_TYPE: "application/json",
+        hdrs.AUTHORIZATION: f"Bearer {token}",
+    }
     request_body = {"id": RACECLASS_ID, "name": "missing_the_rest_of_the_properties"}
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
@@ -505,12 +486,10 @@ async def test_create_event_format_adapter_fails(
         return_value=None,
     )
     request_body = new_event_format_interval_start
-    headers = MultiDict(
-        {
-            hdrs.CONTENT_TYPE: "application/json",
-            hdrs.AUTHORIZATION: f"Bearer {token}",
-        },
-    )
+    headers = {
+        hdrs.CONTENT_TYPE: "application/json",
+        hdrs.AUTHORIZATION: f"Bearer {token}",
+    }
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
         m.post("http://example.com:8081/authorize", status=204)
@@ -547,7 +526,7 @@ async def test_create_event_format_no_authorization(
     )
 
     request_body = new_event_format_interval_start
-    headers = MultiDict({hdrs.CONTENT_TYPE: "application/json"})
+    headers = MultiDict([(hdrs.CONTENT_TYPE, "application/json")])
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
         m.post("http://example.com:8081/authorize", status=401)
@@ -591,11 +570,10 @@ async def test_put_event_format_no_authorization(
         return_value=RACECLASS_ID,
     )
 
-    headers = MultiDict(
-        {
-            hdrs.CONTENT_TYPE: "application/json",
-        },
-    )
+    headers = {
+        hdrs.CONTENT_TYPE: "application/json",
+    }
+
     request_body = event_format_interval_start
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
@@ -660,11 +638,9 @@ async def test_get_event_format_not_found(
         "event_service.adapters.event_format_adapter.EventFormatAdapter.get_event_format",
         return_value=None,
     )
-    headers = MultiDict(
-        {
-            hdrs.AUTHORIZATION: f"Bearer {token}",
-        },
-    )
+    headers = {
+        hdrs.AUTHORIZATION: f"Bearer {token}",
+    }
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
         m.post("http://example.com:8081/authorize", status=204)
@@ -690,12 +666,10 @@ async def test_update_event_format_not_found(
         return_value=None,
     )
 
-    headers = MultiDict(
-        {
-            hdrs.CONTENT_TYPE: "application/json",
-            hdrs.AUTHORIZATION: f"Bearer {token}",
-        },
-    )
+    headers = {
+        hdrs.CONTENT_TYPE: "application/json",
+        hdrs.AUTHORIZATION: f"Bearer {token}",
+    }
     request_body = event_format_interval_start
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
@@ -723,11 +697,9 @@ async def test_delete_event_format_not_found(
         return_value=None,
     )
 
-    headers = MultiDict(
-        {
-            hdrs.AUTHORIZATION: f"Bearer {token}",
-        },
-    )
+    headers = {
+        hdrs.AUTHORIZATION: f"Bearer {token}",
+    }
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
         m.post("http://example.com:8081/authorize", status=204)

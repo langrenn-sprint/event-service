@@ -4,7 +4,7 @@ import copy
 from datetime import date
 import logging
 import os
-from typing import Any, AsyncGenerator, Optional
+from typing import Any, AsyncGenerator, Optional, Tuple
 from urllib.parse import quote
 
 
@@ -472,7 +472,7 @@ async def test_delete_all_contestant(
 
 
 # ---
-async def _decide_group_and_order(raceclass: dict) -> tuple[int, int]:  # noqa: C901
+async def _decide_group_and_order(raceclass: dict) -> Tuple[int, int]:  # noqa: C901
     if raceclass["name"] == "G16":  # race-order: 1
         return (1, 1)
     elif raceclass["name"] == "J16":  # race-order: 2
