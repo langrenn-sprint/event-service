@@ -89,16 +89,19 @@ class RaceclassesView(View):
                 db, event_id, raceclass
             )
         except EventNotFoundException as e:
-            raise HTTPNotFound(reason=e) from e
+            raise HTTPNotFound(reason=str(e)) from e
         except IllegalValueException as e:
-            raise HTTPUnprocessableEntity(reason=e) from e
+            raise HTTPUnprocessableEntity(reason=str(e)) from e
         if raceclass_id:
             logging.debug(f"inserted document with id {raceclass_id}")
             headers = MultiDict(
-                {
-                    hdrs.LOCATION: f"{BASE_URL}/events/{event_id}/raceclasses/{raceclass_id}"
-                }
-            )  # noqa: B950
+                [
+                    (
+                        hdrs.LOCATION,
+                        f"{BASE_URL}/events/{event_id}/raceclasses/{raceclass_id}",
+                    )
+                ]
+            )
 
             return Response(status=201, headers=headers)
         raise HTTPBadRequest() from None  # pragma: no cover
@@ -139,7 +142,7 @@ class RaceclassView(View):
                 db, event_id, raceclass_id
             )
         except RaceclassNotFoundException as e:
-            raise HTTPNotFound(reason=e) from e
+            raise HTTPNotFound(reason=str(e)) from e
         logging.debug(f"Got raceclass: {raceclass}")
         body = raceclass.to_json()
         return Response(status=200, body=body, content_type="application/json")
@@ -172,9 +175,9 @@ class RaceclassView(View):
                 db, event_id, raceclass_id, raceclass
             )
         except IllegalValueException as e:
-            raise HTTPUnprocessableEntity(reason=e) from e
+            raise HTTPUnprocessableEntity(reason=str(e)) from e
         except RaceclassNotFoundException as e:
-            raise HTTPNotFound(reason=e) from e
+            raise HTTPNotFound(reason=str(e)) from e
         return Response(status=204)
 
     async def delete(self) -> Response:
@@ -193,5 +196,5 @@ class RaceclassView(View):
         try:
             await RaceclassesService.delete_raceclass(db, event_id, raceclass_id)
         except RaceclassNotFoundException as e:
-            raise HTTPNotFound(reason=e) from e
+            raise HTTPNotFound(reason=str(e)) from e
         return Response(status=204)
