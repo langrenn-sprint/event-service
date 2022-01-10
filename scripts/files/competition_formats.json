@@ -3,12 +3,16 @@
     "name": "Interval Start",
     "starting_order": "Draw",
     "start_procedure": "Interval Start",
-    "intervals": "00:00:30"
+    "intervals": "00:00:30",
+    "max_no_of_contestants_in_raceclass": 9999,
+    "max_no_of_contestants_in_race": 9999
   },
   {
     "name": "Individual sprint without qualifying round",
     "starting_order": "Draw",
     "start_procedure": "Heat Start",
-    "intervals": "00:00:30"
+    "intervals": "00:00:30",
+    "max_no_of_contestants_in_raceclass": 80,
+    "max_no_of_contestants_in_race": 10
   }
 ]

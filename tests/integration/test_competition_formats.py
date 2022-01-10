@@ -1,7 +1,7 @@
 """Integration test cases for the competition_formats route."""
 from copy import deepcopy
 import os
-from typing import Any
+from typing import Any, Union
 
 from aiohttp import hdrs
 from aiohttp.test_utils import TestClient as _TestClient
@@ -31,7 +31,7 @@ def token_unsufficient_role() -> str:
 
 
 @pytest.fixture
-async def competition_format_interval_start() -> dict[str, str]:
+async def competition_format_interval_start() -> dict[str, Union[int, str]]:
     """An competition_format object for testing."""
     return {
         "name": "Interval Start",
@@ -39,6 +39,8 @@ async def competition_format_interval_start() -> dict[str, str]:
         "start_procedure": "Interval Start",
         "time_between_groups": "00:10:00",
         "intervals": "00:00:30",
+        "max_no_of_contestants_in_raceclass": 9999,
+        "max_no_of_contestants_in_race": 9999,
         "datatype": "interval_start",
     }
 
@@ -53,7 +55,8 @@ async def competition_format_individual_sprint() -> dict[str, Any]:
         "time_between_groups": "00:10:00",
         "time_between_rounds": "00:05:00",
         "time_between_heats": "00:02:30",
-        "max_no_of_contestants": 80,
+        "max_no_of_contestants_in_raceclass": 80,
+        "max_no_of_contestants_in_race": 10,
         "datatype": "individual_sprint",
     }
 
@@ -226,8 +229,14 @@ async def test_get_competition_format_individual_sprint_by_id(
             == competition_format_individual_sprint["time_between_heats"]
         )
         assert (
-            body["max_no_of_contestants"]
-            == competition_format_individual_sprint["max_no_of_contestants"]
+            body["max_no_of_contestants_in_raceclass"]
+            == competition_format_individual_sprint[
+                "max_no_of_contestants_in_raceclass"
+            ]
+        )
+        assert (
+            body["max_no_of_contestants_in_race"]
+            == competition_format_individual_sprint["max_no_of_contestants_in_race"]
         )
 
 
@@ -321,8 +330,14 @@ async def test_get_competition_formats_by_name_individual_sprint(
             == competition_format_individual_sprint["time_between_heats"]
         )
         assert (
-            body[0]["max_no_of_contestants"]
-            == competition_format_individual_sprint["max_no_of_contestants"]
+            body[0]["max_no_of_contestants_in_raceclass"]
+            == competition_format_individual_sprint[
+                "max_no_of_contestants_in_raceclass"
+            ]
+        )
+        assert (
+            body[0]["max_no_of_contestants_in_race"]
+            == competition_format_individual_sprint["max_no_of_contestants_in_race"]
         )
 
 
