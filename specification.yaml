@@ -551,6 +551,13 @@ components:
         startProcedure:
           type: string
           description: the start procuedure to be used for the competition
+        max_no_of_contestants_in_raceclass:
+          type: integer
+          description: maximum number of contestants in raceclass
+        max_no_of_contestants_in_race:
+          type: integer
+          description: maximum number of contestants in race
+
   securitySchemes:
     bearerAuth:
       type: http

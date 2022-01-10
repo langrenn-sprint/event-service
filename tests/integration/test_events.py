@@ -1,6 +1,7 @@
 """Integration test cases for the events route."""
 from copy import deepcopy
 import os
+from typing import Union
 
 from aiohttp import hdrs
 from aiohttp.test_utils import TestClient as _TestClient
@@ -43,7 +44,7 @@ async def event() -> dict[str, str]:
 
 
 @pytest.fixture
-async def competition_format() -> dict[str, str]:
+async def competition_format() -> dict[str, Union[int, str]]:
     """An competition_format object for testing."""
     return {
         "name": "Interval Start",
@@ -51,6 +52,8 @@ async def competition_format() -> dict[str, str]:
         "start_procedure": "Interval Start",
         "time_between_groups": "00:10:00",
         "intervals": "00:00:30",
+        "max_no_of_contestants_in_raceclass": 9999,
+        "max_no_of_contestants_in_race": 9999,
         "datatype": "interval_start",
     }
 
