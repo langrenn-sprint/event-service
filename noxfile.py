@@ -1,11 +1,11 @@
 """Nox sessions."""
-import tempfile
+import sys
 
 import nox
 from nox_poetry import Session, session
 
 package = "event_service"
-locations = "src", "tests", "noxfile.py"
+locations = "event_service", "tests", "noxfile.py"
 nox.options.envdir = ".cache"
 nox.options.reuse_existing_virtualenvs = True
 nox.options.stop_on_first_error = True
@@ -132,26 +132,25 @@ def lint(session: Session) -> None:
 @session
 def safety(session: Session) -> None:
     """Scan dependencies for insecure packages."""
-    with tempfile.NamedTemporaryFile() as requirements:
-        session.run(
-            "poetry",
-            "export",
-            "--dev",
-            "--format=requirements.txt",
-            "--without-hashes",
-            f"--output={requirements.name}",
-            external=True,
-        )
-        session.install("safety")
-        session.run("safety", "check", f"--file={requirements.name}", "--full-report")
+    requirements = session.poetry.export_requirements()
+    session.install("safety")
+    session.run("safety", "check", "--full-report", f"--file={requirements}")
 
 
 @session
 def mypy(session: Session) -> None:
     """Type-check using mypy."""
-    args = session.posargs or locations
-    session.install("mypy")
+    args = session.posargs or [
+        "--install-types",
+        "--non-interactive",
+        "event_service",
+        "tests",
+    ]
+    session.install(".")
+    session.install("mypy", "pytest")
     session.run("mypy", *args)
+    if not session.posargs:
+        session.run("mypy", f"--python-executable={sys.executable}", "noxfile.py")
 
 
 @session

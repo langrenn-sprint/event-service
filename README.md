@@ -53,13 +53,13 @@ Look to the [openAPI specification](./specification.yaml) for the details.
 Start the server locally:
 
 ```Shell
-% poetry run adev runserver -p 8080 --aux-port 8089 src/event_service
+% poetry run adev runserver -p 8080 --aux-port 8089 event_service
 ```
 
 ## Running the API in a wsgi-server (gunicorn)
 
 ```Shell
-% cd src && poetry run gunicorn event_service:create_app --bind localhost:8080 --worker-class aiohttp.GunicornWebWorker
+% poetry run gunicorn event_service:create_app --bind localhost:8080 --worker-class aiohttp.GunicornWebWorker
 ```
 
 ## Running the wsgi-server in Docker

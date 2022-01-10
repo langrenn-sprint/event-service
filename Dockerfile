@@ -11,8 +11,8 @@ COPY poetry.lock pyproject.toml /app/
 RUN poetry config virtualenvs.create false \
   && poetry install --no-dev --no-interaction --no-ansi
 
-ADD src /app/src
+ADD event_service /app/event_service
 
 EXPOSE 8080
 
-CMD gunicorn  --chdir src "event_service:create_app"  --config=src/event_service/gunicorn_config.py --worker-class aiohttp.GunicornWebWorker
+CMD gunicorn "event_service:create_app"  --config=event_service/gunicorn_config.py --worker-class aiohttp.GunicornWebWorker
