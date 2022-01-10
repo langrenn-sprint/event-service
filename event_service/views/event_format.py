@@ -1,6 +1,7 @@
 """Resource module for event specific format resources."""
 import logging
 import os
+from typing import Union
 
 from aiohttp import hdrs
 from aiohttp.web import (
@@ -52,6 +53,7 @@ class EventFormatView(View):
         )
 
         try:
+            event_format: Union[IndividualSprintFormat, IntervalStartFormat]
             if body["datatype"] == "interval_start":
                 event_format = IntervalStartFormat.from_dict(body)
             elif body["datatype"] == "individual_sprint":
@@ -66,12 +68,12 @@ class EventFormatView(View):
                 db, event_id, event_format
             )
         except EventNotFoundException as e:
-            raise HTTPNotFound(reason=e) from e
+            raise HTTPNotFound(reason=str(e)) from e
         if event_format_id:
             logging.debug(f"inserted document with id {event_format_id}")
             headers = MultiDict(
-                {hdrs.LOCATION: f"{BASE_URL}/events/{event_id}/format"}
-            )  # noqa: B950
+                [(hdrs.LOCATION, f"{BASE_URL}/events/{event_id}/format")]
+            )
 
             return Response(status=201, headers=headers)
         raise HTTPBadRequest() from None  # pragma: no cover
@@ -91,7 +93,7 @@ class EventFormatView(View):
         try:
             event_format = await EventFormatService.get_event_format(db, event_id)
         except EventFormatNotFoundException as e:
-            raise HTTPNotFound(reason=e) from e
+            raise HTTPNotFound(reason=str(e)) from e
         logging.debug(f"Got event_format: {event_format}")
         body = event_format.to_json()
         return Response(status=200, body=body, content_type="application/json")
@@ -112,6 +114,7 @@ class EventFormatView(View):
         )
 
         try:
+            event_format: Union[IndividualSprintFormat, IntervalStartFormat]
             if body["datatype"] == "interval_start":
                 event_format = IntervalStartFormat.from_dict(body)
             elif body["datatype"] == "individual_sprint":
@@ -124,7 +127,7 @@ class EventFormatView(View):
         try:
             await EventFormatService.update_event_format(db, event_id, event_format)
         except EventFormatNotFoundException as e:
-            raise HTTPNotFound(reason=e) from e
+            raise HTTPNotFound(reason=str(e)) from e
         return Response(status=204)
 
     async def delete(self) -> Response:
@@ -142,5 +145,5 @@ class EventFormatView(View):
         try:
             await EventFormatService.delete_event_format(db, event_id)
         except EventFormatNotFoundException as e:
-            raise HTTPNotFound(reason=e) from e
+            raise HTTPNotFound(reason=str(e)) from e
         return Response(status=204)

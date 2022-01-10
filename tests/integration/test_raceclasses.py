@@ -6,7 +6,6 @@ from aiohttp import hdrs
 from aiohttp.test_utils import TestClient as _TestClient
 from aioresponses import aioresponses
 import jwt
-from multidict import MultiDict
 import pytest
 from pytest_mock import MockFixture
 
@@ -84,12 +83,10 @@ async def test_create_raceclass(
     )
 
     request_body = new_raceclass
-    headers = MultiDict(
-        {
-            hdrs.CONTENT_TYPE: "application/json",
-            hdrs.AUTHORIZATION: f"Bearer {token}",
-        },
-    )
+    headers = {
+        hdrs.CONTENT_TYPE: "application/json",
+        hdrs.AUTHORIZATION: f"Bearer {token}",
+    }
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
         m.post("http://example.com:8081/authorize", status=204)
@@ -114,11 +111,9 @@ async def test_get_raceclass_by_id(
         "event_service.adapters.raceclasses_adapter.RaceclassesAdapter.get_raceclass_by_id",
         return_value=raceclass,
     )
-    headers = MultiDict(
-        {
-            hdrs.AUTHORIZATION: f"Bearer {token}",
-        },
-    )
+    headers = {
+        hdrs.AUTHORIZATION: f"Bearer {token}",
+    }
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
         m.post("http://example.com:8081/authorize", status=204)
@@ -147,11 +142,10 @@ async def test_get_raceclass_by_name(
         "event_service.adapters.raceclasses_adapter.RaceclassesAdapter.get_raceclass_by_name",  # noqa: B950
         return_value=[raceclass],
     )
-    headers = MultiDict(
-        {
-            hdrs.AUTHORIZATION: f"Bearer {token}",
-        },
-    )
+
+    headers = {
+        hdrs.AUTHORIZATION: f"Bearer {token}",
+    }
 
     name = raceclass["name"]
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
@@ -182,11 +176,9 @@ async def test_get_raceclass_by_ageclass_name(
         "event_service.adapters.raceclasses_adapter.RaceclassesAdapter.get_raceclass_by_ageclass_name",  # noqa: B950
         return_value=[raceclass],
     )
-    headers = MultiDict(
-        {
-            hdrs.AUTHORIZATION: f"Bearer {token}",
-        },
-    )
+    headers = {
+        hdrs.AUTHORIZATION: f"Bearer {token}",
+    }
 
     ageclass_name = raceclass["ageclass_name"]
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
@@ -223,12 +215,10 @@ async def test_update_raceclass_by_id(
         return_value=RACECLASS_ID,
     )
 
-    headers = MultiDict(
-        {
-            hdrs.CONTENT_TYPE: "application/json",
-            hdrs.AUTHORIZATION: f"Bearer {token}",
-        },
-    )
+    headers = {
+        hdrs.CONTENT_TYPE: "application/json",
+        hdrs.AUTHORIZATION: f"Bearer {token}",
+    }
     request_body = deepcopy(raceclass)
     request_body["distance"] = "New distance"
 
@@ -252,11 +242,9 @@ async def test_get_all_raceclasses(
         "event_service.adapters.raceclasses_adapter.RaceclassesAdapter.get_all_raceclasses",
         return_value=[raceclass],
     )
-    headers = MultiDict(
-        {
-            hdrs.AUTHORIZATION: f"Bearer {token}",
-        },
-    )
+    headers = {
+        hdrs.AUTHORIZATION: f"Bearer {token}",
+    }
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
         m.post("http://example.com:8081/authorize", status=204)
@@ -284,11 +272,9 @@ async def test_delete_raceclass_by_id(
         "event_service.adapters.raceclasses_adapter.RaceclassesAdapter.delete_raceclass",
         return_value=RACECLASS_ID,
     )
-    headers = MultiDict(
-        {
-            hdrs.AUTHORIZATION: f"Bearer {token}",
-        },
-    )
+    headers = {
+        hdrs.AUTHORIZATION: f"Bearer {token}",
+    }
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
         m.post("http://example.com:8081/authorize", status=204)
@@ -312,11 +298,10 @@ async def test_delete_all_raceclasses_in_event(
         "event_service.adapters.raceclasses_adapter.RaceclassesAdapter.get_all_raceclasses",  # noqa: B950
         return_value=[],
     )
-    headers = MultiDict(
-        {
-            hdrs.AUTHORIZATION: f"Bearer {token}",
-        },
-    )
+
+    headers = {
+        hdrs.AUTHORIZATION: f"Bearer {token}",
+    }
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
         m.post("http://example.com:8081/authorize", status=204)
@@ -356,12 +341,10 @@ async def test_create_raceclass_event_not_found(
     )
 
     request_body = new_raceclass
-    headers = MultiDict(
-        {
-            hdrs.CONTENT_TYPE: "application/json",
-            hdrs.AUTHORIZATION: f"Bearer {token}",
-        },
-    )
+    headers = {
+        hdrs.CONTENT_TYPE: "application/json",
+        hdrs.AUTHORIZATION: f"Bearer {token}",
+    }
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
         m.post("http://example.com:8081/authorize", status=204)
@@ -396,12 +379,10 @@ async def test_create_raceclass_missing_mandatory_property(
     )
 
     request_body = {"id": RACECLASS_ID, "optional_property": "Optional_property"}
-    headers = MultiDict(
-        {
-            hdrs.CONTENT_TYPE: "application/json",
-            hdrs.AUTHORIZATION: f"Bearer {token}",
-        },
-    )
+    headers = {
+        hdrs.CONTENT_TYPE: "application/json",
+        hdrs.AUTHORIZATION: f"Bearer {token}",
+    }
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
         m.post("http://example.com:8081/authorize", status=204)
@@ -427,12 +408,11 @@ async def test_update_raceclass_by_id_missing_mandatory_property(
         return_value=RACECLASS_ID,
     )
 
-    headers = MultiDict(
-        {
-            hdrs.CONTENT_TYPE: "application/json",
-            hdrs.AUTHORIZATION: f"Bearer {token}",
-        },
-    )
+    headers = {
+        hdrs.CONTENT_TYPE: "application/json",
+        hdrs.AUTHORIZATION: f"Bearer {token}",
+    }
+
     request_body = {"id": RACECLASS_ID, "name": "missing_the_rest_of_the_properties"}
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
@@ -470,12 +450,10 @@ async def test_create_raceclass_with_input_id(
     )
 
     request_body = raceclass
-    headers = MultiDict(
-        {
-            hdrs.CONTENT_TYPE: "application/json",
-            hdrs.AUTHORIZATION: f"Bearer {token}",
-        },
-    )
+    headers = {
+        hdrs.CONTENT_TYPE: "application/json",
+        hdrs.AUTHORIZATION: f"Bearer {token}",
+    }
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
         m.post("http://example.com:8081/authorize", status=204)
@@ -501,12 +479,10 @@ async def test_update_raceclass_by_id_different_id_in_body(
         return_value=RACECLASS_ID,
     )
 
-    headers = MultiDict(
-        {
-            hdrs.CONTENT_TYPE: "application/json",
-            hdrs.AUTHORIZATION: f"Bearer {token}",
-        },
-    )
+    headers = {
+        hdrs.CONTENT_TYPE: "application/json",
+        hdrs.AUTHORIZATION: f"Bearer {token}",
+    }
     request_body = deepcopy(raceclass)
     request_body["id"] = "different_id"
 
@@ -543,12 +519,10 @@ async def test_create_raceclass_adapter_fails(
         return_value=None,
     )
     request_body = new_raceclass
-    headers = MultiDict(
-        {
-            hdrs.CONTENT_TYPE: "application/json",
-            hdrs.AUTHORIZATION: f"Bearer {token}",
-        },
-    )
+    headers = {
+        hdrs.CONTENT_TYPE: "application/json",
+        hdrs.AUTHORIZATION: f"Bearer {token}",
+    }
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
         m.post("http://example.com:8081/authorize", status=204)
@@ -582,7 +556,7 @@ async def test_create_raceclass_no_authorization(
     )
 
     request_body = new_raceclass
-    headers = MultiDict({hdrs.CONTENT_TYPE: "application/json"})
+    headers = {hdrs.CONTENT_TYPE: "application/json"}
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
         m.post("http://example.com:8081/authorize", status=401)
@@ -627,11 +601,10 @@ async def test_put_raceclass_by_id_no_authorization(
         return_value=RACECLASS_ID,
     )
 
-    headers = MultiDict(
-        {
-            hdrs.CONTENT_TYPE: "application/json",
-        },
-    )
+    headers = {
+        hdrs.CONTENT_TYPE: "application/json",
+    }
+
     request_body = raceclass
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
@@ -715,11 +688,10 @@ async def test_get_raceclass_not_found(
         "event_service.adapters.raceclasses_adapter.RaceclassesAdapter.get_raceclass_by_id",
         return_value=None,
     )
-    headers = MultiDict(
-        {
-            hdrs.AUTHORIZATION: f"Bearer {token}",
-        },
-    )
+
+    headers = {
+        hdrs.AUTHORIZATION: f"Bearer {token}",
+    }
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
         m.post("http://example.com:8081/authorize", status=204)
@@ -745,12 +717,10 @@ async def test_update_raceclass_not_found(
         return_value=None,
     )
 
-    headers = MultiDict(
-        {
-            hdrs.CONTENT_TYPE: "application/json",
-            hdrs.AUTHORIZATION: f"Bearer {token}",
-        },
-    )
+    headers = {
+        hdrs.CONTENT_TYPE: "application/json",
+        hdrs.AUTHORIZATION: f"Bearer {token}",
+    }
     request_body = raceclass
 
     RACECLASS_ID = "does-not-exist"
@@ -780,11 +750,9 @@ async def test_delete_raceclass_not_found(
         return_value=None,
     )
 
-    headers = MultiDict(
-        {
-            hdrs.AUTHORIZATION: f"Bearer {token}",
-        },
-    )
+    headers = {
+        hdrs.AUTHORIZATION: f"Bearer {token}",
+    }
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
         m.post("http://example.com:8081/authorize", status=204)

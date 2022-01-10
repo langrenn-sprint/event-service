@@ -7,7 +7,6 @@ from aiohttp import hdrs
 from aiohttp.test_utils import TestClient as _TestClient
 from aioresponses import aioresponses
 import jwt
-from multidict import MultiDict
 import pytest
 from pytest_mock import MockFixture
 
@@ -171,12 +170,11 @@ async def test_assign_bibs_to_contestants(
         side_effect=update_contestant,
     )
 
-    headers = MultiDict(
-        {
-            hdrs.CONTENT_TYPE: "application/json",
-            hdrs.AUTHORIZATION: f"Bearer {token}",
-        },
-    )
+    headers = {
+        hdrs.CONTENT_TYPE: "application/json",
+        hdrs.AUTHORIZATION: f"Bearer {token}",
+    }
+
     event_id = event["id"]
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
         m.post("http://example.com:8081/authorize", status=204)
@@ -210,12 +208,11 @@ async def test_assign_bibs_to_contestants_event_not_found(
         return_value=contestants,
     )
 
-    headers = MultiDict(
-        {
-            hdrs.CONTENT_TYPE: "application/json",
-            hdrs.AUTHORIZATION: f"Bearer {token}",
-        },
-    )
+    headers = {
+        hdrs.CONTENT_TYPE: "application/json",
+        hdrs.AUTHORIZATION: f"Bearer {token}",
+    }
+
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
         m.post("http://example.com:8081/authorize", status=204)
         resp = await client.post(
@@ -247,12 +244,11 @@ async def test_assign_bibs_to_contestants_no_raceclasses(
         return_value=contestants,
     )
 
-    headers = MultiDict(
-        {
-            hdrs.CONTENT_TYPE: "application/json",
-            hdrs.AUTHORIZATION: f"Bearer {token}",
-        },
-    )
+    headers = {
+        hdrs.CONTENT_TYPE: "application/json",
+        hdrs.AUTHORIZATION: f"Bearer {token}",
+    }
+
     event_id = event["id"]
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
         m.post("http://example.com:8081/authorize", status=204)
@@ -293,12 +289,11 @@ async def test_assign_bibs_to_contestants_raceclasses_without_group(
         side_effect=update_contestant,
     )
 
-    headers = MultiDict(
-        {
-            hdrs.CONTENT_TYPE: "application/json",
-            hdrs.AUTHORIZATION: f"Bearer {token}",
-        },
-    )
+    headers = {
+        hdrs.CONTENT_TYPE: "application/json",
+        hdrs.AUTHORIZATION: f"Bearer {token}",
+    }
+
     event_id = event["id"]
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
         m.post("http://example.com:8081/authorize", status=204)
@@ -339,12 +334,11 @@ async def test_assign_bibs_to_contestants_raceclasses_without_order(
         side_effect=update_contestant,
     )
 
-    headers = MultiDict(
-        {
-            hdrs.CONTENT_TYPE: "application/json",
-            hdrs.AUTHORIZATION: f"Bearer {token}",
-        },
-    )
+    headers = {
+        hdrs.CONTENT_TYPE: "application/json",
+        hdrs.AUTHORIZATION: f"Bearer {token}",
+    }
+
     event_id = event["id"]
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
         m.post("http://example.com:8081/authorize", status=204)
@@ -379,7 +373,7 @@ async def test_assign_bibs_to_contestants_no_authorization(
         return_value=contestants,
     )
 
-    headers = MultiDict({hdrs.CONTENT_TYPE: "application/json"})
+    headers = {hdrs.CONTENT_TYPE: "application/json"}
 
     event_id = event["id"]
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:

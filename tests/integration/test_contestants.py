@@ -7,7 +7,6 @@ from aiohttp import hdrs
 from aiohttp.test_utils import TestClient as _TestClient
 from aioresponses import aioresponses
 import jwt
-from multidict import MultiDict
 import pytest
 from pytest_mock import MockFixture
 
@@ -114,12 +113,10 @@ async def test_create_contestant_good_case(
 
     request_body = new_contestant
 
-    headers = MultiDict(
-        {
-            hdrs.CONTENT_TYPE: "application/json",
-            hdrs.AUTHORIZATION: f"Bearer {token}",
-        },
-    )
+    headers = {
+        hdrs.CONTENT_TYPE: "application/json",
+        hdrs.AUTHORIZATION: f"Bearer {token}",
+    }
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
         m.post("http://example.com:8081/authorize", status=204)
@@ -167,11 +164,9 @@ async def test_create_contestants_csv_good_case(
 
     files = {"file": open("tests/files/contestants_eventid_364892.csv", "rb")}
 
-    headers = MultiDict(
-        {
-            hdrs.AUTHORIZATION: f"Bearer {token}",
-        },
-    )
+    headers = {
+        hdrs.AUTHORIZATION: f"Bearer {token}",
+    }
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
         m.post("http://example.com:8081/authorize", status=204)
@@ -231,11 +226,9 @@ async def test_create_contestants_csv_no_minidrett_id_existing_good_case(
         "file": open("tests/files/contestants_eventid_364892_no_minidrett_id.csv", "rb")
     }
 
-    headers = MultiDict(
-        {
-            hdrs.AUTHORIZATION: f"Bearer {token}",
-        },
-    )
+    headers = {
+        hdrs.AUTHORIZATION: f"Bearer {token}",
+    }
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
         m.post("http://example.com:8081/authorize", status=204)
@@ -289,12 +282,9 @@ async def test_create_contestants_csv_minidrett_id_existing_good_case(
 
     files = {"file": open("tests/files/contestants_eventid_364892.csv", "rb")}
 
-    headers = MultiDict(
-        {
-            hdrs.AUTHORIZATION: f"Bearer {token}",
-        },
-    )
-
+    headers = {
+        hdrs.AUTHORIZATION: f"Bearer {token}",
+    }
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
         m.post("http://example.com:8081/authorize", status=204)
         resp = await client.post(
@@ -351,11 +341,9 @@ async def test_create_contestants_csv_create_failures_good_case(
 
     files = {"file": open("tests/files/contestants_eventid_364892.csv", "rb")}
 
-    headers = MultiDict(
-        {
-            hdrs.AUTHORIZATION: f"Bearer {token}",
-        },
-    )
+    headers = {
+        hdrs.AUTHORIZATION: f"Bearer {token}",
+    }
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
         m.post("http://example.com:8081/authorize", status=204)
@@ -413,12 +401,9 @@ async def test_create_contestants_csv_update_failures_good_case(
 
     files = {"file": open("tests/files/contestants_eventid_364892.csv", "rb")}
 
-    headers = MultiDict(
-        {
-            hdrs.AUTHORIZATION: f"Bearer {token}",
-        },
-    )
-
+    headers = {
+        hdrs.AUTHORIZATION: f"Bearer {token}",
+    }
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
         m.post("http://example.com:8081/authorize", status=204)
         resp = await client.post(
@@ -471,12 +456,9 @@ async def test_create_contestants_csv_bad_case(
 
     files = {"file": open("tests/files/contestants.notcsv", "rb")}
 
-    headers = MultiDict(
-        {
-            hdrs.AUTHORIZATION: f"Bearer {token}",
-        },
-    )
-
+    headers = {
+        hdrs.AUTHORIZATION: f"Bearer {token}",
+    }
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
         m.post("http://example.com:8081/authorize", status=204)
         resp = await client.post(
@@ -519,12 +501,10 @@ async def test_create_contestants_csv_not_supported_content_type(
 
     files = {"file": open("tests/files/contestants_eventid_364892.csv", "rb")}
 
-    headers = MultiDict(
-        {
-            hdrs.AUTHORIZATION: f"Bearer {token}",
-            hdrs.CONTENT_TYPE: "unsupportedMediaType",
-        },
-    )
+    headers = {
+        hdrs.AUTHORIZATION: f"Bearer {token}",
+        hdrs.CONTENT_TYPE: "unsupportedMediaType",
+    }
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
         m.post("http://example.com:8081/authorize", status=204)
@@ -568,11 +548,9 @@ async def test_create_contestants_csv_good_case_octet_stream(
 
     with open("tests/files/contestants_eventid_364892.csv", "rb") as f:
 
-        headers = MultiDict(
-            {
-                hdrs.AUTHORIZATION: f"Bearer {token}",
-            },
-        )
+        headers = {
+            hdrs.AUTHORIZATION: f"Bearer {token}",
+        }
 
         with aioresponses(passthrough=["http://127.0.0.1"]) as m:
             m.post("http://example.com:8081/authorize", status=204)
@@ -604,12 +582,9 @@ async def test_get_contestant_by_id(
         return_value=contestant,
     )
 
-    headers = MultiDict(
-        {
-            hdrs.AUTHORIZATION: f"Bearer {token}",
-        },
-    )
-
+    headers = {
+        hdrs.AUTHORIZATION: f"Bearer {token}",
+    }
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
         m.post("http://example.com:8081/authorize", status=204)
 
@@ -649,12 +624,10 @@ async def test_update_contestant_by_id(
         return_value=CONTESTANT_ID,
     )
 
-    headers = MultiDict(
-        {
-            hdrs.CONTENT_TYPE: "application/json",
-            hdrs.AUTHORIZATION: f"Bearer {token}",
-        },
-    )
+    headers = {
+        hdrs.CONTENT_TYPE: "application/json",
+        hdrs.AUTHORIZATION: f"Bearer {token}",
+    }
     request_body = deepcopy(contestant)
     request_body["last_name"] = "New_Last_Name"
 
@@ -679,12 +652,9 @@ async def test_get_all_contestants(
         "event_service.adapters.contestants_adapter.ContestantsAdapter.get_all_contestants",  # noqa: B950
         return_value=[contestant],
     )
-    headers = MultiDict(
-        {
-            hdrs.AUTHORIZATION: f"Bearer {token}",
-        },
-    )
-
+    headers = {
+        hdrs.AUTHORIZATION: f"Bearer {token}",
+    }
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
         m.post("http://example.com:8081/authorize", status=204)
         resp = await client.get(f"/events/{EVENT_ID}/contestants", headers=headers)
@@ -710,11 +680,10 @@ async def test_get_all_contestants_by_raceclass(
         "event_service.adapters.raceclasses_adapter.RaceclassesAdapter.get_raceclass_by_name",  # noqa: B950
         return_value=[{"id": "1", "name": "G12", "ageclass_name": "G 12 år"}],
     )
-    headers = MultiDict(
-        {
-            hdrs.AUTHORIZATION: f"Bearer {token}",
-        },
-    )
+    headers = {
+        hdrs.AUTHORIZATION: f"Bearer {token}",
+    }
+
     raceclass = "G12"
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
         m.post("http://example.com:8081/authorize", status=204)
@@ -740,11 +709,10 @@ async def test_get_all_contestants_by_ageclass(
         "event_service.adapters.contestants_adapter.ContestantsAdapter.get_all_contestants",  # noqa: B950
         return_value=[contestant],
     )
-    headers = MultiDict(
-        {
-            hdrs.AUTHORIZATION: f"Bearer {token}",
-        },
-    )
+    headers = {
+        hdrs.AUTHORIZATION: f"Bearer {token}",
+    }
+
     ageclass = "G 12 år"
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
         m.post("http://example.com:8081/authorize", status=204)
@@ -770,11 +738,10 @@ async def test_get_all_contestants_by_bib(
         "event_service.adapters.contestants_adapter.ContestantsAdapter.get_contestant_by_bib",  # noqa: B950
         return_value=contestant,
     )
-    headers = MultiDict(
-        {
-            hdrs.AUTHORIZATION: f"Bearer {token}",
-        },
-    )
+    headers = {
+        hdrs.AUTHORIZATION: f"Bearer {token}",
+    }
+
     bib = 1
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
         m.post("http://example.com:8081/authorize", status=204)
@@ -805,12 +772,9 @@ async def test_delete_contestant_by_id(
         "event_service.adapters.contestants_adapter.ContestantsAdapter.delete_contestant",  # noqa: B950
         return_value=CONTESTANT_ID,
     )
-    headers = MultiDict(
-        {
-            hdrs.AUTHORIZATION: f"Bearer {token}",
-        },
-    )
-
+    headers = {
+        hdrs.AUTHORIZATION: f"Bearer {token}",
+    }
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
         m.post("http://example.com:8081/authorize", status=204)
 
@@ -834,12 +798,9 @@ async def test_delete_all_contestants_in_event(
         "event_service.adapters.contestants_adapter.ContestantsAdapter.get_all_contestants",  # noqa: B950
         return_value=[],
     )
-    headers = MultiDict(
-        {
-            hdrs.AUTHORIZATION: f"Bearer {token}",
-        },
-    )
-
+    headers = {
+        hdrs.AUTHORIZATION: f"Bearer {token}",
+    }
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
         m.post("http://example.com:8081/authorize", status=204)
         resp = await client.delete(f"/events/{EVENT_ID}/contestants", headers=headers)
@@ -887,12 +848,10 @@ async def test_create_contestant_event_not_found(
 
     request_body = new_contestant
 
-    headers = MultiDict(
-        {
-            hdrs.CONTENT_TYPE: "application/json",
-            hdrs.AUTHORIZATION: f"Bearer {token}",
-        },
-    )
+    headers = {
+        hdrs.CONTENT_TYPE: "application/json",
+        hdrs.AUTHORIZATION: f"Bearer {token}",
+    }
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
         m.post("http://example.com:8081/authorize", status=204)
@@ -936,12 +895,9 @@ async def test_create_contestants_csv_event_not_found(
 
     files = {"file": open("tests/files/contestants_eventid_364892.csv", "rb")}
 
-    headers = MultiDict(
-        {
-            hdrs.AUTHORIZATION: f"Bearer {token}",
-        },
-    )
-
+    headers = {
+        hdrs.AUTHORIZATION: f"Bearer {token}",
+    }
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
         m.post("http://example.com:8081/authorize", status=204)
         resp = await client.post(
@@ -984,11 +940,9 @@ async def test_create_contestants_csv_octet_stream_event_not_found(
 
     with open("tests/files/contestants_eventid_364892.csv", "rb") as f:
 
-        headers = MultiDict(
-            {
-                hdrs.AUTHORIZATION: f"Bearer {token}",
-            },
-        )
+        headers = {
+            hdrs.AUTHORIZATION: f"Bearer {token}",
+        }
 
         with aioresponses(passthrough=["http://127.0.0.1"]) as m:
             m.post("http://example.com:8081/authorize", status=204)
@@ -1033,12 +987,10 @@ async def test_create_contestant_allready_exist(
 
     request_body = new_contestant
 
-    headers = MultiDict(
-        {
-            hdrs.CONTENT_TYPE: "application/json",
-            hdrs.AUTHORIZATION: f"Bearer {token}",
-        },
-    )
+    headers = {
+        hdrs.CONTENT_TYPE: "application/json",
+        hdrs.AUTHORIZATION: f"Bearer {token}",
+    }
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
         m.post("http://example.com:8081/authorize", status=204)
@@ -1072,12 +1024,11 @@ async def test_create_contestant_missing_mandatory_property(
         return_value=CONTESTANT_ID,
     )
     request_body = {"optional_property": "Optional_property"}
-    headers = MultiDict(
-        {
-            hdrs.CONTENT_TYPE: "application/json",
-            hdrs.AUTHORIZATION: f"Bearer {token}",
-        },
-    )
+
+    headers = {
+        hdrs.CONTENT_TYPE: "application/json",
+        hdrs.AUTHORIZATION: f"Bearer {token}",
+    }
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
         m.post("http://example.com:8081/authorize", status=204)
@@ -1099,11 +1050,9 @@ async def test_get_all_contestants_by_id_when_bib_has_been_set_to_noninteger(
         "event_service.adapters.contestants_adapter.ContestantsAdapter.get_all_contestants",  # noqa: B950
         return_value=[contestant, contestant_2],
     )
-    headers = MultiDict(
-        {
-            hdrs.AUTHORIZATION: f"Bearer {token}",
-        },
-    )
+    headers = {
+        hdrs.AUTHORIZATION: f"Bearer {token}",
+    }
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
         m.post("http://example.com:8081/authorize", status=204)
@@ -1131,11 +1080,10 @@ async def test_get_all_contestants_by_raceclass_raceclass_does_not_exist(
         "event_service.adapters.raceclasses_adapter.RaceclassesAdapter.get_raceclass_by_name",  # noqa: B950
         return_value=[],
     )
-    headers = MultiDict(
-        {
-            hdrs.AUTHORIZATION: f"Bearer {token}",
-        },
-    )
+    headers = {
+        hdrs.AUTHORIZATION: f"Bearer {token}",
+    }
+
     raceclass = "G12"
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
         m.post("http://example.com:8081/authorize", status=204)
@@ -1155,11 +1103,10 @@ async def test_get_all_contestants_by_bib_wrong_paramter_type(
         "event_service.adapters.contestants_adapter.ContestantsAdapter.get_contestant_by_bib",  # noqa: B950
         return_value=contestant,
     )
-    headers = MultiDict(
-        {
-            hdrs.AUTHORIZATION: f"Bearer {token}",
-        },
-    )
+    headers = {
+        hdrs.AUTHORIZATION: f"Bearer {token}",
+    }
+
     bib = "one"
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
         m.post("http://example.com:8081/authorize", status=204)
@@ -1197,12 +1144,11 @@ async def test_create_contestant_with_input_id(
         return_value=None,
     )
     request_body = contestant
-    headers = MultiDict(
-        {
-            hdrs.CONTENT_TYPE: "application/json",
-            hdrs.AUTHORIZATION: f"Bearer {token}",
-        },
-    )
+
+    headers = {
+        hdrs.CONTENT_TYPE: "application/json",
+        hdrs.AUTHORIZATION: f"Bearer {token}",
+    }
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
         m.post("http://example.com:8081/authorize", status=204)
@@ -1239,12 +1185,11 @@ async def test_create_contestant_adapter_fails(
         return_value=None,
     )
     request_body = new_contestant
-    headers = MultiDict(
-        {
-            hdrs.CONTENT_TYPE: "application/json",
-            hdrs.AUTHORIZATION: f"Bearer {token}",
-        },
-    )
+
+    headers = {
+        hdrs.CONTENT_TYPE: "application/json",
+        hdrs.AUTHORIZATION: f"Bearer {token}",
+    }
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
         m.post("http://example.com:8081/authorize", status=204)
@@ -1270,12 +1215,10 @@ async def test_update_contestant_by_id_missing_mandatory_property(
         return_value=CONTESTANT_ID,
     )
 
-    headers = MultiDict(
-        {
-            hdrs.CONTENT_TYPE: "application/json",
-            hdrs.AUTHORIZATION: f"Bearer {token}",
-        },
-    )
+    headers = {
+        hdrs.CONTENT_TYPE: "application/json",
+        hdrs.AUTHORIZATION: f"Bearer {token}",
+    }
     request_body = {"id": CONTESTANT_ID, "optional_property": "Optional_property"}
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
@@ -1305,12 +1248,10 @@ async def test_update_contestant_by_id_different_id_in_body(
         return_value=contestant["id"],
     )
 
-    headers = MultiDict(
-        {
-            hdrs.CONTENT_TYPE: "application/json",
-            hdrs.AUTHORIZATION: f"Bearer {token}",
-        },
-    )
+    headers = {
+        hdrs.CONTENT_TYPE: "application/json",
+        hdrs.AUTHORIZATION: f"Bearer {token}",
+    }
     request_body = deepcopy(contestant)
     request_body["id"] = "different_id"
 
@@ -1349,7 +1290,8 @@ async def test_create_contestant_no_authorization(
     )
 
     request_body = new_contestant
-    headers = MultiDict({hdrs.CONTENT_TYPE: "application/json"})
+
+    headers = {hdrs.CONTENT_TYPE: "application/json"}
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
         m.post("http://example.com:8081/authorize", status=401)
@@ -1395,11 +1337,10 @@ async def test_update_contestant_by_id_no_authorization(
         return_value=CONTESTANT_ID,
     )
 
-    headers = MultiDict(
-        {
-            hdrs.CONTENT_TYPE: "application/json",
-        },
-    )
+    headers = {
+        hdrs.CONTENT_TYPE: "application/json",
+    }
+
     request_body = contestant
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
@@ -1491,12 +1432,11 @@ async def test_create_contestant_insufficient_role(
         return_value=CONTESTANT_ID,
     )
     request_body = new_contestant
-    headers = MultiDict(
-        {
-            hdrs.CONTENT_TYPE: "application/json",
-            hdrs.AUTHORIZATION: f"Bearer {token_unsufficient_role}",
-        },
-    )
+
+    headers = {
+        hdrs.CONTENT_TYPE: "application/json",
+        hdrs.AUTHORIZATION: f"Bearer {token_unsufficient_role}",
+    }
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
         m.post("http://example.com:8081/authorize", status=403)
@@ -1520,12 +1460,9 @@ async def test_get_contestant_not_found(
         "event_service.adapters.contestants_adapter.ContestantsAdapter.get_contestant_by_id",  # noqa: B950
         return_value=None,
     )
-    headers = MultiDict(
-        {
-            hdrs.AUTHORIZATION: f"Bearer {token}",
-        },
-    )
-
+    headers = {
+        hdrs.AUTHORIZATION: f"Bearer {token}",
+    }
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
         m.post("http://example.com:8081/authorize", status=204)
 
@@ -1551,12 +1488,10 @@ async def test_update_contestant_not_found(
         return_value=None,
     )
 
-    headers = MultiDict(
-        {
-            hdrs.CONTENT_TYPE: "application/json",
-            hdrs.AUTHORIZATION: f"Bearer {token}",
-        },
-    )
+    headers = {
+        hdrs.CONTENT_TYPE: "application/json",
+        hdrs.AUTHORIZATION: f"Bearer {token}",
+    }
     request_body = contestant
 
     CONTESTANT_ID = "does-not-exist"
@@ -1586,11 +1521,10 @@ async def test_delete_contestant_not_found(
         return_value=None,
     )
 
-    headers = MultiDict(
-        {
-            hdrs.AUTHORIZATION: f"Bearer {token}",
-        },
-    )
+    headers = {
+        hdrs.AUTHORIZATION: f"Bearer {token}",
+    }
+
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
         m.post("http://example.com:8081/authorize", status=204)
         resp = await client.delete(
