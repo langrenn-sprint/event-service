@@ -2,6 +2,7 @@
 from copy import deepcopy
 from datetime import date
 import os
+from typing import Dict
 
 from aiohttp import hdrs
 from aiohttp.test_utils import TestClient as _TestClient
@@ -21,7 +22,7 @@ def token() -> str:
 
 
 @pytest.fixture
-async def event() -> dict[str, str]:
+async def event() -> Dict[str, str]:
     """An event object for testing."""
     return {
         "id": "ref_to_event",

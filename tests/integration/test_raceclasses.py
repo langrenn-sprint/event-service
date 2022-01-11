@@ -1,6 +1,7 @@
 """Integration test cases for the raceclasses route."""
 from copy import deepcopy
 import os
+from typing import Dict
 
 from aiohttp import hdrs
 from aiohttp.test_utils import TestClient as _TestClient
@@ -20,7 +21,7 @@ def token() -> str:
 
 
 @pytest.fixture
-async def event() -> dict[str, str]:
+async def event() -> Dict[str, str]:
     """An event object for testing."""
     return {
         "id": "event_id_1",

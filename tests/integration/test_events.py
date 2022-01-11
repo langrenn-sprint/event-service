@@ -1,7 +1,7 @@
 """Integration test cases for the events route."""
 from copy import deepcopy
 import os
-from typing import Union
+from typing import Dict, Union
 
 from aiohttp import hdrs
 from aiohttp.test_utils import TestClient as _TestClient
@@ -31,7 +31,7 @@ def token_unsufficient_role() -> str:
 
 
 @pytest.fixture
-async def event() -> dict[str, str]:
+async def event() -> Dict[str, str]:
     """An event object for testing."""
     return {
         "name": "Oslo Skagen sprint",
@@ -44,7 +44,7 @@ async def event() -> dict[str, str]:
 
 
 @pytest.fixture
-async def competition_format() -> dict[str, Union[int, str]]:
+async def competition_format() -> Dict[str, Union[int, str]]:
     """An competition_format object for testing."""
     return {
         "name": "Interval Start",
@@ -97,7 +97,7 @@ async def test_create_event(
 
 @pytest.mark.integration
 async def test_get_event_by_id(
-    client: _TestClient, mocker: MockFixture, token: MockFixture, event: dict[str, str]
+    client: _TestClient, mocker: MockFixture, token: MockFixture, event: Dict[str, str]
 ) -> None:
     """Should return OK, and a body containing one event."""
     ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"

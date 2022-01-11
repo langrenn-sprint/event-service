@@ -1,7 +1,7 @@
 """Module for contestants service."""
 from io import StringIO
 import logging
-from typing import Any, List, Optional
+from typing import Any, Dict, List, Optional
 import uuid
 
 import numpy as np
@@ -250,7 +250,7 @@ class ContestantsService:
         # For every record, create contestant:
         # TODO: consider parallellizing this
         # create id
-        result: dict[str, int] = {"total": 0, "created": 0, "updated": 0, "failures": 0}
+        result: Dict[str, int] = {"total": 0, "created": 0, "updated": 0, "failures": 0}
         for _c in contestants:
             result["total"] += 1
             _c["event_id"] = event_id  # type: ignore
