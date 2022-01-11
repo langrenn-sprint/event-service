@@ -6,8 +6,6 @@ from nox_poetry import Session, session
 
 package = "event_service"
 locations = "event_service", "tests", "noxfile.py"
-nox.options.envdir = ".cache"
-nox.options.reuse_existing_virtualenvs = True
 nox.options.stop_on_first_error = True
 nox.options.sessions = (
     "lint",
