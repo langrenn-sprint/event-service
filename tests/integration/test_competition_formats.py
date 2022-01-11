@@ -1,7 +1,7 @@
 """Integration test cases for the competition_formats route."""
 from copy import deepcopy
 import os
-from typing import Any, Union
+from typing import Any, Dict, Union
 
 from aiohttp import hdrs
 from aiohttp.test_utils import TestClient as _TestClient
@@ -31,7 +31,7 @@ def token_unsufficient_role() -> str:
 
 
 @pytest.fixture
-async def competition_format_interval_start() -> dict[str, Union[int, str]]:
+async def competition_format_interval_start() -> Dict[str, Union[int, str]]:
     """An competition_format object for testing."""
     return {
         "name": "Interval Start",
@@ -46,7 +46,7 @@ async def competition_format_interval_start() -> dict[str, Union[int, str]]:
 
 
 @pytest.fixture
-async def competition_format_individual_sprint() -> dict[str, Any]:
+async def competition_format_individual_sprint() -> Dict[str, Any]:
     """An competition_format object for testing."""
     return {
         "name": "Individual Sprint",
