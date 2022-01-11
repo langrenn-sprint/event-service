@@ -21,11 +21,6 @@ jobs:
           python-version: 3.9
           architecture: x64
 
-      - name: Install python 3.9
-        run: |
-          pyenv install 3.9.9
-          pyenv global 3.9.9
-
       - name: Install dependencies
         run: |-
           pipx install poetry==1.1.12
