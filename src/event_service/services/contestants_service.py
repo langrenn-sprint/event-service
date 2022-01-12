@@ -266,7 +266,7 @@ class ContestantsService:
                     db, event_id, _contestant["id"], updated_contestant
                 )
                 logging.debug(
-                    f"inserted event_id/contestant_id: {event_id}/{contestant_id}"
+                    f"updated event_id/contestant_id: {event_id}/{contestant_id}"
                 )
                 if _result:
                     result["updated"] += 1
@@ -278,7 +278,7 @@ class ContestantsService:
                     db, event_id, new_contestant
                 )
                 logging.debug(
-                    f"inserted with event_id/contestant_id: {event_id}/{contestant_id}"
+                    f"inserted event_id/contestant_id: {event_id}/{contestant_id}"
                 )
                 if _result:
                     result["created"] += 1
