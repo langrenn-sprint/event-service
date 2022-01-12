@@ -4,7 +4,7 @@ from datetime import date
 import json
 import logging
 import os
-from typing import Any, AsyncGenerator, List, Optional
+from typing import Any, AsyncGenerator, Dict, List, Optional, Tuple
 
 from aiohttp import ClientSession, hdrs
 import pytest
@@ -206,7 +206,7 @@ async def test_assign_bibs(
 
 
 # ---
-async def _decide_group_and_order(raceclass: dict) -> tuple[int, int]:  # noqa: C901
+async def _decide_group_and_order(raceclass: dict) -> Tuple[int, int]:  # noqa: C901
     if raceclass["name"] == "G16":  # race-order: 1
         return (1, 1)
     elif raceclass["name"] == "J16":  # race-order: 2
@@ -234,7 +234,7 @@ async def _decide_group_and_order(raceclass: dict) -> tuple[int, int]:  # noqa: 
     return (0, 0)  # should not reach this point
 
 
-async def _print_raceclasses(raceclasses: list[dict]) -> None:
+async def _print_raceclasses(raceclasses: List[Dict]) -> None:
     # print("--- RACECLASSES ---")
     # print("group;order;name;ageclass_name;no_of_contestants;distance;event_id")
     # for raceclass in raceclasses:

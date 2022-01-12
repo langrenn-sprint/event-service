@@ -53,7 +53,7 @@ class ContestantsView(View):
                     db, event_id, raceclass
                 )
             except RaceclassNotFoundException as e:
-                raise HTTPBadRequest(reason=e) from e
+                raise HTTPBadRequest(reason=str(e)) from e
         elif "ageclass" in self.request.rel_url.query:
             ageclass = self.request.rel_url.query["ageclass"]
             contestants = await ContestantsService.get_contestants_by_ageclass(
@@ -111,18 +111,21 @@ class ContestantsView(View):
                     db, event_id, contestant
                 )
             except EventNotFoundException as e:
-                raise HTTPNotFound(reason=e) from e
+                raise HTTPNotFound(reason=str(e)) from e
             except IllegalValueException as e:
-                raise HTTPUnprocessableEntity(reason=e) from e
+                raise HTTPUnprocessableEntity(reason=str(e)) from e
             except ContestantAllreadyExistException as e:
-                raise HTTPBadRequest(reason=e) from e
+                raise HTTPBadRequest(reason=str(e)) from e
 
             if contestant_id:
                 logging.debug(f"inserted document with contestant_id {contestant_id}")
                 headers = MultiDict(
-                    {
-                        hdrs.LOCATION: f"{BASE_URL}/events/{event_id}/contestants/{contestant_id}"  # noqa: B950
-                    }
+                    [
+                        (
+                            hdrs.LOCATION,
+                            f"{BASE_URL}/events/{event_id}/contestants/{contestant_id}",  # noqa: B950
+                        )
+                    ]
                 )
                 return Response(status=201, headers=headers)
             else:
@@ -143,7 +146,7 @@ class ContestantsView(View):
                         db, event_id, contestants
                     )
                 except EventNotFoundException as e:
-                    raise HTTPNotFound(reason=e) from e
+                    raise HTTPNotFound(reason=str(e)) from e
 
                 logging.debug(f"result:\n {result}")
                 body = json.dumps(result)
@@ -157,7 +160,7 @@ class ContestantsView(View):
                     db, event_id, contestants
                 )
             except EventNotFoundException as e:
-                raise HTTPNotFound(reason=e) from e
+                raise HTTPNotFound(reason=str(e)) from e
             logging.debug(f"result:\n {result}")
             body = json.dumps(result)
             return Response(status=200, body=body, content_type="application/json")
@@ -204,7 +207,7 @@ class ContestantView(View):
                 db, event_id, contestant_id
             )
         except ContestantNotFoundException as e:
-            raise HTTPNotFound(reason=e) from e
+            raise HTTPNotFound(reason=str(e)) from e
         logging.debug(f"Got contestant: {contestant}")
         body = contestant.to_json()
         return Response(status=200, body=body, content_type="application/json")
@@ -238,9 +241,9 @@ class ContestantView(View):
                 db, event_id, contestant_id, contestant
             )
         except IllegalValueException as e:
-            raise HTTPUnprocessableEntity(reason=e) from e
+            raise HTTPUnprocessableEntity(reason=str(e)) from e
         except ContestantNotFoundException as e:
-            raise HTTPNotFound(reason=e) from e
+            raise HTTPNotFound(reason=str(e)) from e
         return Response(status=204)
 
     async def delete(self) -> Response:
@@ -261,5 +264,5 @@ class ContestantView(View):
         try:
             await ContestantsService.delete_contestant(db, event_id, contestant_id)
         except ContestantNotFoundException as e:
-            raise HTTPNotFound(reason=e) from e
+            raise HTTPNotFound(reason=str(e)) from e
         return Response(status=204)

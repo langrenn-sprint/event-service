@@ -1,7 +1,7 @@
 """Integration test cases for the competition_formats route."""
 from copy import deepcopy
 import os
-from typing import Any
+from typing import Any, Dict, Union
 
 from aiohttp import hdrs
 from aiohttp.test_utils import TestClient as _TestClient
@@ -31,7 +31,7 @@ def token_unsufficient_role() -> str:
 
 
 @pytest.fixture
-async def competition_format_interval_start() -> dict[str, str]:
+async def competition_format_interval_start() -> Dict[str, Union[int, str]]:
     """An competition_format object for testing."""
     return {
         "name": "Interval Start",
@@ -39,12 +39,14 @@ async def competition_format_interval_start() -> dict[str, str]:
         "start_procedure": "Interval Start",
         "time_between_groups": "00:10:00",
         "intervals": "00:00:30",
+        "max_no_of_contestants_in_raceclass": 9999,
+        "max_no_of_contestants_in_race": 9999,
         "datatype": "interval_start",
     }
 
 
 @pytest.fixture
-async def competition_format_individual_sprint() -> dict[str, Any]:
+async def competition_format_individual_sprint() -> Dict[str, Any]:
     """An competition_format object for testing."""
     return {
         "name": "Individual Sprint",
@@ -53,7 +55,8 @@ async def competition_format_individual_sprint() -> dict[str, Any]:
         "time_between_groups": "00:10:00",
         "time_between_rounds": "00:05:00",
         "time_between_heats": "00:02:30",
-        "max_no_of_contestants": 80,
+        "max_no_of_contestants_in_raceclass": 80,
+        "max_no_of_contestants_in_race": 10,
         "datatype": "individual_sprint",
     }
 
@@ -82,12 +85,10 @@ async def test_create_competition_format_interval_start(
 
     request_body = competition_format_interval_start
 
-    headers = MultiDict(
-        {
-            hdrs.CONTENT_TYPE: "application/json",
-            hdrs.AUTHORIZATION: f"Bearer {token}",
-        },
-    )
+    headers = {
+        hdrs.CONTENT_TYPE: "application/json",
+        hdrs.AUTHORIZATION: f"Bearer {token}",
+    }
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
         m.post("http://example.com:8081/authorize", status=204)
@@ -122,12 +123,10 @@ async def test_create_competition_format_individual_sprint(
 
     request_body = competition_format_individual_sprint
 
-    headers = MultiDict(
-        {
-            hdrs.CONTENT_TYPE: "application/json",
-            hdrs.AUTHORIZATION: f"Bearer {token}",
-        },
-    )
+    headers = {
+        hdrs.CONTENT_TYPE: "application/json",
+        hdrs.AUTHORIZATION: f"Bearer {token}",
+    }
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
         m.post("http://example.com:8081/authorize", status=204)
@@ -152,11 +151,9 @@ async def test_get_competition_format_interval_start_by_id(
         return_value={"id": ID} | competition_format_interval_start,  # type: ignore
     )
 
-    headers = MultiDict(
-        {
-            hdrs.AUTHORIZATION: f"Bearer {token}",
-        },
-    )
+    headers = {
+        hdrs.AUTHORIZATION: f"Bearer {token}",
+    }
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
         m.post("http://example.com:8081/authorize", status=204)
@@ -193,11 +190,9 @@ async def test_get_competition_format_individual_sprint_by_id(
         return_value={"id": ID} | competition_format_individual_sprint,  # type: ignore
     )
 
-    headers = MultiDict(
-        {
-            hdrs.AUTHORIZATION: f"Bearer {token}",
-        },
-    )
+    headers = {
+        hdrs.AUTHORIZATION: f"Bearer {token}",
+    }
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
         m.post("http://example.com:8081/authorize", status=204)
@@ -226,8 +221,14 @@ async def test_get_competition_format_individual_sprint_by_id(
             == competition_format_individual_sprint["time_between_heats"]
         )
         assert (
-            body["max_no_of_contestants"]
-            == competition_format_individual_sprint["max_no_of_contestants"]
+            body["max_no_of_contestants_in_raceclass"]
+            == competition_format_individual_sprint[
+                "max_no_of_contestants_in_raceclass"
+            ]
+        )
+        assert (
+            body["max_no_of_contestants_in_race"]
+            == competition_format_individual_sprint["max_no_of_contestants_in_race"]
         )
 
 
@@ -246,11 +247,9 @@ async def test_get_competition_formats_by_name(
         return_value=[{"id": ID} | competition_format_interval_start],  # type: ignore
     )
 
-    headers = MultiDict(
-        {
-            hdrs.AUTHORIZATION: f"Bearer {token}",
-        },
-    )
+    headers = {
+        hdrs.AUTHORIZATION: f"Bearer {token}",
+    }
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
         m.post("http://example.com:8081/authorize", status=204)
@@ -288,11 +287,9 @@ async def test_get_competition_formats_by_name_individual_sprint(
         return_value=[{"id": ID} | competition_format_individual_sprint],  # type: ignore
     )
 
-    headers = MultiDict(
-        {
-            hdrs.AUTHORIZATION: f"Bearer {token}",
-        },
-    )
+    headers = {
+        hdrs.AUTHORIZATION: f"Bearer {token}",
+    }
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
         m.post("http://example.com:8081/authorize", status=204)
@@ -321,8 +318,14 @@ async def test_get_competition_formats_by_name_individual_sprint(
             == competition_format_individual_sprint["time_between_heats"]
         )
         assert (
-            body[0]["max_no_of_contestants"]
-            == competition_format_individual_sprint["max_no_of_contestants"]
+            body[0]["max_no_of_contestants_in_raceclass"]
+            == competition_format_individual_sprint[
+                "max_no_of_contestants_in_raceclass"
+            ]
+        )
+        assert (
+            body[0]["max_no_of_contestants_in_race"]
+            == competition_format_individual_sprint["max_no_of_contestants_in_race"]
         )
 
 
@@ -344,12 +347,10 @@ async def test_update_competition_format_interval_start(
         return_value={"id": ID} | competition_format_interval_start,  # type: ignore
     )
 
-    headers = MultiDict(
-        {
-            hdrs.CONTENT_TYPE: "application/json",
-            hdrs.AUTHORIZATION: f"Bearer {token}",
-        },
-    )
+    headers = {
+        hdrs.CONTENT_TYPE: "application/json",
+        hdrs.AUTHORIZATION: f"Bearer {token}",
+    }
     new_name = "Oslo Skagen competition format"
     request_body = deepcopy(competition_format_interval_start)
     request_body["id"] = ID
@@ -382,12 +383,10 @@ async def test_update_competition_format_individual_sprint(
         return_value={"id": ID} | competition_format_individual_sprint,  # type: ignore
     )
 
-    headers = MultiDict(
-        {
-            hdrs.CONTENT_TYPE: "application/json",
-            hdrs.AUTHORIZATION: f"Bearer {token}",
-        },
-    )
+    headers = {
+        hdrs.CONTENT_TYPE: "application/json",
+        hdrs.AUTHORIZATION: f"Bearer {token}",
+    }
     new_name = "Oslo Skagen competition format"
     request_body = deepcopy(competition_format_individual_sprint)
     request_body["id"] = ID
@@ -419,11 +418,9 @@ async def test_get_all_competition_formats(
             {"id": ID} | competition_format_individual_sprint,  # type: ignore
         ],
     )
-    headers = MultiDict(
-        {
-            hdrs.AUTHORIZATION: f"Bearer {token}",
-        },
-    )
+    headers = {
+        hdrs.AUTHORIZATION: f"Bearer {token}",
+    }
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
         m.post("http://example.com:8081/authorize", status=204)
@@ -453,11 +450,9 @@ async def test_delete_competition_format_by_id(
         "event_service.adapters.competition_formats_adapter.CompetitionFormatsAdapter.delete_competition_format",  # noqa: B950
         return_value=ID,
     )
-    headers = MultiDict(
-        {
-            hdrs.AUTHORIZATION: f"Bearer {token}",
-        },
-    )
+    headers = {
+        hdrs.AUTHORIZATION: f"Bearer {token}",
+    }
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
         m.post("http://example.com:8081/authorize", status=204)
@@ -493,12 +488,10 @@ async def test_create_competition_format_interval_start_allready_exist(
 
     request_body = competition_format_interval_start
 
-    headers = MultiDict(
-        {
-            hdrs.CONTENT_TYPE: "application/json",
-            hdrs.AUTHORIZATION: f"Bearer {token}",
-        },
-    )
+    headers = {
+        hdrs.CONTENT_TYPE: "application/json",
+        hdrs.AUTHORIZATION: f"Bearer {token}",
+    }
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
         m.post("http://example.com:8081/authorize", status=204)
@@ -531,12 +524,10 @@ async def test_create_competition_format_missing_mandatory_property(
         return_value=ID,
     )
     request_body = {"optional_property": "Optional_property"}
-    headers = MultiDict(
-        {
-            hdrs.CONTENT_TYPE: "application/json",
-            hdrs.AUTHORIZATION: f"Bearer {token}",
-        },
-    )
+    headers = {
+        hdrs.CONTENT_TYPE: "application/json",
+        hdrs.AUTHORIZATION: f"Bearer {token}",
+    }
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
         m.post("http://example.com:8081/authorize", status=204)
@@ -568,12 +559,10 @@ async def test_create_competition_format_with_input_id(
         return_value=ID,
     )
     request_body = {"id": ID} | competition_format_interval_start  # type: ignore
-    headers = MultiDict(
-        {
-            hdrs.CONTENT_TYPE: "application/json",
-            hdrs.AUTHORIZATION: f"Bearer {token}",
-        },
-    )
+    headers = {
+        hdrs.CONTENT_TYPE: "application/json",
+        hdrs.AUTHORIZATION: f"Bearer {token}",
+    }
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
         m.post("http://example.com:8081/authorize", status=204)
@@ -604,12 +593,10 @@ async def test_create_competition_format_adapter_fails(
         return_value=None,
     )
     request_body = competition_format_interval_start
-    headers = MultiDict(
-        {
-            hdrs.CONTENT_TYPE: "application/json",
-            hdrs.AUTHORIZATION: f"Bearer {token}",
-        },
-    )
+    headers = {
+        hdrs.CONTENT_TYPE: "application/json",
+        hdrs.AUTHORIZATION: f"Bearer {token}",
+    }
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
         m.post("http://example.com:8081/authorize", status=204)
@@ -637,12 +624,10 @@ async def test_update_competition_format_by_id_missing_mandatory_property(
         return_value=ID,
     )
 
-    headers = MultiDict(
-        {
-            hdrs.CONTENT_TYPE: "application/json",
-            hdrs.AUTHORIZATION: f"Bearer {token}",
-        },
-    )
+    headers = {
+        hdrs.CONTENT_TYPE: "application/json",
+        hdrs.AUTHORIZATION: f"Bearer {token}",
+    }
     request_body = {"id": ID, "optional_property": "Optional_property"}
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
@@ -672,12 +657,10 @@ async def test_update_competition_format_by_id_different_id_in_body(
         return_value=ID,
     )
 
-    headers = MultiDict(
-        {
-            hdrs.CONTENT_TYPE: "application/json",
-            hdrs.AUTHORIZATION: f"Bearer {token}",
-        },
-    )
+    headers = {
+        hdrs.CONTENT_TYPE: "application/json",
+        hdrs.AUTHORIZATION: f"Bearer {token}",
+    }
     request_body = {"id": "different_id"} | competition_format_interval_start  # type: ignore
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
@@ -716,12 +699,10 @@ async def test_create_competition_format_invalid_intervals(
     )
     competition_format_with_invalid_intervals["intervals"] = "99:99:99"
 
-    headers = MultiDict(
-        {
-            hdrs.CONTENT_TYPE: "application/json",
-            hdrs.AUTHORIZATION: f"Bearer {token}",
-        },
-    )
+    headers = {
+        hdrs.CONTENT_TYPE: "application/json",
+        hdrs.AUTHORIZATION: f"Bearer {token}",
+    }
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
         m.post("http://example.com:8081/authorize", status=204)
@@ -762,12 +743,10 @@ async def test_create_competition_format_invalid_time_between_groups(
         "time_between_groups"
     ] = "99:99:99"
 
-    headers = MultiDict(
-        {
-            hdrs.CONTENT_TYPE: "application/json",
-            hdrs.AUTHORIZATION: f"Bearer {token}",
-        },
-    )
+    headers = {
+        hdrs.CONTENT_TYPE: "application/json",
+        hdrs.AUTHORIZATION: f"Bearer {token}",
+    }
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
         m.post("http://example.com:8081/authorize", status=204)
@@ -808,12 +787,10 @@ async def test_create_competition_format_invalid_time_between_rounds(
         "time_between_rounds"
     ] = "99:99:99"
 
-    headers = MultiDict(
-        {
-            hdrs.CONTENT_TYPE: "application/json",
-            hdrs.AUTHORIZATION: f"Bearer {token}",
-        },
-    )
+    headers = {
+        hdrs.CONTENT_TYPE: "application/json",
+        hdrs.AUTHORIZATION: f"Bearer {token}",
+    }
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
         m.post("http://example.com:8081/authorize", status=204)
@@ -854,12 +831,10 @@ async def test_create_competition_format_invalid_time_between_heats(
         "time_between_heats"
     ] = "99:99:99"
 
-    headers = MultiDict(
-        {
-            hdrs.CONTENT_TYPE: "application/json",
-            hdrs.AUTHORIZATION: f"Bearer {token}",
-        },
-    )
+    headers = {
+        hdrs.CONTENT_TYPE: "application/json",
+        hdrs.AUTHORIZATION: f"Bearer {token}",
+    }
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
         m.post("http://example.com:8081/authorize", status=204)
@@ -889,12 +864,10 @@ async def test_update_competition_format_invalid_interval(
         return_value={"id": ID} | competition_format_interval_start,  # type: ignore
     )
 
-    headers = MultiDict(
-        {
-            hdrs.CONTENT_TYPE: "application/json",
-            hdrs.AUTHORIZATION: f"Bearer {token}",
-        },
-    )
+    headers = {
+        hdrs.CONTENT_TYPE: "application/json",
+        hdrs.AUTHORIZATION: f"Bearer {token}",
+    }
     updated_competition_format = deepcopy(competition_format_interval_start)
     updated_competition_format["id"] = ID
     updated_competition_format["intervals"] = "99:99:99"
@@ -933,7 +906,7 @@ async def test_create_competition_format_no_authorization(
     )
 
     request_body = {"name": "Oslo Skagen sprint"}
-    headers = MultiDict({hdrs.CONTENT_TYPE: "application/json"})
+    headers = MultiDict([(hdrs.CONTENT_TYPE, "application/json")])
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
         m.post("http://example.com:8081/authorize", status=401)
@@ -981,11 +954,10 @@ async def test_update_competition_format_by_id_no_authorization(
         return_value=ID,
     )
 
-    headers = MultiDict(
-        {
-            hdrs.CONTENT_TYPE: "application/json",
-        },
-    )
+    headers = {
+        hdrs.CONTENT_TYPE: "application/json",
+    }
+
     request_body = {"id": ID, "name": "Oslo Skagen sprint Oppdatert"}
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
@@ -1054,12 +1026,10 @@ async def test_create_competition_format_insufficient_role(
         return_value=ID,
     )
     request_body = {"name": "Oslo Skagen sprint"}
-    headers = MultiDict(
-        {
-            hdrs.CONTENT_TYPE: "application/json",
-            hdrs.AUTHORIZATION: f"Bearer {token_unsufficient_role}",
-        },
-    )
+    headers = {
+        hdrs.CONTENT_TYPE: "application/json",
+        hdrs.AUTHORIZATION: f"Bearer {token_unsufficient_role}",
+    }
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
         m.post("http://example.com:8081/authorize", status=403)
@@ -1082,11 +1052,9 @@ async def test_get_competition_format_not_found(
         "event_service.adapters.competition_formats_adapter.CompetitionFormatsAdapter.get_competition_format_by_id",  # noqa: B950
         return_value=None,
     )
-    headers = MultiDict(
-        {
-            hdrs.AUTHORIZATION: f"Bearer {token}",
-        },
-    )
+    headers = {
+        hdrs.AUTHORIZATION: f"Bearer {token}",
+    }
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
         m.post("http://example.com:8081/authorize", status=204)
@@ -1105,11 +1073,9 @@ async def test_get_competition_formats_by_name_not_found(
         "event_service.adapters.competition_formats_adapter.CompetitionFormatsAdapter.get_competition_formats_by_name",  # noqa: B950
         return_value=[],
     )
-    headers = MultiDict(
-        {
-            hdrs.AUTHORIZATION: f"Bearer {token}",
-        },
-    )
+    headers = {
+        hdrs.AUTHORIZATION: f"Bearer {token}",
+    }
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
         m.post("http://example.com:8081/authorize", status=204)
@@ -1139,12 +1105,10 @@ async def test_update_competition_format_not_found(
         return_value=None,
     )
 
-    headers = MultiDict(
-        {
-            hdrs.CONTENT_TYPE: "application/json",
-            hdrs.AUTHORIZATION: f"Bearer {token}",
-        },
-    )
+    headers = {
+        hdrs.CONTENT_TYPE: "application/json",
+        hdrs.AUTHORIZATION: f"Bearer {token}",
+    }
     request_body = competition_format_interval_start
 
     ID = "does-not-exist"
@@ -1171,11 +1135,10 @@ async def test_delete_competition_format_not_found(
         return_value=None,
     )
 
-    headers = MultiDict(
-        {
-            hdrs.AUTHORIZATION: f"Bearer {token}",
-        },
-    )
+    headers = {
+        hdrs.AUTHORIZATION: f"Bearer {token}",
+    }
+
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
         m.post("http://example.com:8081/authorize", status=204)
         resp = await client.delete(f"/competition-formats/{ID}", headers=headers)

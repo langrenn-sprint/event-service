@@ -2,6 +2,7 @@
 import json
 import logging
 import os
+from typing import Union
 
 from aiohttp import hdrs
 from aiohttp.web import (
@@ -79,6 +80,7 @@ class CompetitionFormatsView(View):
             f"Got create request for competition_format {body} of type {type(body)}"
         )
         try:
+            competition_format: Union[IndividualSprintFormat, IntervalStartFormat]
             if body["datatype"] == "interval_start":
                 competition_format = IntervalStartFormat.from_dict(body)
             elif body["datatype"] == "individual_sprint":
@@ -95,17 +97,20 @@ class CompetitionFormatsView(View):
                 )
             )
         except (IllegalValueException, CompetitionFormatAllreadyExistException) as e:
-            raise HTTPUnprocessableEntity(reason=e) from e
+            raise HTTPUnprocessableEntity(reason=str(e)) from e
         except InvalidDateFormatException as e:
-            raise HTTPBadRequest(reason=e) from e
+            raise HTTPBadRequest(reason=str(e)) from e
         if competition_format_id:
             logging.debug(
                 f"inserted document with competition_format_id {competition_format_id}"
             )
             headers = MultiDict(
-                {
-                    hdrs.LOCATION: f"{BASE_URL}/competition-formats/{competition_format_id}"
-                }
+                [
+                    (
+                        hdrs.LOCATION,
+                        f"{BASE_URL}/competition-formats/{competition_format_id}",
+                    )
+                ]
             )
 
             return Response(status=201, headers=headers)
@@ -134,7 +139,7 @@ class CompetitionFormatView(View):
                 )
             )
         except CompetitionFormatNotFoundException as e:
-            raise HTTPNotFound(reason=e) from e
+            raise HTTPNotFound(reason=str(e)) from e
         logging.debug(f"Got competition_format: {competition_format}")
         body = competition_format.to_json()
         return Response(status=200, body=body, content_type="application/json")
@@ -158,6 +163,7 @@ class CompetitionFormatView(View):
             f"Got put request for competition_format {body} of type {type(body)}"
         )
         try:
+            competition_format: Union[IndividualSprintFormat, IntervalStartFormat]
             if body["datatype"] == "interval_start":
                 competition_format = IntervalStartFormat.from_dict(body)
             elif body["datatype"] == "individual_sprint":
@@ -172,11 +178,11 @@ class CompetitionFormatView(View):
                 db, competition_format_id, competition_format
             )
         except IllegalValueException as e:
-            raise HTTPUnprocessableEntity(reason=e) from e
+            raise HTTPUnprocessableEntity(reason=str(e)) from e
         except CompetitionFormatNotFoundException as e:
-            raise HTTPNotFound(reason=e) from e
+            raise HTTPNotFound(reason=str(e)) from e
         except InvalidDateFormatException as e:
-            raise HTTPBadRequest(reason=e) from e
+            raise HTTPBadRequest(reason=str(e)) from e
         return Response(status=204)
 
     async def delete(self) -> Response:
@@ -198,5 +204,5 @@ class CompetitionFormatView(View):
                 db, competition_format_id
             )
         except CompetitionFormatNotFoundException as e:
-            raise HTTPNotFound(reason=e) from e
+            raise HTTPNotFound(reason=str(e)) from e
         return Response(status=204)

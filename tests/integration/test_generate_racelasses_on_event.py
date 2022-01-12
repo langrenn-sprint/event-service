@@ -6,7 +6,6 @@ from aiohttp import hdrs
 from aiohttp.test_utils import TestClient as _TestClient
 from aioresponses import aioresponses
 import jwt
-from multidict import MultiDict
 import pytest
 from pytest_mock import MockFixture
 
@@ -84,12 +83,10 @@ async def test_generate_raceclasses_on_event(
         return_value=raceclass["id"],
     )
 
-    headers = MultiDict(
-        {
-            hdrs.CONTENT_TYPE: "application/json",
-            hdrs.AUTHORIZATION: f"Bearer {token}",
-        },
-    )
+    headers = {
+        hdrs.CONTENT_TYPE: "application/json",
+        hdrs.AUTHORIZATION: f"Bearer {token}",
+    }
 
     event_id = event["id"]
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
@@ -132,12 +129,10 @@ async def test_generate_raceclasses_on_event_raceclass_exist(
         return_value=raceclass,
     )
 
-    headers = MultiDict(
-        {
-            hdrs.CONTENT_TYPE: "application/json",
-            hdrs.AUTHORIZATION: f"Bearer {token}",
-        },
-    )
+    headers = {
+        hdrs.CONTENT_TYPE: "application/json",
+        hdrs.AUTHORIZATION: f"Bearer {token}",
+    }
 
     event_id = event["id"]
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
@@ -178,12 +173,10 @@ async def test_generate_raceclasses_on_event_duplicate_raceclasses(
         return_value=raceclass_id,
     )
 
-    headers = MultiDict(
-        {
-            hdrs.CONTENT_TYPE: "application/json",
-            hdrs.AUTHORIZATION: f"Bearer {token}",
-        },
-    )
+    headers = {
+        hdrs.CONTENT_TYPE: "application/json",
+        hdrs.AUTHORIZATION: f"Bearer {token}",
+    }
 
     event_id = event["id"]
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
@@ -222,12 +215,10 @@ async def test_generate_raceclasses_on_event_not_found(
         return_value=raceclass_id,
     )
 
-    headers = MultiDict(
-        {
-            hdrs.CONTENT_TYPE: "application/json",
-            hdrs.AUTHORIZATION: f"Bearer {token}",
-        },
-    )
+    headers = {
+        hdrs.CONTENT_TYPE: "application/json",
+        hdrs.AUTHORIZATION: f"Bearer {token}",
+    }
 
     event_id = event["id"]
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
@@ -267,12 +258,10 @@ async def test_generate_raceclasses_on_event_unauthorized(
         return_value=AGECLASS_ID,
     )
 
-    headers = MultiDict(
-        {
-            hdrs.CONTENT_TYPE: "application/json",
-            hdrs.AUTHORIZATION: f"Bearer {token}",
-        },
-    )
+    headers = {
+        hdrs.CONTENT_TYPE: "application/json",
+        hdrs.AUTHORIZATION: f"Bearer {token}",
+    }
 
     event_id = event["id"]
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
@@ -310,12 +299,10 @@ async def test_generate_raceclasses_on_event_create_fails(
         return_value=None,
     )
 
-    headers = MultiDict(
-        {
-            hdrs.CONTENT_TYPE: "application/json",
-            hdrs.AUTHORIZATION: f"Bearer {token}",
-        },
-    )
+    headers = {
+        hdrs.CONTENT_TYPE: "application/json",
+        hdrs.AUTHORIZATION: f"Bearer {token}",
+    }
 
     event_id = event["id"]
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
@@ -357,12 +344,10 @@ async def test_generate_raceclasses_on_event_update_fails(
         return_value=None,
     )
 
-    headers = MultiDict(
-        {
-            hdrs.CONTENT_TYPE: "application/json",
-            hdrs.AUTHORIZATION: f"Bearer {token}",
-        },
-    )
+    headers = {
+        hdrs.CONTENT_TYPE: "application/json",
+        hdrs.AUTHORIZATION: f"Bearer {token}",
+    }
 
     event_id = event["id"]
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:

@@ -47,14 +47,14 @@ class ContestantsAssignBibsView(View):
         try:
             await ContestantsCommands.assign_bibs(db, event_id)
         except (EventNotFoundException, NoRaceclassInEventException) as e:
-            raise HTTPNotFound(reason=e) from e
+            raise HTTPNotFound(reason=str(e)) from e
         except (
             NoValueForGroupInRaceclassExcpetion,
             NoValueForOrderInRaceclassExcpetion,
         ) as e:
-            raise HTTPBadRequest(reason=e) from e
+            raise HTTPBadRequest(reason=str(e)) from e
 
         headers = MultiDict(
-            {hdrs.LOCATION: f"{BASE_URL}/events/{event_id}/contestants"}
+            [(hdrs.LOCATION, f"{BASE_URL}/events/{event_id}/contestants")]
         )
         return Response(status=201, headers=headers)
