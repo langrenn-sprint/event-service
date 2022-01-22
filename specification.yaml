@@ -449,9 +449,12 @@ components:
         order:
           type: integer
           description: position in group in starting order
-        ageclass_name:
-          type: string
-          description: name of the corresponding ageclass
+        ageclasses:
+          type: array
+          items:
+            type: string
+            description: name of ageclass
+          description: list of ageclasses in raceclass
         event_id:
           type: string
           description: identifier of the event

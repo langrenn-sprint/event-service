@@ -143,11 +143,10 @@ class RaceclassesService:
     ) -> List[Raceclass]:
         """Get raceclass by ageclass_name function."""
         raceclasses: List[Raceclass] = []
-        _raceclasses = await RaceclassesAdapter.get_raceclass_by_ageclass_name(
-            db, event_id, ageclass_name
-        )
-        for a in _raceclasses:
-            raceclasses.append(Raceclass.from_dict(a))
+        _raceclasses = await RaceclassesAdapter.get_all_raceclasses(db, event_id)
+        for raceclass in _raceclasses:
+            if ageclass_name in raceclass["ageclasses"]:
+                raceclasses.append(Raceclass.from_dict(raceclass))
         return raceclasses
 
     @classmethod

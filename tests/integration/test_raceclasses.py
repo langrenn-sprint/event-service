@@ -39,7 +39,7 @@ async def new_raceclass() -> dict:
     """Create a mock raceclass object."""
     return {
         "name": "G16",
-        "ageclass_name": "G 16 år",
+        "ageclasses": ["G 16 år"],
         "order": 1,
         "event_id": "event_id_1",
         "distance": "5km",
@@ -52,7 +52,7 @@ async def raceclass() -> dict:
     return {
         "id": "290e70d5-0933-4af0-bb53-1d705ba7eb95",
         "name": "G16",
-        "ageclass_name": "G 16 år",
+        "ageclasses": ["G 16 år"],
         "order": 1,
         "event_id": "event_id_1",
         "distance": "5km",
@@ -128,7 +128,7 @@ async def test_get_raceclass_by_id(
         assert body["id"] == raceclass["id"]
         assert body["name"] == raceclass["name"]
         assert body["order"] == raceclass["order"]
-        assert body["ageclass_name"] == raceclass["ageclass_name"]
+        assert body["ageclasses"] == raceclass["ageclasses"]
         assert body["event_id"] == raceclass["event_id"]
         assert body["distance"] == raceclass["distance"]
 
@@ -162,7 +162,7 @@ async def test_get_raceclass_by_name(
         assert body[0]["id"] == raceclass["id"]
         assert body[0]["name"] == raceclass["name"]
         assert body[0]["order"] == raceclass["order"]
-        assert body[0]["ageclass_name"] == raceclass["ageclass_name"]
+        assert body[0]["ageclasses"] == raceclass["ageclasses"]
         assert body[0]["event_id"] == raceclass["event_id"]
         assert body[0]["distance"] == raceclass["distance"]
 
@@ -174,14 +174,14 @@ async def test_get_raceclass_by_ageclass_name(
     """Should return 200 OK, and a body containing one raceclass."""
     EVENT_ID = "event_id_1"
     mocker.patch(
-        "event_service.adapters.raceclasses_adapter.RaceclassesAdapter.get_raceclass_by_ageclass_name",  # noqa: B950
+        "event_service.adapters.raceclasses_adapter.RaceclassesAdapter.get_all_raceclasses",
         return_value=[raceclass],
     )
     headers = {
         hdrs.AUTHORIZATION: f"Bearer {token}",
     }
 
-    ageclass_name = raceclass["ageclass_name"]
+    ageclass_name = raceclass["ageclasses"][0]
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
         m.post("http://example.com:8081/authorize", status=204)
         resp = await client.get(
@@ -195,7 +195,7 @@ async def test_get_raceclass_by_ageclass_name(
         assert body[0]["id"] == raceclass["id"]
         assert body[0]["name"] == raceclass["name"]
         assert body[0]["order"] == raceclass["order"]
-        assert body[0]["ageclass_name"] == raceclass["ageclass_name"]
+        assert body[0]["ageclasses"] == raceclass["ageclasses"]
         assert body[0]["event_id"] == raceclass["event_id"]
         assert body[0]["distance"] == raceclass["distance"]
 
