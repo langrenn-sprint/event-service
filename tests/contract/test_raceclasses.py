@@ -1,6 +1,5 @@
 """Contract test cases for ping."""
 import asyncio
-from copy import deepcopy
 import logging
 import os
 from typing import Any, Optional
@@ -209,7 +208,7 @@ async def test_get_raceclass_by_id(
 @pytest.mark.contract
 @pytest.mark.asyncio
 async def test_update_raceclass(
-    http_service: Any, token: MockFixture, event_id: str, raceclass: dict
+    http_service: Any, token: MockFixture, event_id: str
 ) -> None:
     """Should return No Content."""
     url = f"{http_service}/events/{event_id}/raceclasses"
@@ -221,15 +220,23 @@ async def test_update_raceclass(
     async with ClientSession() as session:
         async with session.get(url, headers=headers) as response:
             raceclasses = await response.json()
-        id = raceclasses[0]["id"]
-        url = f"{url}/{id}"
-        request_body = deepcopy(raceclass)
-        request_body["id"] = id
-        request_body["name"] = "raceclass name updated"
-        async with session.put(url, headers=headers, json=request_body) as response:
-            pass
+        assert response.status == 200
 
-    assert response.status == 204
+        _raceclass = raceclasses[0]
+        id = _raceclass["id"]
+        _raceclass["name"] = _raceclass["name"] + "G15"
+        _raceclass["ageclasses"] = _raceclass["ageclasses"].append("G 15 år")
+
+        url = f"{url}/{id}"
+        async with session.put(url, headers=headers, json=_raceclass) as response:
+            pass
+        assert response.status == 204
+
+        async with session.get(url, headers=headers) as response:
+            raceclass = await response.json()
+        assert response.status == 200
+        assert raceclass["name"] == _raceclass["name"]
+        assert raceclass["ageclasses"] == _raceclass["ageclasses"]
 
 
 @pytest.mark.contract
