@@ -679,7 +679,7 @@ async def test_get_all_contestants_by_raceclass(
     )
     mocker.patch(
         "event_service.adapters.raceclasses_adapter.RaceclassesAdapter.get_raceclass_by_name",  # noqa: B950
-        return_value=[{"id": "1", "name": "G12", "ageclass_name": "G 12 år"}],
+        return_value=[{"id": "1", "name": "G12", "ageclasses": ["G 12 år"]}],
     )
     headers = {
         hdrs.AUTHORIZATION: f"Bearer {token}",

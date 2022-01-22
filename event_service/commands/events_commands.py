@@ -24,6 +24,7 @@ class EventsCommands:
             await EventsService.get_event_by_id(db, event_id)
         except EventNotFoundException as e:
             raise e from e
+
         # Get all contestants in event:
         contestants = await ContestantsService.get_all_contestants(db, event_id)
         # For every contestant, create corresponding raceclass and update counter:
@@ -56,7 +57,7 @@ class EventsCommands:
                 new_raceclass = Raceclass(
                     event_id=event_id,
                     name=_create_raceclass_name(_c),
-                    ageclass_name=_c.ageclass,
+                    ageclasses=[_c.ageclass],
                     distance=_c.distance,
                     no_of_contestants=1,
                 )

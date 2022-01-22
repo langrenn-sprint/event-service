@@ -90,15 +90,15 @@ class ContestantsCommands:
         # Sort list of contestants in random order:
         shuffle(contestants)
 
-        # Create temporary list, lookup correct raceclasses, and to dict:
+        # Create temporary list, lookup correct raceclasses, and convert to dict:
         _list: List[dict] = list()
         for c in contestants:
             c_dict = c.to_dict()
             c_dict["raceclass_group"] = next(
-                item for item in raceclasses if item.ageclass_name == c_dict["ageclass"]
+                item for item in raceclasses if c_dict["ageclass"] in item.ageclasses
             ).group
             c_dict["raceclass_order"] = next(
-                item for item in raceclasses if item.ageclass_name == c_dict["ageclass"]
+                item for item in raceclasses if c_dict["ageclass"] in item.ageclasses
             ).order
             _list.append(c_dict)
 

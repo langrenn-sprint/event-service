@@ -74,7 +74,7 @@ async def raceclass(event_id: str) -> dict:
     return {
         "name": "G16",
         "order": 1,
-        "ageclass_name": "G 16 år",
+        "ageclasses": ["G 16 år"],
         "event_id": event_id,
         "distance": "5km",
     }
@@ -172,7 +172,7 @@ async def test_get_all_raceclasses_by_ageclass_name(
     assert "application/json" in response.headers[hdrs.CONTENT_TYPE]
     assert type(raceclasses) is list
     assert len(raceclasses) == 1
-    assert raceclasses[0]["ageclass_name"] == ageclass_name
+    assert raceclasses[0]["ageclasses"] == [ageclass_name]
 
 
 @pytest.mark.contract
@@ -201,7 +201,7 @@ async def test_get_raceclass_by_id(
     assert body["id"]
     assert body["name"] == raceclass["name"]
     assert body["order"] == raceclass["order"]
-    assert body["ageclass_name"] == raceclass["ageclass_name"]
+    assert body["ageclasses"] == raceclass["ageclasses"]
     assert body["distance"] == raceclass["distance"]
     assert body["event_id"] == raceclass["event_id"]
 
