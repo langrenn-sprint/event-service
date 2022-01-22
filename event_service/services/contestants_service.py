@@ -70,15 +70,19 @@ class ContestantsService:
         raceclasses = await RaceclassesAdapter.get_raceclass_by_name(
             db, event_id, raceclass
         )
-        if raceclasses == []:
+        if len(raceclasses) == 1:
+            pass
+        else:
             raise RaceclassNotFoundException(f'Raceclass "{raceclass}" not found.')
-        # FIXME: this has to change when ageclass_anme on raceclass becomes a list
-        ageclasses = [raceclass["ageclass_name"] for raceclass in raceclasses]
+
+        _raceclass: Dict = raceclasses[0]
         # Then filter contestants on ageclasses:
         _contestants = await ContestantsAdapter.get_all_contestants(db, event_id)
         for _c in _contestants:
-            if _c["ageclass"] in ageclasses:
+            if _c["ageclass"] in _raceclass["ageclasses"]:
                 contestants.append(Contestant.from_dict(_c))
+
+        # We sort the list on bib, ageclass, last- and first-name:
         _s = sorted(
             contestants,
             key=lambda k: (

@@ -55,24 +55,6 @@ class RaceclassesAdapter(Adapter):
         return raceclasses
 
     @classmethod
-    async def get_raceclass_by_ageclass_name(
-        cls: Any, db: Any, event_id: str, ageclass_name: str
-    ) -> List[dict]:  # pragma: no cover
-        """Get raceclass by ageclass_name function."""
-        raceclasses: List = []
-        cursor = db.raceclasses_collection.find(
-            {
-                "$and": [
-                    {"event_id": event_id},
-                    {"ageclass_name": ageclass_name},
-                ]
-            }
-        )
-        for raceclass in await cursor.to_list(None):
-            raceclasses.append(raceclass)
-        return raceclasses
-
-    @classmethod
     async def update_raceclass(
         cls: Any, db: Any, event_id: str, raceclass_id: str, raceclass: dict
     ) -> Optional[str]:  # pragma: no cover

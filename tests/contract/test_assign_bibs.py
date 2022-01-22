@@ -236,7 +236,7 @@ async def _decide_group_and_order(raceclass: dict) -> Tuple[int, int]:  # noqa: 
 
 async def _print_raceclasses(raceclasses: List[Dict]) -> None:
     # print("--- RACECLASSES ---")
-    # print("group;order;name;ageclass_name;no_of_contestants;distance;event_id")
+    # print("group;order;name;ageclasses;no_of_contestants;distance;event_id")
     # for raceclass in raceclasses:
     #     print(
     #         str(raceclass["group"])
@@ -245,7 +245,7 @@ async def _print_raceclasses(raceclasses: List[Dict]) -> None:
     #         + ";"
     #         + raceclass["name"]
     #         + ";"
-    #         + raceclass["ageclass_name"]
+    #         + raceclass["ageclasses"]
     #         + ";"
     #         + str(raceclass["no_of_contestants"])
     #         + ";"

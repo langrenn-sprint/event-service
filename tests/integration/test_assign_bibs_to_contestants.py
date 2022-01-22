@@ -33,7 +33,7 @@ async def raceclasses() -> List[dict]:
         {
             "id": "11111111-11111-1111-1111-11111111111",
             "name": "G12",
-            "ageclass_name": "G 12 år",
+            "ageclasses": ["G 12 år"],
             "event_id": "ref_to_event",
             "group": 1,
             "order": 1,
@@ -41,7 +41,7 @@ async def raceclasses() -> List[dict]:
         {
             "id": "99999999-99999-9999-9999-99999999999",
             "name": "J12",
-            "ageclass_name": "J 12 år",
+            "ageclasses": ["J 12 år"],
             "event_id": "ref_to_event",
             "group": 1,
             "order": 2,
@@ -56,14 +56,14 @@ async def raceclasses_without_group() -> List[dict]:
         {
             "id": "11111111-11111-1111-1111-11111111111",
             "name": "G12",
-            "ageclass_name": "G 12 år",
+            "ageclasses": ["G 12 år"],
             "event_id": "ref_to_event",
             "order": 2,
         },
         {
             "id": "99999999-99999-9999-9999-99999999999",
             "name": "J12",
-            "ageclass_name": "J 12 år",
+            "ageclasses": ["J 12 år"],
             "event_id": "ref_to_event",
             "order": 2,
         },
@@ -77,14 +77,14 @@ async def raceclasses_without_order() -> List[dict]:
         {
             "id": "11111111-11111-1111-1111-11111111111",
             "name": "G12",
-            "ageclass_name": "G 12 år",
+            "ageclasses": ["G 12 år"],
             "event_id": "ref_to_event",
             "group": 1,
         },
         {
             "id": "99999999-99999-9999-9999-99999999999",
             "name": "J12",
-            "ageclass_name": "J 12 år",
+            "ageclasses": ["J 12 år"],
             "event_id": "ref_to_event",
             "group": 1,
         },

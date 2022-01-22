@@ -49,7 +49,7 @@ async def raceclass() -> dict:
     return {
         "id": "290e70d5-0933-4af0-bb53-1d705ba7eb95",
         "name": "G16",
-        "ageclass_name": "G 16 år",
+        "ageclasses": ["G 16 år"],
         "order": 1,
         "event_id": "ref_to_event",
         "distance": "5km",
@@ -71,7 +71,7 @@ async def test_generate_raceclasses_on_event(
         return_value=event,
     )
     mocker.patch(
-        "event_service.adapters.raceclasses_adapter.RaceclassesAdapter.get_raceclass_by_ageclass_name",  # noqa: B950
+        "event_service.adapters.raceclasses_adapter.RaceclassesAdapter.get_all_raceclasses",  # noqa: B950
         return_value=[],
     )
     mocker.patch(
@@ -117,7 +117,7 @@ async def test_generate_raceclasses_on_event_raceclass_exist(
         return_value=raceclass,
     )
     mocker.patch(
-        "event_service.adapters.raceclasses_adapter.RaceclassesAdapter.get_raceclass_by_ageclass_name",  # noqa: B950
+        "event_service.adapters.raceclasses_adapter.RaceclassesAdapter.get_all_raceclasses",
         return_value=[raceclass],
     )
     mocker.patch(
@@ -161,7 +161,7 @@ async def test_generate_raceclasses_on_event_duplicate_raceclasses(
         return_value=event,
     )
     mocker.patch(
-        "event_service.adapters.raceclasses_adapter.RaceclassesAdapter.get_raceclass_by_ageclass_name",  # noqa: B950
+        "event_service.adapters.raceclasses_adapter.RaceclassesAdapter.get_all_raceclasses",
         return_value=[raceclass, raceclass],
     )
     mocker.patch(
@@ -203,7 +203,7 @@ async def test_generate_raceclasses_on_event_not_found(
         return_value=None,
     )
     mocker.patch(
-        "event_service.adapters.raceclasses_adapter.RaceclassesAdapter.get_raceclass_by_ageclass_name",  # noqa: B950
+        "event_service.adapters.raceclasses_adapter.RaceclassesAdapter.get_all_raceclasses",
         return_value=[raceclass, raceclass],
     )
     mocker.patch(
@@ -246,7 +246,7 @@ async def test_generate_raceclasses_on_event_unauthorized(
         return_value=event,
     )
     mocker.patch(
-        "event_service.adapters.raceclasses_adapter.RaceclassesAdapter.get_raceclass_by_ageclass_name",  # noqa: B950
+        "event_service.adapters.raceclasses_adapter.RaceclassesAdapter.get_all_raceclasses",
         return_value=[],
     )
     mocker.patch(
@@ -287,7 +287,7 @@ async def test_generate_raceclasses_on_event_create_fails(
         return_value=event,
     )
     mocker.patch(
-        "event_service.adapters.raceclasses_adapter.RaceclassesAdapter.get_raceclass_by_ageclass_name",  # noqa: B950
+        "event_service.adapters.raceclasses_adapter.RaceclassesAdapter.get_all_raceclasses",
         return_value=[],
     )
     mocker.patch(
@@ -328,7 +328,7 @@ async def test_generate_raceclasses_on_event_update_fails(
         return_value=event,
     )
     mocker.patch(
-        "event_service.adapters.raceclasses_adapter.RaceclassesAdapter.get_raceclass_by_ageclass_name",  # noqa: B950
+        "event_service.adapters.raceclasses_adapter.RaceclassesAdapter.get_all_raceclasses",
         return_value=[raceclass],
     )
     mocker.patch(
