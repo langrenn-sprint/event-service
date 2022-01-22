@@ -72,7 +72,7 @@ class ContestantsCommands:
                 f"Event {event_id} has no raceclasses. Not able to assign bibs."
             ) from None
 
-        # Check if all raceclasses has value for group|:
+        # Check if all raceclasses has value for group:
         for raceclass in raceclasses:
             if not raceclass.group:
                 raise NoValueForGroupInRaceclassExcpetion(
