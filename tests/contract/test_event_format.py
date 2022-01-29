@@ -110,12 +110,9 @@ async def test_get_event_specific_format(
 ) -> None:
     """Should return OK and a event specific format as json."""
     url = f"{http_service}/events/{event_id}/format"
-    headers = {
-        hdrs.AUTHORIZATION: f"Bearer {token}",
-    }
 
     session = ClientSession()
-    async with session.get(url, headers=headers) as response:
+    async with session.get(url) as response:
         body = await response.json()
     await session.close()
 

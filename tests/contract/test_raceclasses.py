@@ -107,12 +107,9 @@ async def test_get_all_raceclasses(
 ) -> None:
     """Should return OK and a list of raceclasses as json."""
     url = f"{http_service}/events/{event_id}/raceclasses"
-    headers = {
-        hdrs.AUTHORIZATION: f"Bearer {token}",
-    }
 
     session = ClientSession()
-    async with session.get(url, headers=headers) as response:
+    async with session.get(url) as response:
         raceclasses = await response.json()
     await session.close()
 
@@ -130,12 +127,9 @@ async def test_get_all_raceclasses_by_name(
     """Should return OK and a list of raceclasses as json."""
     name_parameter = "G16"
     url = f"{http_service}/events/{event_id}/raceclasses?name={name_parameter}"
-    headers = {
-        hdrs.AUTHORIZATION: f"Bearer {token}",
-    }
 
     session = ClientSession()
-    async with session.get(url, headers=headers) as response:
+    async with session.get(url) as response:
         raceclasses = await response.json()
     await session.close()
 
@@ -158,12 +152,9 @@ async def test_get_all_raceclasses_by_ageclass_name(
         f"{http_service}/events/{event_id}/raceclasses?ageclass-name"
         f"={ageclass_name_parameter}"
     )
-    headers = {
-        hdrs.AUTHORIZATION: f"Bearer {token}",
-    }
 
     session = ClientSession()
-    async with session.get(url, headers=headers) as response:
+    async with session.get(url) as response:
         raceclasses = await response.json()
     await session.close()
 
@@ -182,16 +173,12 @@ async def test_get_raceclass_by_id(
     """Should return OK and an raceclass as json."""
     url = f"{http_service}/events/{event_id}/raceclasses"
 
-    headers = {
-        hdrs.AUTHORIZATION: f"Bearer {token}",
-    }
-
     async with ClientSession() as session:
-        async with session.get(url, headers=headers) as response:
+        async with session.get(url) as response:
             raceclasses = await response.json()
         id = raceclasses[0]["id"]
         url = f"{url}/{id}"
-        async with session.get(url, headers=headers) as response:
+        async with session.get(url) as response:
             body = await response.json()
 
     assert response.status == 200
@@ -218,7 +205,7 @@ async def test_update_raceclass(
     }
 
     async with ClientSession() as session:
-        async with session.get(url, headers=headers) as response:
+        async with session.get(url) as response:
             raceclasses = await response.json()
         assert response.status == 200
 
@@ -232,7 +219,7 @@ async def test_update_raceclass(
             pass
         assert response.status == 204
 
-        async with session.get(url, headers=headers) as response:
+        async with session.get(url) as response:
             raceclass = await response.json()
         assert response.status == 200
         assert raceclass["name"] == _raceclass["name"]
@@ -251,7 +238,7 @@ async def test_delete_raceclass(
     }
 
     async with ClientSession() as session:
-        async with session.get(url, headers=headers) as response:
+        async with session.get(url) as response:
             raceclasses = await response.json()
         id = raceclasses[0]["id"]
         url = f"{url}/{id}"
@@ -276,7 +263,7 @@ async def test_delete_all_raceclasses(
         async with session.delete(url, headers=headers) as response:
             assert response.status == 204
 
-        async with session.get(url, headers=headers) as response:
+        async with session.get(url) as response:
             assert response.status == 200
             raceclasses = await response.json()
             assert len(raceclasses) == 0

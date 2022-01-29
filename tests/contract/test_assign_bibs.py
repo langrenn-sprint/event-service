@@ -108,7 +108,7 @@ async def delete_raceclasses(
     }
 
     session = ClientSession()
-    async with session.get(url, headers=headers) as response:
+    async with session.get(url) as response:
         raceclasses = await response.json()
         for raceclass in raceclasses:
             raceclass_id = raceclass["id"]
@@ -139,7 +139,7 @@ async def test_assign_bibs(
         # First we need to assert that we have an event:
         url = f"{http_service}/events/{event_id}"
         logging.debug(f"Verifying event with id {event_id} at url {url}.")
-        async with session.get(url, headers=headers) as response:
+        async with session.get(url) as response:
             assert response.status == 200
 
         # Then we add contestants to event:
@@ -156,7 +156,7 @@ async def test_assign_bibs(
 
         # We need to work on the raceclasses:
         url = f"{http_service}/events/{event_id}/raceclasses"
-        async with session.get(url, headers=headers) as response:
+        async with session.get(url) as response:
             assert response.status == 200
             raceclasses = await response.json()
 
@@ -183,7 +183,7 @@ async def test_assign_bibs(
 
         # We get the updated list of raceclasses:
         url = f"{http_service}/events/{event_id}/raceclasses"
-        async with session.get(url, headers=headers) as response:
+        async with session.get(url) as response:
             assert response.status == 200
             raceclasses = await response.json()
 
@@ -211,7 +211,7 @@ async def test_assign_bibs(
 
         # We check that bibs are actually assigned:
         url = response.headers[hdrs.LOCATION]
-        async with session.get(url, headers=headers) as response:
+        async with session.get(url) as response:
             contestants = await response.json()
             assert response.status == 200
             assert "application/json" in response.headers[hdrs.CONTENT_TYPE]

@@ -39,11 +39,6 @@ class ContestantsView(View):
     async def get(self) -> Response:  # noqa: C901
         """Get route function."""
         db = self.request.app["db"]
-        token = extract_token_from_request(self.request)
-        try:
-            await UsersAdapter.authorize(token, roles=["admin", "contestant-admin"])
-        except Exception as e:
-            raise e from e
 
         event_id = self.request.match_info["eventId"]
         if "raceclass" in self.request.rel_url.query:
@@ -192,11 +187,6 @@ class ContestantView(View):
     async def get(self) -> Response:
         """Get route function."""
         db = self.request.app["db"]
-        token = extract_token_from_request(self.request)
-        try:
-            await UsersAdapter.authorize(token, roles=["admin", "contestant-admin"])
-        except Exception as e:
-            raise e from e
 
         event_id = self.request.match_info["eventId"]
         contestant_id = self.request.match_info["contestantId"]
