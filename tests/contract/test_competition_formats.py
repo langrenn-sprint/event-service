@@ -39,7 +39,7 @@ async def delete_competition_formats(http_service: Any, token: MockFixture) -> N
     }
 
     session = ClientSession()
-    async with session.get(url, headers=headers) as response:
+    async with session.get(url) as response:
         competition_formats = await response.json()
         for competition_format in competition_formats:
             competition_format_id = competition_format["id"]
@@ -159,12 +159,9 @@ async def test_get_all_competition_formats(
 ) -> None:
     """Should return OK and a list of competition_formats as json."""
     url = f"{http_service}/competition-formats"
-    headers = {
-        hdrs.AUTHORIZATION: f"Bearer {token}",
-    }
 
     session = ClientSession()
-    async with session.get(url, headers=headers) as response:
+    async with session.get(url) as response:
         competition_formats = await response.json()
     await session.close()
 
@@ -182,17 +179,13 @@ async def test_get_competition_format_by_id(
     """Should return OK and an competition_format as json."""
     url = f"{http_service}/competition-formats"
 
-    headers = {
-        hdrs.AUTHORIZATION: f"Bearer {token}",
-    }
-
     async with ClientSession() as session:
         query_param = f'name={quote(competition_format_individual_sprint["name"])}'
-        async with session.get(f"{url}?{query_param}", headers=headers) as response:
+        async with session.get(f"{url}?{query_param}") as response:
             competition_formats = await response.json()
         id = competition_formats[0]["id"]
         url = f"{url}/{id}"
-        async with session.get(url, headers=headers) as response:
+        async with session.get(url) as response:
             body = await response.json()
 
     assert response.status == 200
@@ -232,13 +225,10 @@ async def test_get_competition_format_by_name(
 ) -> None:
     """Should return OK and an competition_format as json."""
     url = f"{http_service}/competition-formats"
-    headers = {
-        hdrs.AUTHORIZATION: f"Bearer {token}",
-    }
 
     async with ClientSession() as session:
         query_param = f'name={quote(competition_format_interval_start["name"])}'
-        async with session.get(f"{url}?{query_param}", headers=headers) as response:
+        async with session.get(f"{url}?{query_param}") as response:
             assert str(response.url) == f"{url}?name=Interval%20Start"
             body = await response.json()
 
@@ -270,7 +260,7 @@ async def test_update_competition_format_interval_start(
     }
 
     async with ClientSession() as session:
-        async with session.get(url, headers=headers) as response:
+        async with session.get(url) as response:
             competition_formats = await response.json()
         id = competition_formats[0]["id"]
         url = f"{url}/{id}"
@@ -283,7 +273,7 @@ async def test_update_competition_format_interval_start(
         async with session.put(url, headers=headers, json=request_body) as response:
             assert response.status == 204
 
-        async with session.get(url, headers=headers) as response:
+        async with session.get(url) as response:
             assert response.status == 200
             updated_competition_format = await response.json()
             assert updated_competition_format["name"] == new_name
@@ -302,7 +292,7 @@ async def test_update_competition_format_individual_sprint(
     }
 
     async with ClientSession() as session:
-        async with session.get(url, headers=headers) as response:
+        async with session.get(url) as response:
             competition_formats = await response.json()
         id = competition_formats[0]["id"]
         url = f"{url}/{id}"
@@ -315,7 +305,7 @@ async def test_update_competition_format_individual_sprint(
         async with session.put(url, headers=headers, json=request_body) as response:
             assert response.status == 204
 
-        async with session.get(url, headers=headers) as response:
+        async with session.get(url) as response:
             assert response.status == 200
             updated_competition_format = await response.json()
             assert updated_competition_format["name"] == new_name
@@ -331,12 +321,12 @@ async def test_delete_competition_format(http_service: Any, token: MockFixture) 
     }
 
     async with ClientSession() as session:
-        async with session.get(url, headers=headers) as response:
+        async with session.get(url) as response:
             competition_formats = await response.json()
         id = competition_formats[0]["id"]
         url = f"{url}/{id}"
         async with session.delete(url, headers=headers) as response:
             assert response.status == 204
 
-        async with session.get(url, headers=headers) as response:
+        async with session.get(url) as response:
             assert response.status == 404

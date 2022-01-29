@@ -81,11 +81,6 @@ class EventFormatView(View):
     async def get(self) -> Response:
         """Get route function."""
         db = self.request.app["db"]
-        token = extract_token_from_request(self.request)
-        try:
-            await UsersAdapter.authorize(token, roles=["admin", "event-admin"])
-        except Exception as e:
-            raise e from e
 
         event_id = self.request.match_info["eventId"]
         logging.debug(f"Got get request for event_format for event {event_id}")

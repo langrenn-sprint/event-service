@@ -106,14 +106,10 @@ async def test_get_event_by_id(
         return_value={"id": ID} | event,  # type: ignore
     )
 
-    headers = {
-        hdrs.AUTHORIZATION: f"Bearer {token}",
-    }
-
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
         m.post("http://example.com:8081/authorize", status=204)
 
-        resp = await client.get(f"/events/{ID}", headers=headers)
+        resp = await client.get(f"/events/{ID}")
         assert resp.status == 200
         assert "application/json" in resp.headers[hdrs.CONTENT_TYPE]
         body = await resp.json()
@@ -176,13 +172,10 @@ async def test_get_all_events(
         "event_service.adapters.events_adapter.EventsAdapter.get_all_events",
         return_value=[{"id": ID, "name": "Oslo Skagen Sprint"}],
     )
-    headers = {
-        hdrs.AUTHORIZATION: f"Bearer {token}",
-    }
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
         m.post("http://example.com:8081/authorize", status=204)
-        resp = await client.get("/events", headers=headers)
+        resp = await client.get("/events")
         assert resp.status == 200
         assert "application/json" in resp.headers[hdrs.CONTENT_TYPE]
         events = await resp.json()
@@ -606,24 +599,6 @@ async def test_create_event_no_authorization(
 
 
 @pytest.mark.integration
-async def test_get_event_by_id_no_authorization(
-    client: _TestClient, mocker: MockFixture
-) -> None:
-    """Should return 401 Unauthorized."""
-    ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
-    mocker.patch(
-        "event_service.adapters.events_adapter.EventsAdapter.get_event_by_id",
-        return_value={"id": ID, "name": "Oslo Skagen Sprint"},
-    )
-
-    with aioresponses(passthrough=["http://127.0.0.1"]) as m:
-        m.post("http://example.com:8081/authorize", status=401)
-
-        resp = await client.get(f"/events/{ID}")
-        assert resp.status == 401
-
-
-@pytest.mark.integration
 async def test_update_event_by_id_no_authorization(
     client: _TestClient, mocker: MockFixture
 ) -> None:
@@ -648,22 +623,6 @@ async def test_update_event_by_id_no_authorization(
         m.post("http://example.com:8081/authorize", status=401)
 
         resp = await client.put(f"/events/{ID}", headers=headers, json=request_body)
-        assert resp.status == 401
-
-
-@pytest.mark.integration
-async def test_list_events_no_authorization(
-    client: _TestClient, mocker: MockFixture
-) -> None:
-    """Should return 401 Unauthorized."""
-    ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
-    mocker.patch(
-        "event_service.adapters.events_adapter.EventsAdapter.get_all_events",
-        return_value=[{"id": ID, "name": "Oslo Skagen Sprint"}],
-    )
-    with aioresponses(passthrough=["http://127.0.0.1"]) as m:
-        m.post("http://example.com:8081/authorize", status=401)
-        resp = await client.get("/events")
         assert resp.status == 401
 
 
@@ -725,14 +684,11 @@ async def test_get_event_not_found(
         "event_service.adapters.events_adapter.EventsAdapter.get_event_by_id",
         return_value=None,
     )
-    headers = {
-        hdrs.AUTHORIZATION: f"Bearer {token}",
-    }
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
         m.post("http://example.com:8081/authorize", status=204)
 
-        resp = await client.get(f"/events/{ID}", headers=headers)
+        resp = await client.get(f"/events/{ID}")
         assert resp.status == 404
 
 

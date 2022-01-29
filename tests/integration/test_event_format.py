@@ -188,13 +188,10 @@ async def test_get_event_format_interval_start(
         "event_service.adapters.event_format_adapter.EventFormatAdapter.get_event_format",
         return_value=event_format_interval_start,
     )
-    headers = {
-        hdrs.AUTHORIZATION: f"Bearer {token}",
-    }
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
         m.post("http://example.com:8081/authorize", status=204)
-        resp = await client.get(f"/events/{EVENT_ID}/format", headers=headers)
+        resp = await client.get(f"/events/{EVENT_ID}/format")
         assert resp.status == 200
         assert "application/json" in resp.headers[hdrs.CONTENT_TYPE]
         body = await resp.json()
@@ -218,13 +215,10 @@ async def test_get_event_format_individual_sprint(
         "event_service.adapters.event_format_adapter.EventFormatAdapter.get_event_format",
         return_value=event_format_individual_sprint,
     )
-    headers = {
-        hdrs.AUTHORIZATION: f"Bearer {token}",
-    }
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
         m.post("http://example.com:8081/authorize", status=204)
-        resp = await client.get(f"/events/{EVENT_ID}/format", headers=headers)
+        resp = await client.get(f"/events/{EVENT_ID}/format")
         assert resp.status == 200
         assert "application/json" in resp.headers[hdrs.CONTENT_TYPE]
         body = await resp.json()
@@ -538,23 +532,6 @@ async def test_create_event_format_no_authorization(
 
 
 @pytest.mark.integration
-async def test_get_event_format_no_authorization(
-    client: _TestClient, mocker: MockFixture, event_format_interval_start: dict
-) -> None:
-    """Should return 401 Unauthorized."""
-    EVENT_ID = "event_id_1"
-    mocker.patch(
-        "event_service.adapters.event_format_adapter.EventFormatAdapter.get_event_format",
-        return_value=event_format_interval_start,
-    )
-
-    with aioresponses(passthrough=["http://127.0.0.1"]) as m:
-        m.post("http://example.com:8081/authorize", status=401)
-        resp = await client.get(f"/events/{EVENT_ID}/format")
-        assert resp.status == 401
-
-
-@pytest.mark.integration
 async def test_put_event_format_no_authorization(
     client: _TestClient, mocker: MockFixture, event_format_interval_start: dict
 ) -> None:
@@ -583,23 +560,6 @@ async def test_put_event_format_no_authorization(
             headers=headers,
             json=request_body,
         )
-        assert resp.status == 401
-
-
-@pytest.mark.integration
-async def test_list_event_format_no_authorization(
-    client: _TestClient, mocker: MockFixture, event_format_interval_start: dict
-) -> None:
-    """Should return 401 Unauthorized."""
-    EVENT_ID = "event_id_1"
-    mocker.patch(
-        "event_service.adapters.event_format_adapter.EventFormatAdapter.get_event_format",
-        return_value=[event_format_interval_start],
-    )
-
-    with aioresponses(passthrough=["http://127.0.0.1"]) as m:
-        m.post("http://example.com:8081/authorize", status=401)
-        resp = await client.get(f"/events/{EVENT_ID}/format")
         assert resp.status == 401
 
 
@@ -638,13 +598,10 @@ async def test_get_event_format_not_found(
         "event_service.adapters.event_format_adapter.EventFormatAdapter.get_event_format",
         return_value=None,
     )
-    headers = {
-        hdrs.AUTHORIZATION: f"Bearer {token}",
-    }
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
         m.post("http://example.com:8081/authorize", status=204)
-        resp = await client.get(f"/events/{EVENT_ID}/format", headers=headers)
+        resp = await client.get(f"/events/{EVENT_ID}/format")
         assert resp.status == 404
 
 

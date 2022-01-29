@@ -66,6 +66,8 @@ paths:
     put:
       tags:
         - event
+      security:
+        - bearerAuth: []
       description: Update an event
       responses:
         204:
@@ -73,6 +75,8 @@ paths:
     delete:
       tags:
         - event
+      security:
+        - bearerAuth: []
       description: Delete an event
       responses:
         204:
@@ -115,6 +119,8 @@ paths:
     put:
       tags:
         - format
+      security:
+        - bearerAuth: []
       description: Update the event specific competition format
       responses:
         204:
@@ -122,6 +128,8 @@ paths:
     delete:
       tags:
         - format
+      security:
+        - bearerAuth: []
       description: Delete the event speicific competition format
       responses:
         204:
@@ -222,6 +230,8 @@ paths:
     put:
       tags:
         - raceclass
+      security:
+        - bearerAuth: []
       description: Update an raceclass
       responses:
         204:
@@ -229,6 +239,8 @@ paths:
     delete:
       tags:
         - raceclass
+      security:
+        - bearerAuth: []
       description: Delete an raceclass
       responses:
         204:
@@ -263,6 +275,8 @@ paths:
     post:
       tags:
         - contestant
+      security:
+        - bearerAuth: []
       description: create new contestant
       requestBody:
         description: the new contestant to be created
@@ -287,6 +301,8 @@ paths:
     delete:
       tags:
         - contestant
+      security:
+        - bearerAuth: []
       description: Delete all contestants in event
       responses:
         204:
@@ -303,6 +319,8 @@ paths:
     post:
       tags:
         - contestant
+      security:
+        - bearerAuth: []
       description: command to generate assign bibs to all contestants in event
       responses:
         201:
@@ -337,6 +355,8 @@ paths:
     put:
       tags:
         - contestant
+      security:
+        - bearerAuth: []
       description: Update a contestant
       requestBody:
         description: the new contestant data
@@ -354,6 +374,8 @@ paths:
     delete:
       tags:
         - contestant
+      security:
+        - bearerAuth: []
       description: Delete a contestant given by id
       responses:
         204:
@@ -416,6 +438,8 @@ paths:
     put:
       tags:
         - competition-format
+      security:
+        - bearerAuth: []
       description: Update a competition format
       responses:
         204:
@@ -423,6 +447,8 @@ paths:
     delete:
       tags:
         - competition-format
+      security:
+        - bearerAuth: []
       description: Delete acompetition format
       responses:
         204:

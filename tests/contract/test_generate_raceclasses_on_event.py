@@ -80,7 +80,7 @@ async def test_generate_raceclasses(
 
         # First we need to find assert that we have an event:
         url = f"{http_service}/events/{event_id}"
-        async with session.get(url, headers=headers) as response:
+        async with session.get(url) as response:
             assert response.status == 200
 
         # Then we add contestants to event:
@@ -97,7 +97,7 @@ async def test_generate_raceclasses(
 
         # We check that 12 raceclasses are actually created:
         url = response.headers[hdrs.LOCATION]
-        async with session.get(url, headers=headers) as response:
+        async with session.get(url) as response:
             assert response.status == 200
             raceclasses = await response.json()
             assert "application/json" in response.headers[hdrs.CONTENT_TYPE]

@@ -95,7 +95,7 @@ async def delete_contestants(http_service: Any, token: MockFixture) -> None:
     }
 
     async with ClientSession() as session:
-        async with session.get(url, headers=headers) as response:
+        async with session.get(url) as response:
             contestants = await response.json()
             for contestant in contestants:
                 contestant_id = contestant["id"]
@@ -114,7 +114,7 @@ async def delete_raceplans(http_service: Any, token: MockFixture) -> None:
     }
 
     async with ClientSession() as session:
-        async with session.get(url, headers=headers) as response:
+        async with session.get(url) as response:
             raceclasses = await response.json()
             for raceclass in raceclasses:
                 raceclass_id = raceclass["id"]
@@ -175,18 +175,14 @@ async def test_get_contestant_by_id(
     """Should return OK and an contestant as json."""
     url = f"{http_service}/events/{event_id}/contestants"
 
-    headers = {
-        hdrs.AUTHORIZATION: f"Bearer {token}",
-    }
-
     async with ClientSession() as session:
-        async with session.get(url, headers=headers) as response:
+        async with session.get(url) as response:
             contestants = await response.json()
         assert len(contestants) > 0
         assert type(contestants) is list
         id = contestants[0]["id"]
         url = f"{url}/{id}"
-        async with session.get(url, headers=headers) as response:
+        async with session.get(url) as response:
             body = await response.json()
 
     assert response.status == 200
@@ -218,7 +214,7 @@ async def test_update_contestant(
     }
 
     async with ClientSession() as session:
-        async with session.get(url, headers=headers) as response:
+        async with session.get(url) as response:
             contestants = await response.json()
         assert len(contestants) > 0
         assert type(contestants) is list
@@ -245,7 +241,7 @@ async def test_delete_contestant(
     }
 
     async with ClientSession() as session:
-        async with session.get(url, headers=headers) as response:
+        async with session.get(url) as response:
             contestants = await response.json()
         assert len(contestants) > 0
         assert type(contestants) is list
@@ -331,12 +327,9 @@ async def test_get_all_contestants_in_given_event(
 ) -> None:
     """Should return OK and a list of contestants as json."""
     url = f"{http_service}/events/{event_id}/contestants"
-    headers = {
-        hdrs.AUTHORIZATION: f"Bearer {token}",
-    }
 
     async with ClientSession() as session:
-        async with session.get(url, headers=headers) as response:
+        async with session.get(url) as response:
             contestants = await response.json()
 
     assert response.status == 200
@@ -363,7 +356,7 @@ async def test_get_all_contestants_in_given_event_by_raceclass(
         raceclass_parameter = "J15"
         url = f"{http_service}/events/{event_id}/contestants?raceclass={raceclass_parameter}"
 
-        async with session.get(url, headers=headers) as response:
+        async with session.get(url) as response:
             contestants = await response.json()
 
     assert response.status == 200
@@ -413,7 +406,7 @@ async def test_get_all_contestants_in_given_event_by_bib(
 
         # Also we need to set order for all raceclasses:
         url = f"{http_service}/events/{event_id}/raceclasses"
-        async with session.get(url, headers=headers) as response:
+        async with session.get(url) as response:
             assert response.status == 200
             raceclasses = await response.json()
             for raceclass in raceclasses:
@@ -434,13 +427,13 @@ async def test_get_all_contestants_in_given_event_by_bib(
 
         # We can now get the contestants
         url = f"{http_service}/events/{event_id}/contestants"
-        async with session.get(url, headers=headers) as response:
+        async with session.get(url) as response:
             contestants = await response.json()
         assert response.status == 200
         assert len(contestants) > 0
         # We can now get the contestant by bib.
         url = f"{http_service}/events/{event_id}/contestants?bib={bib}"
-        async with session.get(url, headers=headers) as response:
+        async with session.get(url) as response:
             contestants_with_bib = await response.json()
 
         assert response.status == 200
@@ -465,7 +458,7 @@ async def test_delete_all_contestant(
         async with session.delete(url, headers=headers) as response:
             assert response.status == 204
 
-        async with session.get(url, headers=headers) as response:
+        async with session.get(url) as response:
             assert response.status == 200
             contestants = await response.json()
             assert len(contestants) == 0
