@@ -583,15 +583,10 @@ async def test_get_contestant_by_id(
         return_value=contestant,
     )
 
-    headers = {
-        hdrs.AUTHORIZATION: f"Bearer {token}",
-    }
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
         m.post("http://example.com:8081/authorize", status=204)
 
-        resp = await client.get(
-            f"/events/{EVENT_ID}/contestants/{CONTESTANT_ID}", headers=headers
-        )
+        resp = await client.get(f"/events/{EVENT_ID}/contestants/{CONTESTANT_ID}")
         assert resp.status == 200
         assert "application/json" in resp.headers[hdrs.CONTENT_TYPE]
         body = await resp.json()
@@ -653,12 +648,10 @@ async def test_get_all_contestants(
         "event_service.adapters.contestants_adapter.ContestantsAdapter.get_all_contestants",  # noqa: B950
         return_value=[contestant],
     )
-    headers = {
-        hdrs.AUTHORIZATION: f"Bearer {token}",
-    }
+
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
         m.post("http://example.com:8081/authorize", status=204)
-        resp = await client.get(f"/events/{EVENT_ID}/contestants", headers=headers)
+        resp = await client.get(f"/events/{EVENT_ID}/contestants")
         assert resp.status == 200
         assert "application/json" in resp.headers[hdrs.CONTENT_TYPE]
         contestants = await resp.json()
@@ -681,16 +674,11 @@ async def test_get_all_contestants_by_raceclass(
         "event_service.adapters.raceclasses_adapter.RaceclassesAdapter.get_raceclass_by_name",  # noqa: B950
         return_value=[{"id": "1", "name": "G12", "ageclasses": ["G 12 år"]}],
     )
-    headers = {
-        hdrs.AUTHORIZATION: f"Bearer {token}",
-    }
 
     raceclass = "G12"
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
         m.post("http://example.com:8081/authorize", status=204)
-        resp = await client.get(
-            f"/events/{EVENT_ID}/contestants?raceclass={raceclass}", headers=headers
-        )
+        resp = await client.get(f"/events/{EVENT_ID}/contestants?raceclass={raceclass}")
         assert resp.status == 200
         assert "application/json" in resp.headers[hdrs.CONTENT_TYPE]
         contestants = await resp.json()
@@ -710,16 +698,11 @@ async def test_get_all_contestants_by_ageclass(
         "event_service.adapters.contestants_adapter.ContestantsAdapter.get_all_contestants",  # noqa: B950
         return_value=[contestant],
     )
-    headers = {
-        hdrs.AUTHORIZATION: f"Bearer {token}",
-    }
 
     ageclass = "G 12 år"
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
         m.post("http://example.com:8081/authorize", status=204)
-        resp = await client.get(
-            f"/events/{EVENT_ID}/contestants?ageclass={ageclass}", headers=headers
-        )
+        resp = await client.get(f"/events/{EVENT_ID}/contestants?ageclass={ageclass}")
         assert resp.status == 200
         assert "application/json" in resp.headers[hdrs.CONTENT_TYPE]
         contestants = await resp.json()
@@ -739,16 +722,11 @@ async def test_get_all_contestants_by_bib(
         "event_service.adapters.contestants_adapter.ContestantsAdapter.get_contestant_by_bib",  # noqa: B950
         return_value=contestant,
     )
-    headers = {
-        hdrs.AUTHORIZATION: f"Bearer {token}",
-    }
 
     bib = 1
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
         m.post("http://example.com:8081/authorize", status=204)
-        resp = await client.get(
-            f"/events/{EVENT_ID}/contestants?bib={bib}", headers=headers
-        )
+        resp = await client.get(f"/events/{EVENT_ID}/contestants?bib={bib}")
         assert resp.status == 200
         assert "application/json" in resp.headers[hdrs.CONTENT_TYPE]
         contestants = await resp.json()
@@ -808,7 +786,7 @@ async def test_delete_all_contestants_in_event(
         assert resp.status == 204
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
         m.post("http://example.com:8081/authorize", status=204)
-        resp = await client.get(f"/events/{EVENT_ID}/contestants", headers=headers)
+        resp = await client.get(f"/events/{EVENT_ID}/contestants")
         assert resp.status == 200
         contestants = await resp.json()
         assert len(contestants) == 0
@@ -1051,13 +1029,10 @@ async def test_get_all_contestants_by_id_when_bib_has_been_set_to_noninteger(
         "event_service.adapters.contestants_adapter.ContestantsAdapter.get_all_contestants",  # noqa: B950
         return_value=[contestant, contestant_2],
     )
-    headers = {
-        hdrs.AUTHORIZATION: f"Bearer {token}",
-    }
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
         m.post("http://example.com:8081/authorize", status=204)
-        resp = await client.get(f"/events/{EVENT_ID}/contestants", headers=headers)
+        resp = await client.get(f"/events/{EVENT_ID}/contestants")
         assert resp.status == 200
         assert "application/json" in resp.headers[hdrs.CONTENT_TYPE]
         contestants = await resp.json()
@@ -1081,16 +1056,11 @@ async def test_get_all_contestants_by_raceclass_raceclass_does_not_exist(
         "event_service.adapters.raceclasses_adapter.RaceclassesAdapter.get_raceclass_by_name",  # noqa: B950
         return_value=[],
     )
-    headers = {
-        hdrs.AUTHORIZATION: f"Bearer {token}",
-    }
 
     raceclass = "G12"
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
         m.post("http://example.com:8081/authorize", status=204)
-        resp = await client.get(
-            f"/events/{EVENT_ID}/contestants?raceclass={raceclass}", headers=headers
-        )
+        resp = await client.get(f"/events/{EVENT_ID}/contestants?raceclass={raceclass}")
         assert resp.status == 400
 
 
@@ -1104,16 +1074,11 @@ async def test_get_all_contestants_by_bib_wrong_paramter_type(
         "event_service.adapters.contestants_adapter.ContestantsAdapter.get_contestant_by_bib",  # noqa: B950
         return_value=contestant,
     )
-    headers = {
-        hdrs.AUTHORIZATION: f"Bearer {token}",
-    }
 
     bib = "one"
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
         m.post("http://example.com:8081/authorize", status=204)
-        resp = await client.get(
-            f"/events/{EVENT_ID}/contestants?bib={bib}", headers=headers
-        )
+        resp = await client.get(f"/events/{EVENT_ID}/contestants?bib={bib}")
         assert resp.status == 400
 
 
@@ -1304,25 +1269,6 @@ async def test_create_contestant_no_authorization(
 
 
 @pytest.mark.integration
-async def test_get_contestant_by_id_no_authorization(
-    client: _TestClient, mocker: MockFixture, contestant: dict
-) -> None:
-    """Should return 401 Unauthorized."""
-    EVENT_ID = "event_id_1"
-    CONTESTANT_ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
-    mocker.patch(
-        "event_service.adapters.contestants_adapter.ContestantsAdapter.get_contestant_by_id",  # noqa: B950
-        return_value=contestant,
-    )
-
-    with aioresponses(passthrough=["http://127.0.0.1"]) as m:
-        m.post("http://example.com:8081/authorize", status=401)
-
-        resp = await client.get(f"/events/{EVENT_ID}/contestants/{CONTESTANT_ID}")
-        assert resp.status == 401
-
-
-@pytest.mark.integration
 async def test_update_contestant_by_id_no_authorization(
     client: _TestClient, mocker: MockFixture, contestant: dict
 ) -> None:
@@ -1352,22 +1298,6 @@ async def test_update_contestant_by_id_no_authorization(
             headers=headers,
             json=request_body,
         )
-        assert resp.status == 401
-
-
-@pytest.mark.integration
-async def test_get_all_contestants_no_authorization(
-    client: _TestClient, mocker: MockFixture, contestant: dict
-) -> None:
-    """Should return 401 Unauthorized."""
-    EVENT_ID = "event_id_1"
-    mocker.patch(
-        "event_service.adapters.contestants_adapter.ContestantsAdapter.get_all_contestants",  # noqa: B950
-        return_value=[contestant],
-    )
-    with aioresponses(passthrough=["http://127.0.0.1"]) as m:
-        m.post("http://example.com:8081/authorize", status=401)
-        resp = await client.get(f"/events/{EVENT_ID}/contestants")
         assert resp.status == 401
 
 
@@ -1461,15 +1391,10 @@ async def test_get_contestant_not_found(
         "event_service.adapters.contestants_adapter.ContestantsAdapter.get_contestant_by_id",  # noqa: B950
         return_value=None,
     )
-    headers = {
-        hdrs.AUTHORIZATION: f"Bearer {token}",
-    }
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
         m.post("http://example.com:8081/authorize", status=204)
 
-        resp = await client.get(
-            f"/events/{EVENT_ID}/contestants/{CONTESTANT_ID}", headers=headers
-        )
+        resp = await client.get(f"/events/{EVENT_ID}/contestants/{CONTESTANT_ID}")
         assert resp.status == 404
 
 

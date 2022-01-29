@@ -32,7 +32,7 @@ async def clear_db(http_service: Any, token: MockFixture) -> AsyncGenerator:
     }
 
     session = ClientSession()
-    async with session.get(url, headers=headers) as response:
+    async with session.get(url) as response:
         events = await response.json()
         for event in events:
             event_id = event["id"]
@@ -120,12 +120,9 @@ async def test_create_event(
 async def test_get_all_events(http_service: Any, token: MockFixture) -> None:
     """Should return OK and a list of events as json."""
     url = f"{http_service}/events"
-    headers = {
-        hdrs.AUTHORIZATION: f"Bearer {token}",
-    }
 
     session = ClientSession()
-    async with session.get(url, headers=headers) as response:
+    async with session.get(url) as response:
         events = await response.json()
     await session.close()
 
@@ -143,16 +140,12 @@ async def test_get_event_by_id(
     """Should return OK and an event as json."""
     url = f"{http_service}/events"
 
-    headers = {
-        hdrs.AUTHORIZATION: f"Bearer {token}",
-    }
-
     async with ClientSession() as session:
-        async with session.get(url, headers=headers) as response:
+        async with session.get(url) as response:
             events = await response.json()
         id = events[0]["id"]
         url = f"{url}/{id}"
-        async with session.get(url, headers=headers) as response:
+        async with session.get(url) as response:
             body = await response.json()
 
     assert response.status == 200
@@ -179,7 +172,7 @@ async def test_update_event(http_service: Any, token: MockFixture, event: dict) 
     }
 
     async with ClientSession() as session:
-        async with session.get(url, headers=headers) as response:
+        async with session.get(url) as response:
             events = await response.json()
         id = events[0]["id"]
         url = f"{url}/{id}"
@@ -192,7 +185,7 @@ async def test_update_event(http_service: Any, token: MockFixture, event: dict) 
         async with session.put(url, headers=headers, json=request_body) as response:
             assert response.status == 204
 
-        async with session.get(url, headers=headers) as response:
+        async with session.get(url) as response:
             assert response.status == 200
             updated_event = await response.json()
             assert updated_event["name"] == new_name
@@ -214,12 +207,12 @@ async def test_delete_event(http_service: Any, token: MockFixture) -> None:
     }
 
     async with ClientSession() as session:
-        async with session.get(url, headers=headers) as response:
+        async with session.get(url) as response:
             events = await response.json()
         id = events[0]["id"]
         url = f"{url}/{id}"
         async with session.delete(url, headers=headers) as response:
             assert response.status == 204
 
-        async with session.get(url, headers=headers) as response:
+        async with session.get(url) as response:
             assert response.status == 404

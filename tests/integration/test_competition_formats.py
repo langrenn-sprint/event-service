@@ -151,14 +151,10 @@ async def test_get_competition_format_interval_start_by_id(
         return_value={"id": ID} | competition_format_interval_start,  # type: ignore
     )
 
-    headers = {
-        hdrs.AUTHORIZATION: f"Bearer {token}",
-    }
-
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
         m.post("http://example.com:8081/authorize", status=204)
 
-        resp = await client.get(f"/competition-formats/{ID}", headers=headers)
+        resp = await client.get(f"/competition-formats/{ID}")
         assert resp.status == 200
         assert "application/json" in resp.headers[hdrs.CONTENT_TYPE]
         body = await resp.json()
@@ -190,14 +186,10 @@ async def test_get_competition_format_individual_sprint_by_id(
         return_value={"id": ID} | competition_format_individual_sprint,  # type: ignore
     )
 
-    headers = {
-        hdrs.AUTHORIZATION: f"Bearer {token}",
-    }
-
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
         m.post("http://example.com:8081/authorize", status=204)
 
-        resp = await client.get(f"/competition-formats/{ID}", headers=headers)
+        resp = await client.get(f"/competition-formats/{ID}")
         assert resp.status == 200
         assert "application/json" in resp.headers[hdrs.CONTENT_TYPE]
         body = await resp.json()
@@ -247,14 +239,10 @@ async def test_get_competition_formats_by_name(
         return_value=[{"id": ID} | competition_format_interval_start],  # type: ignore
     )
 
-    headers = {
-        hdrs.AUTHORIZATION: f"Bearer {token}",
-    }
-
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
         m.post("http://example.com:8081/authorize", status=204)
 
-        resp = await client.get(f"/competition-formats?name={NAME}", headers=headers)
+        resp = await client.get(f"/competition-formats?name={NAME}")
         assert resp.status == 200
         assert "application/json" in resp.headers[hdrs.CONTENT_TYPE]
         body = await resp.json()
@@ -287,14 +275,10 @@ async def test_get_competition_formats_by_name_individual_sprint(
         return_value=[{"id": ID} | competition_format_individual_sprint],  # type: ignore
     )
 
-    headers = {
-        hdrs.AUTHORIZATION: f"Bearer {token}",
-    }
-
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
         m.post("http://example.com:8081/authorize", status=204)
 
-        resp = await client.get(f"/competition-formats?name={NAME}", headers=headers)
+        resp = await client.get(f"/competition-formats?name={NAME}")
         assert resp.status == 200
         assert "application/json" in resp.headers[hdrs.CONTENT_TYPE]
         body = await resp.json()
@@ -418,13 +402,10 @@ async def test_get_all_competition_formats(
             {"id": ID} | competition_format_individual_sprint,  # type: ignore
         ],
     )
-    headers = {
-        hdrs.AUTHORIZATION: f"Bearer {token}",
-    }
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
         m.post("http://example.com:8081/authorize", status=204)
-        resp = await client.get("/competition-formats", headers=headers)
+        resp = await client.get("/competition-formats")
         assert resp.status == 200
         assert "application/json" in resp.headers[hdrs.CONTENT_TYPE]
         body = await resp.json()
@@ -918,26 +899,6 @@ async def test_create_competition_format_no_authorization(
 
 
 @pytest.mark.integration
-async def test_get_competition_format_by_id_no_authorization(
-    client: _TestClient,
-    mocker: MockFixture,
-    competition_format_interval_start: dict,
-) -> None:
-    """Should return 401 Unauthorized."""
-    ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
-    mocker.patch(
-        "event_service.adapters.competition_formats_adapter.CompetitionFormatsAdapter.get_competition_format_by_id",  # noqa: B950
-        return_value={"id": ID} | competition_format_interval_start,  # type: ignore
-    )
-
-    with aioresponses(passthrough=["http://127.0.0.1"]) as m:
-        m.post("http://example.com:8081/authorize", status=401)
-
-        resp = await client.get(f"/competition-formats/{ID}")
-        assert resp.status == 401
-
-
-@pytest.mark.integration
 async def test_update_competition_format_by_id_no_authorization(
     client: _TestClient,
     mocker: MockFixture,
@@ -966,22 +927,6 @@ async def test_update_competition_format_by_id_no_authorization(
         resp = await client.put(
             f"/competition-formats/{ID}", headers=headers, json=request_body
         )
-        assert resp.status == 401
-
-
-@pytest.mark.integration
-async def test_list_competition_formats_no_authorization(
-    client: _TestClient, mocker: MockFixture
-) -> None:
-    """Should return 401 Unauthorized."""
-    ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
-    mocker.patch(
-        "event_service.adapters.competition_formats_adapter.CompetitionFormatsAdapter.get_all_competition_formats",  # noqa: B950
-        return_value=[{"id": ID, "name": "Oslo Skagen Sprint"}],
-    )
-    with aioresponses(passthrough=["http://127.0.0.1"]) as m:
-        m.post("http://example.com:8081/authorize", status=401)
-        resp = await client.get("/competition-formats")
         assert resp.status == 401
 
 
@@ -1052,14 +997,11 @@ async def test_get_competition_format_not_found(
         "event_service.adapters.competition_formats_adapter.CompetitionFormatsAdapter.get_competition_format_by_id",  # noqa: B950
         return_value=None,
     )
-    headers = {
-        hdrs.AUTHORIZATION: f"Bearer {token}",
-    }
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
         m.post("http://example.com:8081/authorize", status=204)
 
-        resp = await client.get(f"/competition-formats/{ID}", headers=headers)
+        resp = await client.get(f"/competition-formats/{ID}")
         assert resp.status == 404
 
 
@@ -1073,14 +1015,11 @@ async def test_get_competition_formats_by_name_not_found(
         "event_service.adapters.competition_formats_adapter.CompetitionFormatsAdapter.get_competition_formats_by_name",  # noqa: B950
         return_value=[],
     )
-    headers = {
-        hdrs.AUTHORIZATION: f"Bearer {token}",
-    }
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
         m.post("http://example.com:8081/authorize", status=204)
 
-        resp = await client.get(f"/competition-formats?name={NAME}", headers=headers)
+        resp = await client.get(f"/competition-formats?name={NAME}")
         assert resp.status == 200
         body = await resp.json()
         assert type(body) is list
