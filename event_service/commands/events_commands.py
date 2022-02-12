@@ -60,6 +60,7 @@ class EventsCommands:
                     ageclasses=[_c.ageclass],
                     distance=_c.distance,
                     no_of_contestants=1,
+                    ranking=True,
                 )
                 result = await RaceclassesService.create_raceclass(
                     db, event_id, new_raceclass
