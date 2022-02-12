@@ -160,6 +160,8 @@ async def test_assign_bibs(
             assert response.status == 200
             raceclasses = await response.json()
 
+        await _print_raceclasses(raceclasses)
+
         # We assign ageclasses "G 16 år" and "G 15 år" to the same new raceclass "G15-16":
         raceclass_G16 = await _get_raceclass_by_ageclass(raceclasses, "G 16 år")
         raceclass_G15 = await _get_raceclass_by_ageclass(raceclasses, "G 15 år")
@@ -169,6 +171,7 @@ async def test_assign_bibs(
             "ageclasses": raceclass_G15["ageclasses"] + raceclass_G16["ageclasses"],
             "no_of_contestants": raceclass_G15["no_of_contestants"]
             + raceclass_G16["no_of_contestants"],
+            "ranking": True,
         }
         request_body = raceclass_G15_16
         url = f"{http_service}/events/{event_id}/raceclasses"
@@ -196,6 +199,12 @@ async def test_assign_bibs(
             url = f"{http_service}/events/{event_id}/raceclasses/{id}"
             async with session.put(url, headers=headers, json=raceclass) as response:
                 assert response.status == 204
+
+        # We again get the updated list of raceclasses:
+        url = f"{http_service}/events/{event_id}/raceclasses"
+        async with session.get(url) as response:
+            assert response.status == 200
+            raceclasses = await response.json()
 
         await _print_raceclasses(raceclasses)
 
@@ -277,7 +286,7 @@ async def _decide_group_and_order(raceclass: dict) -> Tuple[int, int]:  # noqa: 
 
 async def _print_raceclasses(raceclasses: List[Dict]) -> None:
     # print("--- RACECLASSES ---")
-    # print("group;order;name;ageclasses;no_of_contestants;distance;event_id")
+    # print("group;order;name;ageclasses;no_of_contestants;distance;ranking;event_id")
     # for raceclass in raceclasses:
     #     print(
     #         str(raceclass["group"])
@@ -291,6 +300,8 @@ async def _print_raceclasses(raceclasses: List[Dict]) -> None:
     #         + str(raceclass["no_of_contestants"])
     #         + ";"
     #         + str(raceclass["distance"])
+    #         + ";"
+    #         + str(raceclass["ranking"])
     #         + ";"
     #         + raceclass["event_id"]
     #     )

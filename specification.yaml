@@ -490,6 +490,10 @@ components:
         noOfContestants:
           type: integer
           description: number of contestants in raceclass
+        ranking:
+          type: boolean
+          default: true
+          description: if the contenstants are to be ranked and results published
     EventCollection:
       type: object
       properties:
