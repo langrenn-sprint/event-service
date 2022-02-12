@@ -54,6 +54,7 @@ class RaceclassesService:
         _s = sorted(
             raceclasses,
             key=lambda k: (
+                k.group is not None,
                 k.order is not None,
                 k.group,
                 k.order,
