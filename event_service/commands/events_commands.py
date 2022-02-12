@@ -17,7 +17,9 @@ class EventsCommands:
     """Class representing a commands on events."""
 
     @classmethod
-    async def generate_raceclasses(cls: Any, db: Any, event_id: str) -> None:
+    async def generate_raceclasses(  # noqa: C901
+        cls: Any, db: Any, event_id: str
+    ) -> None:
         """Create raceclasses function."""
         # Check if event exists:
         try:
@@ -69,6 +71,24 @@ class EventsCommands:
                     raise RaceclassCreateException(
                         f"Create of raceclass with name {new_raceclass.name} failed."
                     ) from None
+        # Finally we sort and assign default group and order values:
+        raceclasses = await RaceclassesService.get_all_raceclasses(
+            db, event_id=event_id
+        )
+        _raceclasses_sorted = sorted(
+            raceclasses,
+            key=lambda k: (int(k.name[1:].split("/")[0]), k.name[:1]),
+            reverse=True,
+        )
+        order: int = 1
+        for raceclass in _raceclasses_sorted:
+            if raceclass.id:
+                raceclass.group = 1
+                raceclass.order = order
+                await RaceclassesService.update_raceclass(
+                    db, event_id, raceclass.id, raceclass
+                )
+                order += 1
 
 
 # helpers
