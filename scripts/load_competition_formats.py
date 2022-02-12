@@ -3,6 +3,7 @@ import asyncio
 from json import load
 import logging
 import os
+from typing import Optional
 
 from aiohttp import ClientSession, hdrs
 from dotenv import load_dotenv
@@ -33,7 +34,7 @@ async def create_competition_format(
     session: ClientSession,
     token: str,
     competition_format: dict,
-) -> str:
+) -> int:
     """Should return Created, location header and no body."""
     url = f"http://{EVENTS_HOST_SERVER}:{EVENTS_HOST_PORT}/competition-formats"
     headers = {
@@ -49,7 +50,7 @@ async def create_competition_format(
 
 async def get_competition_format_by_name(
     session: ClientSession, token: str, name: str
-) -> str:
+) -> Optional[str]:
     """Should return OK and an competition_format as json."""
     headers = {
         hdrs.AUTHORIZATION: f"Bearer {token}",
@@ -69,7 +70,7 @@ async def get_competition_format_by_name(
 
 async def update_competition_format(
     session: ClientSession, token: str, id: str, competition_format: dict
-) -> str:
+) -> int:
     """Should return No Content."""
     headers = {
         hdrs.CONTENT_TYPE: "application/json",
