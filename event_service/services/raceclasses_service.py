@@ -17,28 +17,19 @@ def create_id() -> str:  # pragma: no cover
 class RaceclassCreateException(Exception):
     """Class representing custom exception for create method."""
 
-    def __init__(self, message: str) -> None:
-        """Initialize the error."""
-        # Call the base class constructor with the parameters it needs
-        super().__init__(message)
+    pass
 
 
 class RaceclassUpdateException(Exception):
     """Class representing custom exception for update method."""
 
-    def __init__(self, message: str) -> None:
-        """Initialize the error."""
-        # Call the base class constructor with the parameters it needs
-        super().__init__(message)
+    pass
 
 
 class RaceclassNotUniqueNameException(Exception):
     """Class representing custom exception for find method."""
 
-    def __init__(self, message: str) -> None:
-        """Initialize the error."""
-        # Call the base class constructor with the parameters it needs
-        super().__init__(message)
+    pass
 
 
 class RaceclassesService:
@@ -92,6 +83,11 @@ class RaceclassesService:
             raise IllegalValueException(
                 "Cannot create raceclass with input id."
             ) from None
+        # Validate raceclasses:
+        try:
+            await validate_raceclass(raceclass)
+        except IllegalValueException as e:
+            raise e from e
         # create id
         raceclass_id = create_id()
         raceclass.id = raceclass_id
@@ -159,18 +155,24 @@ class RaceclassesService:
         old_raceclass = await RaceclassesAdapter.get_raceclass_by_id(
             db, event_id, raceclass_id
         )
-        # update the raceclass if found:
-        if old_raceclass:
-            if raceclass.id != old_raceclass["id"]:
-                raise IllegalValueException("Cannot change id for raceclass.") from None
-            new_raceclass = raceclass.to_dict()
-            result = await RaceclassesAdapter.update_raceclass(
-                db, event_id, raceclass_id, new_raceclass
-            )
-            return result
-        raise RaceclassNotFoundException(
-            f"Raceclass with id {raceclass_id} not found."
-        ) from None
+        # Check if raceclass if found:
+        if not old_raceclass:
+            raise RaceclassNotFoundException(
+                f"Raceclass with id {raceclass_id} not found."
+            ) from None
+        if raceclass.id != old_raceclass["id"]:
+            raise IllegalValueException("Cannot change id for raceclass.") from None
+        # Validate raceclasses:
+        try:
+            await validate_raceclass(raceclass)
+        except IllegalValueException as e:
+            raise e from e
+        # Everything ok, update:
+        new_raceclass = raceclass.to_dict()
+        result = await RaceclassesAdapter.update_raceclass(
+            db, event_id, raceclass_id, new_raceclass
+        )
+        return result
 
     @classmethod
     async def delete_raceclass(
@@ -192,3 +194,20 @@ class RaceclassesService:
         ) from None
 
     # -- helper methods
+
+
+async def validate_raceclass(raceclass: Raceclass) -> None:
+    """Validator function for raceclasses."""
+    # Validate `group` property:
+    # Check if raceclasses have only integers group values:
+    if not isinstance(raceclass.group, (int)):
+        raise IllegalValueException(
+            f"Raceclass {raceclass.name} group value is not numeric."
+        )
+
+    # Validate `order` property:
+    # Check if raceclasses have only integers order values:
+    if not isinstance(raceclass.order, (int)):
+        raise IllegalValueException(
+            f"Raceclass {raceclass.name} order value is not numeric."
+        )
