@@ -12,9 +12,9 @@ class Raceclass(DataClassJsonMixin):
     name: str
     ageclasses: List[str]
     event_id: str
+    group: int = 0
+    order: int = 0
     no_of_contestants: int = 0
     ranking: bool = True
     distance: Optional[str] = field(default=None)
-    group: Optional[int] = field(default=None)
-    order: Optional[int] = field(default=None)
     id: Optional[str] = field(default=None)

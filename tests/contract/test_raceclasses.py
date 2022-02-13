@@ -72,9 +72,12 @@ async def raceclass(event_id: str) -> dict:
     """Create a raceclass object for testing."""
     return {
         "name": "G16",
-        "order": 1,
         "ageclasses": ["G 16 år"],
         "event_id": event_id,
+        "group": 1,
+        "order": 1,
+        "no_of_contestants": 0,
+        "ranking": True,
         "distance": "5km",
     }
 

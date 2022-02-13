@@ -57,12 +57,12 @@ class EventsCommands:
             # If not found, we create the raceclass:
             else:
                 new_raceclass = Raceclass(
-                    event_id=event_id,
                     name=_create_raceclass_name(_c),
                     ageclasses=[_c.ageclass],
-                    distance=_c.distance,
+                    event_id=event_id,
                     no_of_contestants=1,
                     ranking=True,
+                    distance=_c.distance,
                 )
                 result = await RaceclassesService.create_raceclass(
                     db, event_id, new_raceclass
@@ -71,7 +71,8 @@ class EventsCommands:
                     raise RaceclassCreateException(
                         f"Create of raceclass with name {new_raceclass.name} failed."
                     ) from None
-        # Finally we sort and assign default group and order values:
+
+        # Finally we sort and re-assign default group and order values:
         raceclasses = await RaceclassesService.get_all_raceclasses(
             db, event_id=event_id
         )

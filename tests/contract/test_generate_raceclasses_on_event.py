@@ -92,7 +92,9 @@ async def test_generate_raceclasses(
         # Finally raceclasses are generated:
         url = f"{http_service}/events/{event_id}/generate-raceclasses"
         async with session.post(url, headers=headers) as response:
-            assert response.status == 201
+            if response.status != 201:
+                body = await response.json()
+            assert response.status == 201, body
             assert f"/events/{event_id}/raceclasses" in response.headers[hdrs.LOCATION]
 
         # We check that 12 raceclasses are actually created:
