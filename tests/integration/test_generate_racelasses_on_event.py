@@ -50,8 +50,10 @@ async def raceclass() -> dict:
         "id": "290e70d5-0933-4af0-bb53-1d705ba7eb95",
         "name": "G16",
         "ageclasses": ["G 16 år"],
-        "order": 1,
         "event_id": "ref_to_event",
+        "group": 1,
+        "order": 1,
+        "ranking": True,
         "distance": "5km",
     }
 

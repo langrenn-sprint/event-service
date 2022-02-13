@@ -151,7 +151,9 @@ async def test_assign_bibs(
         # We need to generate raceclasses for the event:
         url = f"{http_service}/events/{event_id}/generate-raceclasses"
         async with session.post(url, headers=headers) as response:
-            assert response.status == 201
+            if response.status != 201:
+                body = await response.json()
+            assert response.status == 201, body["detail"]
             assert f"/events/{event_id}/raceclasses" in response.headers[hdrs.LOCATION]
 
         # We need to work on the raceclasses:
