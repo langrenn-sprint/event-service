@@ -38,7 +38,7 @@ In future versions:
 % curl -H "Content-Type: multipart/form-data" \
   -H "Authorization: Bearer $ACCESS" \
   -X POST \
-  -F "data=@tests/files/allcontestants_eventid_364892.csv; type=text/csv" \
+  -F "data=@tests/files/contestants_all.csv; type=text/csv" \
   http://localhost:8080/events/<event-id/contestants
 % curl \
   -H "Authorization: Bearer $ACCESS" \

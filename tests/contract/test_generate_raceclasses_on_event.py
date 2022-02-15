@@ -85,9 +85,15 @@ async def test_generate_raceclasses(
 
         # Then we add contestants to event:
         url = f"{http_service}/events/{event_id}/contestants"
-        files = {"file": open("tests/files/allcontestants_eventid_364892.csv", "rb")}
+        files = {"file": open("tests/files/contestants_all.csv", "rb")}
         async with session.post(url, headers=headers, data=files) as response:
             assert response.status == 200
+
+        # We get the list of contestants:
+        url = f"{http_service}/events/{event_id}/contestants"
+        async with session.get(url, headers=headers) as response:
+            assert response.status == 200
+            contestants = await response.json()
 
         # Finally raceclasses are generated:
         url = f"{http_service}/events/{event_id}/generate-raceclasses"
@@ -97,7 +103,7 @@ async def test_generate_raceclasses(
             assert response.status == 201, body
             assert f"/events/{event_id}/raceclasses" in response.headers[hdrs.LOCATION]
 
-        # We check that 12 raceclasses are actually created:
+        # We check that 22 raceclasses are actually created:
         url = response.headers[hdrs.LOCATION]
         async with session.get(url) as response:
             assert response.status == 200
@@ -105,59 +111,121 @@ async def test_generate_raceclasses(
             assert "application/json" in response.headers[hdrs.CONTENT_TYPE]
             assert type(raceclasses) is list
 
-            # Check that we have 12 raceclasses:
-            assert len(raceclasses) == 12
+            # Check that we have 22 raceclasses:
+            assert len(raceclasses) == 22
 
             # Check sum of contestants is equal to total no of contestants:
-            assert sum(item["no_of_contestants"] for item in raceclasses) == 333
+            assert sum(item["no_of_contestants"] for item in raceclasses) == len(
+                contestants
+            )
 
             # Check that we have all raceclasses and that sum pr class is correct:
             sorted_list = sorted(raceclasses, key=lambda k: k["name"])
-            assert (
-                sorted_list[0]["name"] == "G11"
-                and sorted_list[0]["no_of_contestants"] == 17
+
+            assert sorted_list[0]["name"] == "G10"
+            assert sorted_list[0]["no_of_contestants"] == len(
+                [c for c in contestants if c["ageclass"] == "G 10 år"]
             )
-            assert (
-                sorted_list[1]["name"] == "G12"
-                and sorted_list[1]["no_of_contestants"] == 37
+            assert sorted_list[1]["name"] == "G11"
+            assert sorted_list[1]["no_of_contestants"] == len(
+                [c for c in contestants if c["ageclass"] == "G 11 år"]
             )
-            assert (
-                sorted_list[2]["name"] == "G13"
-                and sorted_list[2]["no_of_contestants"] == 29
+            assert sorted_list[2]["name"] == "G12"
+            assert sorted_list[2]["no_of_contestants"] == len(
+                [c for c in contestants if c["ageclass"] == "G 12 år"]
             )
-            assert (
-                sorted_list[3]["name"] == "G14"
-                and sorted_list[3]["no_of_contestants"] == 26
+
+            assert sorted_list[3]["name"] == "G13"
+            assert sorted_list[3]["no_of_contestants"] == len(
+                [c for c in contestants if c["ageclass"] == "G 13 år"]
             )
-            assert (
-                sorted_list[4]["name"] == "G15"
-                and sorted_list[4]["no_of_contestants"] == 45
+
+            assert sorted_list[4]["name"] == "G14"
+            assert sorted_list[4]["no_of_contestants"] == len(
+                [c for c in contestants if c["ageclass"] == "G 14 år"]
             )
-            assert (
-                sorted_list[5]["name"] == "G16"
-                and sorted_list[5]["no_of_contestants"] == 36
+
+            assert sorted_list[5]["name"] == "G15"
+            assert sorted_list[5]["no_of_contestants"] == len(
+                [c for c in contestants if c["ageclass"] == "G 15 år"]
             )
-            assert (
-                sorted_list[6]["name"] == "J11"
-                and sorted_list[6]["no_of_contestants"] == 17
+
+            assert sorted_list[6]["name"] == "G16"
+            assert sorted_list[6]["no_of_contestants"] == len(
+                [c for c in contestants if c["ageclass"] == "G 16 år"]
             )
-            assert (
-                sorted_list[7]["name"] == "J12"
-                and sorted_list[7]["no_of_contestants"] == 18
+
+            assert sorted_list[7]["name"] == "G9"
+            assert sorted_list[7]["no_of_contestants"] == len(
+                [c for c in contestants if c["ageclass"] == "G 9 år"]
             )
-            assert (
-                sorted_list[8]["name"] == "J13"
-                and sorted_list[8]["no_of_contestants"] == 29
+
+            assert sorted_list[8]["name"] == "J10"
+            assert sorted_list[8]["no_of_contestants"] == len(
+                [c for c in contestants if c["ageclass"] == "J 10 år"]
             )
-            assert (
-                sorted_list[9]["name"] == "J14"
-                and sorted_list[9]["no_of_contestants"] == 19
+
+            assert sorted_list[9]["name"] == "J11"
+            assert sorted_list[9]["no_of_contestants"] == len(
+                [c for c in contestants if c["ageclass"] == "J 11 år"]
             )
-            assert (
-                sorted_list[10]["name"] == "J15"
-                and sorted_list[10]["no_of_contestants"] == 42
+
+            assert sorted_list[10]["name"] == "J12"
+            assert sorted_list[10]["no_of_contestants"] == len(
+                [c for c in contestants if c["ageclass"] == "J 12 år"]
             )
-            assert (
-                sorted_list[11]["name"] == "J16"
-                and sorted_list[11]["no_of_contestants"] == 18
+
+            assert sorted_list[11]["name"] == "J13"
+            assert sorted_list[11]["no_of_contestants"] == len(
+                [c for c in contestants if c["ageclass"] == "J 13 år"]
+            )
+
+            assert sorted_list[12]["name"] == "J14"
+            assert sorted_list[12]["no_of_contestants"] == len(
+                [c for c in contestants if c["ageclass"] == "J 14 år"]
+            )
+
+            assert sorted_list[13]["name"] == "J15"
+            assert sorted_list[13]["no_of_contestants"] == len(
+                [c for c in contestants if c["ageclass"] == "J 15 år"]
+            )
+
+            assert sorted_list[14]["name"] == "J16"
+            assert sorted_list[14]["no_of_contestants"] == len(
+                [c for c in contestants if c["ageclass"] == "J 16 år"]
+            )
+
+            assert sorted_list[15]["name"] == "J9"
+            assert sorted_list[15]["no_of_contestants"] == len(
+                [c for c in contestants if c["ageclass"] == "J 9 år"]
+            )
+
+            assert sorted_list[16]["name"] == "K17"
+            assert sorted_list[16]["no_of_contestants"] == len(
+                [c for c in contestants if c["ageclass"] == "K 17 år"]
+            )
+
+            assert sorted_list[17]["name"] == "K18"
+            assert sorted_list[17]["no_of_contestants"] == len(
+                [c for c in contestants if c["ageclass"] == "K 18 år"]
+            )
+
+            assert sorted_list[18]["name"] == "K19/20"
+            assert sorted_list[18]["no_of_contestants"] == len(
+                [c for c in contestants if c["ageclass"] == "K 19/20 år"]
+            )
+
+            assert sorted_list[19]["name"] == "M17"
+            assert sorted_list[19]["no_of_contestants"] == len(
+                [c for c in contestants if c["ageclass"] == "M 17 år"]
+            )
+
+            assert sorted_list[20]["name"] == "M18"
+            assert sorted_list[20]["no_of_contestants"] == len(
+                [c for c in contestants if c["ageclass"] == "M 18 år"]
+            )
+
+            assert sorted_list[21]["name"] == "M19/20"
+            assert sorted_list[21]["no_of_contestants"] == len(
+                [c for c in contestants if c["ageclass"] == "M 19/20 år"]
             )
