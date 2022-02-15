@@ -163,7 +163,7 @@ async def test_create_contestants_csv_good_case(
         return_value=None,
     )
 
-    files = {"file": open("tests/files/contestants_eventid_364892.csv", "rb")}
+    files = {"file": open("tests/files/contestants_G11.csv", "rb")}
 
     headers = {
         hdrs.AUTHORIZATION: f"Bearer {token}",
@@ -223,9 +223,7 @@ async def test_create_contestants_csv_no_minidrett_id_existing_good_case(
         return_value=CONTESTANT_ID,
     )
 
-    files = {
-        "file": open("tests/files/contestants_eventid_364892_no_minidrett_id.csv", "rb")
-    }
+    files = {"file": open("tests/files/contestants_G11_no_minidrett_id.csv", "rb")}
 
     headers = {
         hdrs.AUTHORIZATION: f"Bearer {token}",
@@ -281,7 +279,7 @@ async def test_create_contestants_csv_minidrett_id_existing_good_case(
         return_value=CONTESTANT_ID,
     )
 
-    files = {"file": open("tests/files/contestants_eventid_364892.csv", "rb")}
+    files = {"file": open("tests/files/contestants_G11.csv", "rb")}
 
     headers = {
         hdrs.AUTHORIZATION: f"Bearer {token}",
@@ -340,7 +338,7 @@ async def test_create_contestants_csv_create_failures_good_case(
         return_value=CONTESTANT_ID,
     )
 
-    files = {"file": open("tests/files/contestants_eventid_364892.csv", "rb")}
+    files = {"file": open("tests/files/contestants_G11.csv", "rb")}
 
     headers = {
         hdrs.AUTHORIZATION: f"Bearer {token}",
@@ -400,7 +398,7 @@ async def test_create_contestants_csv_update_failures_good_case(
         return_value=None,
     )
 
-    files = {"file": open("tests/files/contestants_eventid_364892.csv", "rb")}
+    files = {"file": open("tests/files/contestants_G11.csv", "rb")}
 
     headers = {
         hdrs.AUTHORIZATION: f"Bearer {token}",
@@ -500,7 +498,7 @@ async def test_create_contestants_csv_not_supported_content_type(
         return_value=CONTESTANT_ID,
     )
 
-    files = {"file": open("tests/files/contestants_eventid_364892.csv", "rb")}
+    files = {"file": open("tests/files/contestants_G11.csv", "rb")}
 
     headers = {
         hdrs.AUTHORIZATION: f"Bearer {token}",
@@ -547,7 +545,7 @@ async def test_create_contestants_csv_good_case_octet_stream(
         return_value=None,
     )
 
-    with open("tests/files/contestants_eventid_364892.csv", "rb") as f:
+    with open("tests/files/contestants_G11.csv", "rb") as f:
 
         headers = {
             hdrs.AUTHORIZATION: f"Bearer {token}",
@@ -872,7 +870,7 @@ async def test_create_contestants_csv_event_not_found(
         return_value=None,
     )
 
-    files = {"file": open("tests/files/contestants_eventid_364892.csv", "rb")}
+    files = {"file": open("tests/files/contestants_G11.csv", "rb")}
 
     headers = {
         hdrs.AUTHORIZATION: f"Bearer {token}",
@@ -917,7 +915,7 @@ async def test_create_contestants_csv_octet_stream_event_not_found(
         return_value=None,
     )
 
-    with open("tests/files/contestants_eventid_364892.csv", "rb") as f:
+    with open("tests/files/contestants_G11.csv", "rb") as f:
 
         headers = {
             hdrs.AUTHORIZATION: f"Bearer {token}",

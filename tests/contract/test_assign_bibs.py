@@ -144,7 +144,7 @@ async def test_assign_bibs(
 
         # Then we add contestants to event:
         url = f"{http_service}/events/{event_id}/contestants"
-        files = {"file": open("tests/files/allcontestants_eventid_364892.csv", "rb")}
+        files = {"file": open("tests/files/contestants_all.csv", "rb")}
         async with session.post(url, headers=headers, data=files) as response:
             assert response.status == 200
 
@@ -164,12 +164,12 @@ async def test_assign_bibs(
 
         await _print_raceclasses(raceclasses)
 
-        # We assign ageclasses "G 16 år" and "G 15 år" to the same new raceclass "G15-16":
+        # We assign ageclasses "G 16 år" and "G 15 år" to the same new raceclass "G15/16":
         raceclass_G16 = await _get_raceclass_by_ageclass(raceclasses, "G 16 år")
         raceclass_G15 = await _get_raceclass_by_ageclass(raceclasses, "G 15 år")
         raceclass_G15_16: Dict = {
             "event_id": event_id,
-            "name": "G15-16",
+            "name": "G15/16",
             "ageclasses": raceclass_G15["ageclasses"] + raceclass_G16["ageclasses"],
             "no_of_contestants": raceclass_G15["no_of_contestants"]
             + raceclass_G16["no_of_contestants"],
@@ -195,9 +195,11 @@ async def test_assign_bibs(
         # Also we need to set order for the remaining raceclasses:
         for raceclass in raceclasses:
             id = raceclass["id"]
-            raceclass["group"], raceclass["order"] = await _decide_group_and_order(
-                raceclass
-            )
+            (
+                raceclass["group"],
+                raceclass["order"],
+                raceclass["ranking"],
+            ) = await _decide_group_order_and_ranking(raceclass)
             url = f"{http_service}/events/{event_id}/raceclasses/{id}"
             async with session.put(url, headers=headers, json=raceclass) as response:
                 assert response.status == 204
@@ -215,7 +217,9 @@ async def test_assign_bibs(
         # Finally assign bibs to all contestants:
         url = f"{http_service}/events/{event_id}/contestants/assign-bibs"
         async with session.post(url, headers=headers) as response:
-            assert response.status == 201
+            if response.status != 201:
+                body = await response.json()
+            assert response.status == 201, body
             assert f"/events/{event_id}/contestants" in response.headers[hdrs.LOCATION]
 
         # ASSERT #
@@ -260,30 +264,52 @@ async def _get_raceclass_by_ageclass(raceclasses: List[Dict], ageclass: str) -> 
     return {}
 
 
-async def _decide_group_and_order(raceclass: dict) -> Tuple[int, int]:  # noqa: C901
-    if raceclass["name"] == "G15-16":  # race-order: 1
-        return (1, 1)
-    elif raceclass["name"] == "J16":  # race-order: 2
-        return (1, 2)
-    elif raceclass["name"] == "J15":  # race-order: 3
-        return (1, 3)
-    elif raceclass["name"] == "G14":  # race-order: 4
-        return (2, 1)
-    elif raceclass["name"] == "J14":  # race-order: 5
-        return (2, 2)
-    elif raceclass["name"] == "G13":  # race-order: 6
-        return (2, 3)
-    elif raceclass["name"] == "J13":  # race-order: 7
-        return (2, 4)
-    elif raceclass["name"] == "G12":  # race-order: 8
-        return (3, 1)
-    elif raceclass["name"] == "J12":  # race-order: 9
-        return (3, 2)
-    elif raceclass["name"] == "G11":  # race-order: 10
-        return (3, 3)
-    elif raceclass["name"] == "J11":  # race-order: 11
-        return (3, 4)
-    return (0, 0)  # should not reach this point
+async def _decide_group_order_and_ranking(  # noqa: C901
+    raceclass: dict,
+) -> Tuple[int, int, bool]:
+    if raceclass["name"] == "M19/20":
+        return (1, 1, True)
+    elif raceclass["name"] == "K19/20":
+        return (1, 2, True)
+    elif raceclass["name"] == "M18":
+        return (2, 1, True)
+    elif raceclass["name"] == "K18":
+        return (2, 2, True)
+    elif raceclass["name"] == "M17":
+        return (3, 1, True)
+    elif raceclass["name"] == "K17":
+        return (3, 2, True)
+    elif raceclass["name"] == "G15/16":
+        return (4, 1, True)
+    elif raceclass["name"] == "J16":
+        return (4, 2, True)
+    elif raceclass["name"] == "J15":
+        return (4, 3, True)
+    elif raceclass["name"] == "G14":
+        return (5, 1, True)
+    elif raceclass["name"] == "J14":
+        return (5, 2, True)
+    elif raceclass["name"] == "G13":
+        return (5, 3, True)
+    elif raceclass["name"] == "J13":
+        return (5, 4, True)
+    elif raceclass["name"] == "G12":
+        return (6, 1, True)
+    elif raceclass["name"] == "J12":
+        return (6, 2, True)
+    elif raceclass["name"] == "G11":
+        return (6, 3, True)
+    elif raceclass["name"] == "J11":
+        return (6, 4, True)
+    elif raceclass["name"] == "G10":
+        return (7, 1, False)
+    elif raceclass["name"] == "J10":
+        return (7, 2, False)
+    elif raceclass["name"] == "G9":
+        return (8, 1, False)
+    elif raceclass["name"] == "J9":
+        return (8, 2, False)
+    return (0, 0, True)  # should not reach this point
 
 
 async def _print_raceclasses(raceclasses: List[Dict]) -> None:

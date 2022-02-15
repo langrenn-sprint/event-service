@@ -268,7 +268,7 @@ async def test_create_many_contestants_as_csv_file(
     }
 
     # Send csv-file in request:
-    files = {"file": open("tests/files/allcontestants_eventid_364892.csv", "rb")}
+    files = {"file": open("tests/files/contestants_all.csv", "rb")}
     async with ClientSession() as session:
         async with session.delete(url) as response:
             pass
@@ -281,9 +281,9 @@ async def test_create_many_contestants_as_csv_file(
 
     assert len(body) > 0
 
-    assert body["total"] == 333
-    assert body["created"] == 333
-    assert body["updated"] == 0
+    assert body["total"] == 670
+    assert body["created"] == 668
+    assert body["updated"] == 2
     assert body["failures"] == 0
     assert body["total"] == body["created"] + body["updated"] + body["failures"]
 
@@ -302,7 +302,7 @@ async def test_update_many_existing_contestants_as_csv_file(
     }
 
     # Send csv-file in request:
-    files = {"file": open("tests/files/contestants_eventid_364892.csv", "rb")}
+    files = {"file": open("tests/files/contestants_G11.csv", "rb")}
     async with ClientSession() as session:
         async with session.post(url, headers=headers, data=files) as response:
             status = response.status
@@ -335,7 +335,7 @@ async def test_get_all_contestants_in_given_event(
     assert response.status == 200
     assert "application/json" in response.headers[hdrs.CONTENT_TYPE]
     assert type(contestants) is list
-    assert len(contestants) == 333
+    assert len(contestants) == 668
 
 
 @pytest.mark.contract
@@ -362,7 +362,7 @@ async def test_get_all_contestants_in_given_event_by_raceclass(
     assert response.status == 200
     assert "application/json" in response.headers[hdrs.CONTENT_TYPE]
     assert type(contestants) is list
-    assert len(contestants) == 42
+    assert len(contestants) == 26
     for contestant in contestants:
         assert contestant["ageclass"] == "J 15 år"
 
@@ -385,7 +385,7 @@ async def test_get_all_contestants_in_given_event_by_ageclass(
     assert response.status == 200
     assert "application/json" in response.headers[hdrs.CONTENT_TYPE]
     assert type(contestants) is list
-    assert len(contestants) == 42
+    assert len(contestants) == 26
     for contestant in contestants:
         assert contestant["ageclass"] == "J 15 år"
 
@@ -411,9 +411,11 @@ async def test_get_all_contestants_in_given_event_by_bib(
             raceclasses = await response.json()
             for raceclass in raceclasses:
                 id = raceclass["id"]
-                raceclass["group"], raceclass["order"] = await _decide_group_and_order(
-                    raceclass
-                )
+                (
+                    raceclass["group"],
+                    raceclass["order"],
+                    raceclass["ranking"],
+                ) = await _decide_group_order_and_ranking(raceclass)
                 async with session.put(
                     f"{url}/{id}", headers=headers, json=raceclass
                 ) as response:
@@ -465,29 +467,51 @@ async def test_delete_all_contestant(
 
 
 # ---
-async def _decide_group_and_order(raceclass: dict) -> Tuple[int, int]:  # noqa: C901
-    if raceclass["name"] == "G16":  # race-order: 1
-        return (1, 1)
-    elif raceclass["name"] == "J16":  # race-order: 2
-        return (1, 2)
-    elif raceclass["name"] == "G15":  # race-order: 3
-        return (1, 3)
-    elif raceclass["name"] == "J15":  # race-order: 4
-        return (1, 4)
-    elif raceclass["name"] == "G14":  # race-order: 5
-        return (2, 1)
-    elif raceclass["name"] == "J14":  # race-order: 6
-        return (2, 2)
-    elif raceclass["name"] == "G13":  # race-order: 7
-        return (2, 3)
-    elif raceclass["name"] == "J13":  # race-order: 8
-        return (2, 4)
-    elif raceclass["name"] == "G12":  # race-order: 9
-        return (3, 1)
-    elif raceclass["name"] == "J12":  # race-order: 10
-        return (3, 2)
-    elif raceclass["name"] == "G11":  # race-order: 11
-        return (3, 3)
-    elif raceclass["name"] == "J11":  # race-order: 12
-        return (3, 4)
-    return (0, 0)  # should not reach this point
+async def _decide_group_order_and_ranking(  # noqa: C901
+    raceclass: dict,
+) -> Tuple[int, int, bool]:
+    if raceclass["name"] == "M19/20":
+        return (1, 1, True)
+    elif raceclass["name"] == "K19/20":
+        return (1, 2, True)
+    elif raceclass["name"] == "M18":
+        return (2, 1, True)
+    elif raceclass["name"] == "K18":
+        return (2, 2, True)
+    elif raceclass["name"] == "M17":
+        return (3, 1, True)
+    elif raceclass["name"] == "K17":
+        return (3, 2, True)
+    elif raceclass["name"] == "G16":
+        return (4, 1, True)
+    elif raceclass["name"] == "J16":
+        return (4, 2, True)
+    elif raceclass["name"] == "G15":
+        return (4, 3, True)
+    elif raceclass["name"] == "J15":
+        return (4, 4, True)
+    elif raceclass["name"] == "G14":
+        return (5, 1, True)
+    elif raceclass["name"] == "J14":
+        return (5, 2, True)
+    elif raceclass["name"] == "G13":
+        return (5, 3, True)
+    elif raceclass["name"] == "J13":
+        return (5, 4, True)
+    elif raceclass["name"] == "G12":
+        return (6, 1, True)
+    elif raceclass["name"] == "J12":
+        return (6, 2, True)
+    elif raceclass["name"] == "G11":
+        return (6, 3, True)
+    elif raceclass["name"] == "J11":
+        return (6, 4, True)
+    elif raceclass["name"] == "G10":
+        return (7, 1, False)
+    elif raceclass["name"] == "J10":
+        return (7, 2, False)
+    elif raceclass["name"] == "G9":
+        return (8, 1, False)
+    elif raceclass["name"] == "J9":
+        return (8, 2, False)
+    return (0, 0, True)  # should not reach this point
