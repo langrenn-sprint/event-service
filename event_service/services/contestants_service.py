@@ -310,7 +310,7 @@ class ContestantsService:
     async def update_contestant(
         cls: Any, db: Any, event_id: str, contestant_id: str, contestant: Contestant
     ) -> Optional[str]:
-        """Get contestant function."""
+        """Update contestant function."""
         # get old document
         old_contestant = await ContestantsAdapter.get_contestant_by_id(
             db, event_id, contestant_id
