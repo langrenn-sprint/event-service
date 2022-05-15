@@ -24,3 +24,4 @@ class Contestant(DataClassJsonMixin):
     id: Optional[str] = field(default=None)
     bib: Optional[int] = field(default=None)
     distance: Optional[str] = field(default=None)
+    seeding_points: Optional[int] = field(default=None)
