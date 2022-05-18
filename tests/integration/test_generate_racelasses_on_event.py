@@ -54,6 +54,7 @@ async def raceclass() -> dict:
         "group": 1,
         "order": 1,
         "ranking": True,
+        "seeding": False,
         "distance": "5km",
     }
 
