@@ -16,5 +16,6 @@ class Raceclass(DataClassJsonMixin):
     order: int = 0
     no_of_contestants: int = 0
     ranking: bool = True
+    seeding: bool = False
     distance: Optional[str] = field(default=None)
     id: Optional[str] = field(default=None)

@@ -494,6 +494,10 @@ components:
           type: boolean
           default: true
           description: if the contenstants are to be ranked and results published
+        seeding:
+          type: boolean
+          default: false
+          description: if startlist is to be seeded according to seeding_points
     EventCollection:
       type: object
       properties:

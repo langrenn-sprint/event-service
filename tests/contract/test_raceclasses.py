@@ -78,6 +78,7 @@ async def raceclass(event_id: str) -> dict:
         "order": 1,
         "no_of_contestants": 0,
         "ranking": True,
+        "seeding": False,
         "distance": "5km",
     }
 

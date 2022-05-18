@@ -62,6 +62,7 @@ class EventsCommands:
                     event_id=event_id,
                     no_of_contestants=1,
                     ranking=True,
+                    seeding=False,
                     distance=_c.distance,
                 )
                 result = await RaceclassesService.create_raceclass(

@@ -174,6 +174,7 @@ async def test_assign_bibs(
             "no_of_contestants": raceclass_G15["no_of_contestants"]
             + raceclass_G16["no_of_contestants"],
             "ranking": True,
+            "seeding": False,
         }
         request_body = raceclass_G15_16
         url = f"{http_service}/events/{event_id}/raceclasses"
@@ -330,6 +331,8 @@ async def _print_raceclasses(raceclasses: List[Dict]) -> None:
     #         + str(raceclass["distance"])
     #         + ";"
     #         + str(raceclass["ranking"])
+    #         + ";"
+    #         + str(raceclass["seeding"])
     #         + ";"
     #         + raceclass["event_id"]
     #     )
