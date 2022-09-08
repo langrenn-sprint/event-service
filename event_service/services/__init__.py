@@ -22,3 +22,4 @@ from .raceclasses_service import (
     RaceclassNotUniqueNameException,
     RaceclassUpdateException,
 )
+from .results_service import ResultNotFoundException, ResultsService

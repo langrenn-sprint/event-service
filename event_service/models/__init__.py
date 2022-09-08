@@ -6,4 +6,4 @@ from .competition_format_model import (
 )
 from .contestant_model import Contestant
 from .event_model import Event
-from .raceclass_model import Raceclass
+from .raceclass_model import Raceclass, RaceclassResult

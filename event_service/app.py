@@ -19,6 +19,8 @@ from .views import (
     EventView,
     Ping,
     RaceclassesView,
+    RaceclassResultsView,
+    RaceclassResultView,
     RaceclassView,
     Ready,
 )
@@ -64,6 +66,8 @@ async def create_app() -> web.Application:
                 "/events/{eventId}/contestants/assign-bibs", ContestantsAssignBibsView
             ),
             web.view("/events/{eventId}/contestants/{contestantId}", ContestantView),
+            web.view("/events/{eventId}/results", RaceclassResultsView),
+            web.view("/events/{eventId}/results/{raceclass}", RaceclassResultView),
         ]
     )
 
