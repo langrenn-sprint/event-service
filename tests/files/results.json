@@ -1,0 +1,13 @@
+{
+  "id": "290e70d5-0933-4af0-bb53-1d705ba7eb95",
+  "event_id": "event_id",
+  "raceclass": "G12",
+  "timing_point": "Finish",
+  "no_of_contestants": 3,
+  "ranking_sequence": [
+    {"rank": 1, "bib": 19, "round": "FA", "name": "Heming H", "club": "Kjelsås", "ageclass": "G 12 år"},
+    {"rank": 2, "bib": 23, "round": "FB", "name": "Heming B", "club": "Kjelsås", "ageclass": "G 12 år"},
+    {"rank": 3, "bib": 11, "round": "SA", "name": "Heming S", "club": "Kjelsås", "ageclass": "G 11 år"},
+  ],
+  "status": 1,
+  }

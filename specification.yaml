@@ -232,7 +232,7 @@ paths:
         - raceclass
       security:
         - bearerAuth: []
-      description: Update an raceclass
+      description: Update a raceclass
       responses:
         204:
           description: No content
@@ -241,7 +241,52 @@ paths:
         - raceclass
       security:
         - bearerAuth: []
-      description: Delete an raceclass
+      description: Delete a raceclass
+      responses:
+        204:
+          description: No content
+  /events/{eventId}/result/{raceclass}:
+    parameters:
+      - name: eventId
+        in: path
+        description: event id
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: raceclass
+        in: path
+        description: raceclass name
+        required: true
+        schema:
+          type: string
+          format: uuid
+    get:
+      tags:
+        - raceclass
+      description: Get result for a unique raceclass
+      responses:
+        200:
+          description: Ok
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/result"
+    put:
+      tags:
+        - raceclass
+      security:
+        - bearerAuth: []
+      description: Update results for a raceclass
+      responses:
+        204:
+          description: No content
+    delete:
+      tags:
+        - raceclass
+      security:
+        - bearerAuth: []
+      description: Delete results for a raceclass
       responses:
         204:
           description: No content
