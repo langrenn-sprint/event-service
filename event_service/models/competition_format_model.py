@@ -2,14 +2,14 @@
 from abc import ABC
 from dataclasses import dataclass, field
 from datetime import time
-from typing import Optional
+from typing import Dict, Optional
 
 from dataclasses_json import DataClassJsonMixin
 from marshmallow.fields import Constant
 
 
 @dataclass
-class CompetitionFormat(DataClassJsonMixin, ABC):
+class CompetitionFormat(DataClassJsonMixin, ABC):  # noqa: B024
     """Abstract data class with details about a competition format."""
 
     def __post_init__(self) -> None:  # pragma: no cover
@@ -38,12 +38,22 @@ class IntervalStartFormat(CompetitionFormat, DataClassJsonMixin):
 
 
 @dataclass
+class RaceSetting(DataClassJsonMixin):
+    """Data class with details about the settings of a race."""
+
+    max_no_of_contestants: int
+    no_of_heats: Dict[str, int]
+    rules: Dict[str, Dict[str, float]]
+
+
+@dataclass
 class IndividualSprintFormat(CompetitionFormat, DataClassJsonMixin):
     """Data class with details about a individual sprint format."""
 
     time_between_groups: time
     time_between_rounds: time
     time_between_heats: time
+    race_config: Dict[str, RaceSetting]
     datatype: str = field(
         metadata=dict(marshmallow_field=Constant("individual_sprint")),
         default="individual_sprint",
