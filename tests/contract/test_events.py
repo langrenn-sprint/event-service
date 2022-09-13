@@ -78,7 +78,7 @@ async def token(http_service: Any) -> str:
 @pytest.fixture(scope="module")
 async def competition_format_interval_start() -> dict:
     """An competition_format object for testing."""
-    with open("tests/files/competition_format.json", "r") as file:
+    with open("tests/files/competition_format_interval_start.json", "r") as file:
         competition_format = load(file)
     return competition_format
 
