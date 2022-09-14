@@ -91,6 +91,14 @@ module = [
   "pythonjsonlogger.*",
 ]
 
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+markers = [
+  "unit: marks tests as unit (fast)",
+  "integration: marks tests as integration (slower)",
+  "contract: marks test as contract (slow)",
+]
+
 [build-system]
 build-backend = "poetry.core.masonry.api"
 requires = ["poetry-core>=1.0.0"]
