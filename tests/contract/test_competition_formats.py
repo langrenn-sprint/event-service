@@ -82,23 +82,23 @@ async def competition_format_individual_sprint() -> dict:
             "1": {
                 "max_no_of_contestants": 8,
                 "no_of_heats": {"Q": 1, "FA": 1},
-                "rules": {"Q": {"FA": "Infinity"}},
+                "rules": {"Q": {"FA": "REST"}},
             },
             "2": {
                 "max_no_of_contestants": 16,
                 "no_of_heats": {"Q": 2, "FA": 1, "FB": 1},
-                "rules": {"Q": {"FA": 4, "FB": "Infinity"}},
+                "rules": {"Q": {"FA": 4, "FB": "REST"}},
             },
             "3": {
                 "max_no_of_contestants": 24,
                 "no_of_heats": {"Q": 3, "SA": 2, "FA": 1, "FB": 1, "FC": 1},
-                "rules": {"Q": {"SA": 5, "FC": "Infinity"}, "SA": {"FA": 4, "FB": 4}},
+                "rules": {"Q": {"SA": 5, "FC": "REST"}, "SA": {"FA": 4, "FB": 4}},
             },
             "4": {
                 "max_no_of_contestants": 32,
                 "no_of_heats": {"Q": 4, "SA": 2, "SC": 2, "FA": 1, "FB": 1, "FC": 1},
                 "rules": {
-                    "Q": {"SA": 4, "SC": "Infinity"},
+                    "Q": {"SA": 4, "SC": "REST"},
                     "SA": {"FA": 4, "FB": 4},
                     "SC": {"FC": 4},
                 },
@@ -107,7 +107,7 @@ async def competition_format_individual_sprint() -> dict:
                 "max_no_of_contestants": 80,
                 "no_of_heats": {"Q": 8, "SA": 4, "SC": 4, "FA": 1, "FB": 1, "FC": 1},
                 "rules": {
-                    "Q": {"SA": 4, "SC": "Infinity"},
+                    "Q": {"SA": 4, "SC": "REST"},
                     "SA": {"FA": 2, "FB": 2},
                     "SC": {"FC": 2},
                 },

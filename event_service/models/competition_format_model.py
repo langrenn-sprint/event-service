@@ -2,7 +2,7 @@
 from abc import ABC
 from dataclasses import dataclass, field
 from datetime import time
-from typing import Dict, Optional
+from typing import Dict, List, Optional, Union
 
 from dataclasses_json import DataClassJsonMixin
 from marshmallow.fields import Constant
@@ -43,7 +43,10 @@ class RaceSetting(DataClassJsonMixin):
 
     max_no_of_contestants: int
     no_of_heats: Dict[str, int]
-    rules: Dict[str, Dict[str, float]]
+    rules: Dict[str, Dict[str, Union[int, str]]]
+
+
+# TODO: rounds cannot be persisted, it must be calculated based on ranking_status in raceclass
 
 
 @dataclass
@@ -53,6 +56,8 @@ class IndividualSprintFormat(CompetitionFormat, DataClassJsonMixin):
     time_between_groups: time
     time_between_rounds: time
     time_between_heats: time
+    rounds_ranked_classes: List[str]
+    rounds_non_ranked_classes: List[str]
     race_config: Dict[str, RaceSetting]
     datatype: str = field(
         metadata=dict(marshmallow_field=Constant("individual_sprint")),

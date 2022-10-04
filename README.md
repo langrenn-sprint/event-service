@@ -27,8 +27,13 @@ In future versions:
 % curl -H "Content-Type: application/json" \
   -X POST \
   --data '{"username":"admin","password":"passw123"}' \
-  http://localhost:8081/login
+  http://localhost:8082/login
 % export ACCESS="" #token from response
+% curl -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $ACCESS" \
+  -X POST \
+  --data @tests/files/competition_format_individual_sprint.json \
+  http://localhost:8080/events/
 % curl -H "Content-Type: application/json" \
   -H "Authorization: Bearer $ACCESS" \
   -X POST \
