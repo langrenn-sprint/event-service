@@ -75,6 +75,8 @@ async def competition_format_individual_sprint() -> dict:
         "time_between_groups": "00:10:00",
         "time_between_rounds": "00:05:00",
         "time_between_heats": "00:02:30",
+        "rounds_ranked_classes": ["Q", "S", "F"],
+        "rounds_non_ranked_classes": ["R1", "R2"],
         "max_no_of_contestants_in_raceclass": 80,
         "max_no_of_contestants_in_race": 10,
         "datatype": "individual_sprint",
