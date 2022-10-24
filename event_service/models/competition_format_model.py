@@ -46,9 +46,6 @@ class RaceSetting(DataClassJsonMixin):
     rules: Dict[str, Dict[str, Union[int, str]]]
 
 
-# TODO: rounds cannot be persisted, it must be calculated based on ranking_status in raceclass
-
-
 @dataclass
 class IndividualSprintFormat(CompetitionFormat, DataClassJsonMixin):
     """Data class with details about a individual sprint format."""
