@@ -1,9 +1,4 @@
 """Package for all services."""
-from .competition_formats_service import (
-    CompetitionFormatAllreadyExistException,
-    CompetitionFormatNotFoundException,
-    CompetitionFormatsService,
-)
 from .contestants_service import (
     ContestantAllreadyExistException,
     ContestantNotFoundException,
@@ -12,6 +7,7 @@ from .contestants_service import (
 from .event_format_service import EventFormatNotFoundException, EventFormatService
 from .events_service import EventNotFoundException, EventsService
 from .exceptions import (
+    CompetitionFormatNotFoundException,
     IllegalValueException,
     InvalidDateFormatException,
     RaceclassNotFoundException,
