@@ -1,39 +1,20 @@
 """Module for competition_format adapter."""
 import logging
-from typing import Any, List, Optional
+import os
+from typing import Any, List
+from urllib.parse import quote
+
+from aiohttp import ClientSession
 
 from .adapter import Adapter
 
 
+COMPETITION_FORMAT_HOST_SERVER = os.getenv("COMPETITION_FORMAT_HOST_SERVER")
+COMPETITION_FORMAT_HOST_PORT = os.getenv("COMPETITION_FORMAT_HOST_PORT")
+
+
 class CompetitionFormatsAdapter(Adapter):
     """Class representing an adapter for competition_formats."""
-
-    @classmethod
-    async def get_all_competition_formats(
-        cls: Any, db: Any
-    ) -> List:  # pragma: no cover
-        """Get all competition_formats function."""
-        competition_formats: List = []
-        cursor = db.competition_formats_collection.find()
-        for competition_format in await cursor.to_list(None):
-            competition_formats.append(competition_format)
-        return competition_formats
-
-    @classmethod
-    async def create_competition_format(
-        cls: Any, db: Any, competition_format: dict
-    ) -> str:  # pragma: no cover
-        """Create competition_format function."""
-        result = await db.competition_formats_collection.insert_one(competition_format)
-        return result
-
-    @classmethod
-    async def get_competition_format_by_id(
-        cls: Any, db: Any, id: str
-    ) -> dict:  # pragma: no cover
-        """Get competition_format by idfunction."""
-        result = await db.competition_formats_collection.find_one({"id": id})
-        return result
 
     @classmethod
     async def get_competition_formats_by_name(
@@ -42,28 +23,17 @@ class CompetitionFormatsAdapter(Adapter):
         """Get competition_format by name function."""
         logging.debug(f"Got request for name {competition_format_name}.")
         competition_formats: List = []
-        query = {"$regex": f".*{competition_format_name}.*", "$options": "i"}
-        logging.debug(f"Query: {query}.")
-        cursor = db.competition_formats_collection.find({"name": query})
-        for competition_format in await cursor.to_list(None):
+
+        url = f"http://{COMPETITION_FORMAT_HOST_SERVER}:{COMPETITION_FORMAT_HOST_PORT}/competition-formats"  # noqa: B950
+
+        async with ClientSession() as session:
+            query_param = f"name={quote(competition_format_name)}"
+            async with session.get(f"{url}?{query_param}") as response:
+                assert str(response.url) == f"{url}?name=Interval%20Start"
+                body = await response.json()
+
+        for competition_format in body:
             logging.debug(f"cursor - competition_format: {competition_format}")
             competition_formats.append(competition_format)
+
         return competition_formats
-
-    @classmethod
-    async def update_competition_format(
-        cls: Any, db: Any, id: str, competition_format: dict
-    ) -> Optional[str]:  # pragma: no cover
-        """Get competition_format function."""
-        result = await db.competition_formats_collection.replace_one(
-            {"id": id}, competition_format
-        )
-        return result
-
-    @classmethod
-    async def delete_competition_format(
-        cls: Any, db: Any, id: str
-    ) -> Optional[str]:  # pragma: no cover
-        """Get competition_format function."""
-        result = await db.competition_formats_collection.delete_one({"id": id})
-        return result

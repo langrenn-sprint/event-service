@@ -6,12 +6,20 @@ import logging
 import os
 from typing import Any, AsyncGenerator
 
-from aiohttp import ClientSession, hdrs
+from aiohttp import ClientSession, ContentTypeError, hdrs
+import motor.motor_asyncio
 import pytest
 from pytest_mock import MockFixture
 
+COMPETITION_FORMAT_HOST_SERVER = os.getenv("COMPETITION_FORMAT_HOST_SERVER")
+COMPETITION_FORMAT_HOST_PORT = os.getenv("COMPETITION_FORMAT_HOST_PORT")
 USERS_HOST_SERVER = os.getenv("USERS_HOST_SERVER")
 USERS_HOST_PORT = os.getenv("USERS_HOST_PORT")
+DB_HOST = os.getenv("DB_HOST", "localhost")
+DB_PORT = int(os.getenv("DB_PORT", 27017))
+DB_NAME = os.getenv("DB_NAME", "events")
+DB_USER = os.getenv("DB_USER")
+DB_PASSWORD = os.getenv("DB_PASSWORD")
 
 
 @pytest.fixture(scope="module")
@@ -22,23 +30,18 @@ def event_loop(request: Any) -> Any:
     loop.close()
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="module", autouse=True)
 @pytest.mark.asyncio
 async def clear_db(http_service: Any, token: MockFixture) -> AsyncGenerator:
     """Delete all events before we start."""
-    url = f"{http_service}/events"
-    headers = {
-        hdrs.AUTHORIZATION: f"Bearer {token}",
-    }
-
-    session = ClientSession()
-    async with session.get(url) as response:
-        events = await response.json()
-        for event in events:
-            event_id = event["id"]
-            async with session.delete(f"{url}/{event_id}", headers=headers) as response:
-                pass
-    await session.close()
+    mongo = motor.motor_asyncio.AsyncIOMotorClient(
+        host=DB_HOST, port=DB_PORT, username=DB_USER, password=DB_PASSWORD
+    )
+    try:
+        await mongo.drop_database(f"{DB_NAME}")
+    except Exception as error:
+        logging.error(f"Failed to drop database {DB_NAME}: {error}")
+        raise error
     yield
 
 
@@ -99,19 +102,31 @@ async def test_create_event(
             hdrs.AUTHORIZATION: f"Bearer {token}",
         }
         # We have to create a competition_format:
-        url = f"{http_service}/competition-formats"
+        url = f"http://{COMPETITION_FORMAT_HOST_SERVER}:{COMPETITION_FORMAT_HOST_PORT}/competition-formats"  # noqa: B950
         request_body = competition_format_interval_start
         async with session.post(url, headers=headers, json=request_body) as response:
-            status = response.status
-            assert status == 201
+            try:
+                body = await response.json()
+            except ContentTypeError:
+                body = None
+                pass
 
+            status = response.status
+            assert status == 201, f"{body}" if body else ""
+
+        # Now we can create an event:
         url = f"{http_service}/events"
         request_body = event
 
         async with session.post(url, headers=headers, json=request_body) as response:
-            status = response.status
+            try:
+                body = await response.json()
+            except ContentTypeError:
+                body = None
+                pass
 
-        assert status == 201
+            status = response.status
+        assert status == 201, f"{body}" if body else ""
         assert "/events/" in response.headers[hdrs.LOCATION]
 
 

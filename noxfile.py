@@ -92,6 +92,8 @@ def contract_tests(session: Session) -> None:
             "CONFIG": "test",
             "ADMIN_USERNAME": "admin",
             "ADMIN_PASSWORD": "password",
+            "COMPETITION_FORMAT_HOST_SERVER": "localhost",
+            "COMPETITION_FORMAT_HOST_PORT": "8082",
             "USERS_HOST_SERVER": "localhost",
             "USERS_HOST_PORT": "8081",
             "JWT_SECRET": "secret",
