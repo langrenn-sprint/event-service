@@ -22,7 +22,7 @@ services:
       - user-service
       - mongodb
   competition-format-service:
-    image: ghcr.io/langrenn-sprint/competition-format-service:test
+    image: ghcr.io/langrenn-sprint/competition-format-service:latest
     ports:
       - 8082:8080
     environment:
@@ -39,7 +39,7 @@ services:
       - user-service
       - mongodb
   user-service:
-    image: ghcr.io/langrenn-sprint/user-service:test
+    image: ghcr.io/langrenn-sprint/user-service:latest
     ports:
       - 8081:8080
     environment:
