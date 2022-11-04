@@ -4,7 +4,11 @@ import logging
 from typing import Any, List, Optional
 import uuid
 
-from event_service.adapters import CompetitionFormatsAdapter, EventsAdapter
+from event_service.adapters import (
+    CompetitionFormatsAdapter,
+    CompetitionFormatsAdapterException,
+    EventsAdapter,
+)
 from event_service.models import Event
 from .exceptions import (
     CompetitionFormatNotFoundException,
@@ -117,7 +121,7 @@ class EventsService:
 
 
 #   Validation:
-async def validate_event(db: Any, event: Event) -> None:
+async def validate_event(db: Any, event: Event) -> None:  # noqa: C901
     """Validate the event."""
     # Validate date_of_event if set:
     if event.date_of_event:
@@ -139,11 +143,17 @@ async def validate_event(db: Any, event: Event) -> None:
 
     # Validate competition_format:
     if event.competition_format:
-        competition_formats = (
-            await CompetitionFormatsAdapter.get_competition_formats_by_name(
-                db, event.competition_format
+        try:
+            competition_formats = (
+                await CompetitionFormatsAdapter.get_competition_formats_by_name(
+                    db, event.competition_format
+                )
             )
-        )
+        except CompetitionFormatsAdapterException as e:
+            raise CompetitionFormatNotFoundException(
+                f'Competition format "{event.competition_format}" not found.'
+            ) from e
+
         if len(competition_formats) == 1:
             pass
         elif len(competition_formats) == 0:

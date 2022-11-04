@@ -11,6 +11,8 @@ from multidict import MultiDict
 import pytest
 from pytest_mock import MockFixture
 
+from event_service.adapters import CompetitionFormatsAdapterException
+
 
 @pytest.fixture
 def token() -> str:
@@ -236,6 +238,44 @@ async def test_create_event_missing_mandatory_property(
         m.post("http://example.com:8081/authorize", status=204)
         resp = await client.post("/events", headers=headers, json=request_body)
         assert resp.status == 422
+
+
+@pytest.mark.integration
+async def test_create_event_competition_formats_adapter_raises_exception(
+    client: _TestClient,
+    mocker: MockFixture,
+    token: MockFixture,
+    event: dict,
+    competition_format: dict,
+) -> None:
+    """Should return Created, location header."""
+    ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
+    mocker.patch(
+        "event_service.services.events_service.create_id",
+        return_value=ID,
+    )
+    mocker.patch(
+        "event_service.adapters.events_adapter.EventsAdapter.create_event",
+        return_value=ID,
+    )
+    mocker.patch(
+        "event_service.adapters.competition_formats_adapter.CompetitionFormatsAdapter.get_competition_formats_by_name",  # noqa: B950
+        side_effect=CompetitionFormatsAdapterException(
+            "Got unknown status 500 from competition_formats service."
+        ),
+    )
+
+    request_body = event
+
+    headers = {
+        hdrs.CONTENT_TYPE: "application/json",
+        hdrs.AUTHORIZATION: f"Bearer {token}",
+    }
+
+    with aioresponses(passthrough=["http://127.0.0.1"]) as m:
+        m.post("http://example.com:8081/authorize", status=204)
+        resp = await client.post("/events", headers=headers, json=request_body)
+        assert resp.status == 400
 
 
 @pytest.mark.integration

@@ -13,6 +13,15 @@ COMPETITION_FORMAT_HOST_SERVER = os.getenv("COMPETITION_FORMAT_HOST_SERVER")
 COMPETITION_FORMAT_HOST_PORT = os.getenv("COMPETITION_FORMAT_HOST_PORT")
 
 
+class CompetitionFormatsAdapterException(Exception):
+    """Class representing custom exception for fetch method."""
+
+    def __init__(self, message: str) -> None:
+        """Initialize the error."""
+        # Call the base class constructor with the parameters it needs
+        super().__init__(message)
+
+
 class CompetitionFormatsAdapter(Adapter):
     """Class representing an adapter for competition_formats."""
 
@@ -29,10 +38,14 @@ class CompetitionFormatsAdapter(Adapter):
         async with ClientSession() as session:
             query_param = f"name={quote(competition_format_name)}"
             async with session.get(f"{url}?{query_param}") as response:
-                assert str(response.url) == f"{url}?name=Interval%20Start"
-                body = await response.json()
+                if response.status == 200:
+                    competition_formats_response = await response.json()
+                else:
+                    raise CompetitionFormatsAdapterException(
+                        f"Got unknown status {response.status} from competition_formats service."  # noqa: B950
+                    )  # noqa: B950
 
-        for competition_format in body:
+        for competition_format in competition_formats_response:
             logging.debug(f"cursor - competition_format: {competition_format}")
             competition_formats.append(competition_format)
 
