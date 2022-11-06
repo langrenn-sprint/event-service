@@ -66,7 +66,7 @@ class CompetitionFormatsView(View):
         db = self.request.app["db"]
         token = extract_token_from_request(self.request)
         try:
-            await UsersAdapter.authorize(token, roles=["admin"])
+            await UsersAdapter.authorize(token, roles=["admin", "event-admin"])
         except Exception as e:
             raise e from e
 
@@ -139,7 +139,7 @@ class CompetitionFormatView(View):
         db = self.request.app["db"]
         token = extract_token_from_request(self.request)
         try:
-            await UsersAdapter.authorize(token, roles=["admin"])
+            await UsersAdapter.authorize(token, roles=["admin", "event-admin"])
         except Exception as e:
             raise e from e
 
