@@ -19,7 +19,7 @@ nox.options.sessions = (
 )
 
 
-@session(python="3.9")
+@session(python="3.10")
 def unit_tests(session: Session) -> None:
     """Run the unit test suite."""
     args = session.posargs
@@ -40,7 +40,7 @@ def unit_tests(session: Session) -> None:
     )
 
 
-@session(python="3.9")
+@session(python="3.10")
 def integration_tests(session: Session) -> None:
     """Run the integration test suite."""
     args = session.posargs or ["--cov"]
@@ -70,7 +70,7 @@ def integration_tests(session: Session) -> None:
     )
 
 
-@session(python="3.9")
+@session(python="3.10")
 def contract_tests(session: Session) -> None:
     """Run the contract test suite."""
     args = session.posargs
@@ -92,8 +92,11 @@ def contract_tests(session: Session) -> None:
             "CONFIG": "test",
             "ADMIN_USERNAME": "admin",
             "ADMIN_PASSWORD": "password",
+            "COMPETITION_FORMAT_HOST_SERVER": "localhost",
+            "COMPETITION_FORMAT_HOST_PORT": "8082",
             "USERS_HOST_SERVER": "localhost",
             "USERS_HOST_PORT": "8081",
+            "JWT_SECRET": "secret",
             "JWT_EXP_DELTA_SECONDS": "60",
             "DB_USER": "event-service",
             "DB_PASSWORD": "password",
@@ -102,7 +105,7 @@ def contract_tests(session: Session) -> None:
     )
 
 
-@session(python="3.9")
+@session(python="3.10")
 def black(session: Session) -> None:
     """Run black code formatter."""
     args = session.posargs or locations
@@ -110,7 +113,7 @@ def black(session: Session) -> None:
     session.run("black", *args)
 
 
-@session(python="3.9")
+@session(python="3.10")
 def lint(session: Session) -> None:
     """Lint using flake8."""
     args = session.posargs or locations
@@ -129,7 +132,7 @@ def lint(session: Session) -> None:
     session.run("flake8", *args)
 
 
-@session(python="3.9")
+@session(python="3.10")
 def safety(session: Session) -> None:
     """Scan dependencies for insecure packages."""
     requirements = session.poetry.export_requirements()
@@ -137,7 +140,7 @@ def safety(session: Session) -> None:
     session.run("safety", "check", "--full-report", f"--file={requirements}")
 
 
-@session(python="3.9")
+@session(python="3.10")
 def mypy(session: Session) -> None:
     """Type-check using mypy."""
     args = session.posargs or [
@@ -153,7 +156,7 @@ def mypy(session: Session) -> None:
         session.run("mypy", f"--python-executable={sys.executable}", "noxfile.py")
 
 
-@session(python="3.9")
+@session(python="3.10")
 def pytype(session: Session) -> None:
     """Run the static type checker using pytype."""
     args = session.posargs or ["--disable=import-error", *locations]
@@ -161,7 +164,7 @@ def pytype(session: Session) -> None:
     session.run("pytype", *args)
 
 
-@session(python="3.9")
+@session(python="3.10")
 def xdoctest(session: Session) -> None:
     """Run examples with xdoctest."""
     args = session.posargs or ["all"]
@@ -170,7 +173,7 @@ def xdoctest(session: Session) -> None:
     session.run("python", "-m", "xdoctest", package, *args)
 
 
-@session(python="3.9")
+@session(python="3.10")
 def docs(session: Session) -> None:
     """Build the documentation."""
     session.install(".")
@@ -178,7 +181,7 @@ def docs(session: Session) -> None:
     session.run("sphinx-build", "docs", "docs/_build")
 
 
-@session(python="3.9")
+@session(python="3.10")
 def coverage(session: Session) -> None:
     """Upload coverage data."""
     session.install("coverage[toml]", "codecov")

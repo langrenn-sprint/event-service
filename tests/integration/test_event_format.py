@@ -62,7 +62,49 @@ async def new_event_format_individual_sprint() -> dict:
         "time_between_heats": "00:02:30",
         "max_no_of_contestants_in_raceclass": 80,
         "max_no_of_contestants_in_race": 10,
+        "rounds_ranked_classes": ["Q", "S", "F"],
+        "rounds_non_ranked_classes": ["R1", "R2"],
         "datatype": "individual_sprint",
+        "race_config": {
+            "1": {
+                "max_no_of_contestants": 8,
+                "rounds": ["Q", "F"],
+                "no_of_heats": {"Q": 1, "FA": 1},
+                "rules": {"Q": {"FA": "REST"}},
+            },
+            "2": {
+                "max_no_of_contestants": 16,
+                "rounds": ["Q", "F"],
+                "no_of_heats": {"Q": 2, "FA": 1, "FB": 1},
+                "rules": {"Q": {"FA": 4, "FB": "REST"}},
+            },
+            "3": {
+                "max_no_of_contestants": 24,
+                "rounds": ["Q", "S", "F"],
+                "no_of_heats": {"Q": 3, "SA": 2, "FA": 1, "FB": 1, "FC": 1},
+                "rules": {"Q": {"SA": 5, "FC": "REST"}, "SA": {"FA": 4, "FB": 4}},
+            },
+            "4": {
+                "max_no_of_contestants": 32,
+                "rounds": ["Q", "S", "F"],
+                "no_of_heats": {"Q": 4, "SA": 2, "SC": 2, "FA": 1, "FB": 1, "FC": 1},
+                "rules": {
+                    "Q": {"SA": 4, "SC": "REST"},
+                    "SA": {"FA": 4, "FB": 4},
+                    "SC": {"FC": 4},
+                },
+            },
+            "5": {
+                "max_no_of_contestants": 80,
+                "rounds": ["Q", "S", "F"],
+                "no_of_heats": {"Q": 8, "SA": 4, "SC": 4, "FA": 1, "FB": 1, "FC": 1},
+                "rules": {
+                    "Q": {"SA": 4, "SC": "REST"},
+                    "SA": {"FA": 2, "FB": 2},
+                    "SC": {"FC": 2},
+                },
+            },
+        },
     }
 
 
@@ -93,7 +135,49 @@ async def event_format_individual_sprint() -> dict:
         "time_between_heats": "00:02:30",
         "max_no_of_contestants_in_raceclass": 80,
         "max_no_of_contestants_in_race": 10,
+        "rounds_ranked_classes": ["Q", "S", "F"],
+        "rounds_non_ranked_classes": ["R1", "R2"],
         "datatype": "individual_sprint",
+        "race_config": {
+            "1": {
+                "max_no_of_contestants": 8,
+                "rounds": ["Q", "F"],
+                "no_of_heats": {"Q": 1, "FA": 1},
+                "rules": {"Q": {"FA": "REST"}},
+            },
+            "2": {
+                "max_no_of_contestants": 16,
+                "rounds": ["Q", "F"],
+                "no_of_heats": {"Q": 2, "FA": 1, "FB": 1},
+                "rules": {"Q": {"FA": 4, "FB": "REST"}},
+            },
+            "3": {
+                "max_no_of_contestants": 24,
+                "rounds": ["Q", "S", "F"],
+                "no_of_heats": {"Q": 3, "SA": 2, "FA": 1, "FB": 1, "FC": 1},
+                "rules": {"Q": {"SA": 5, "FC": "REST"}, "SA": {"FA": 4, "FB": 4}},
+            },
+            "4": {
+                "max_no_of_contestants": 32,
+                "rounds": ["Q", "S", "F"],
+                "no_of_heats": {"Q": 4, "SA": 2, "SC": 2, "FA": 1, "FB": 1, "FC": 1},
+                "rules": {
+                    "Q": {"SA": 4, "SC": "REST"},
+                    "SA": {"FA": 4, "FB": 4},
+                    "SC": {"FC": 4},
+                },
+            },
+            "5": {
+                "max_no_of_contestants": 80,
+                "rounds": ["Q", "S", "F"],
+                "no_of_heats": {"Q": 8, "SA": 4, "SC": 4, "FA": 1, "FB": 1, "FC": 1},
+                "rules": {
+                    "Q": {"SA": 4, "SC": "REST"},
+                    "SA": {"FA": 2, "FB": 2},
+                    "SC": {"FC": 2},
+                },
+            },
+        },
     }
 
 

@@ -2,7 +2,7 @@
 from abc import ABC
 from dataclasses import dataclass, field
 from datetime import time
-from typing import Optional
+from typing import Dict, List, Optional, Union
 
 from dataclasses_json import DataClassJsonMixin
 from marshmallow.fields import Constant
@@ -38,12 +38,24 @@ class IntervalStartFormat(CompetitionFormat, DataClassJsonMixin):
 
 
 @dataclass
+class RaceSetting(DataClassJsonMixin):
+    """Data class with details about the settings of a race."""
+
+    max_no_of_contestants: int
+    no_of_heats: Dict[str, int]
+    rules: Dict[str, Dict[str, Union[int, str]]]
+
+
+@dataclass
 class IndividualSprintFormat(CompetitionFormat, DataClassJsonMixin):
     """Data class with details about a individual sprint format."""
 
     time_between_groups: time
     time_between_rounds: time
     time_between_heats: time
+    rounds_ranked_classes: List[str]
+    rounds_non_ranked_classes: List[str]
+    race_config: Dict[str, RaceSetting]
     datatype: str = field(
         metadata=dict(marshmallow_field=Constant("individual_sprint")),
         default="individual_sprint",
