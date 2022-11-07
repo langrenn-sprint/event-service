@@ -9,7 +9,7 @@ from marshmallow.fields import Constant
 
 
 @dataclass
-class CompetitionFormat(DataClassJsonMixin, ABC):
+class CompetitionFormat(DataClassJsonMixin, ABC):  # noqa: B024
     """Abstract data class with details about a competition format."""
 
     def __post_init__(self) -> None:  # pragma: no cover
