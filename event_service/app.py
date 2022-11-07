@@ -8,8 +8,6 @@ from aiohttp_middlewares import cors_middleware, error_middleware
 import motor.motor_asyncio
 
 from .views import (
-    CompetitionFormatsView,
-    CompetitionFormatView,
     ContestantsAssignBibsView,
     ContestantsView,
     ContestantView,
@@ -27,9 +25,9 @@ from .views import (
 
 
 LOGGING_LEVEL = os.getenv("LOGGING_LEVEL", "INFO")
-DB_HOST = os.getenv("DB_HOST", "localhost")
+DB_HOST = os.getenv("DB_HOST", "mongodb")
 DB_PORT = int(os.getenv("DB_PORT", 27017))
-DB_NAME = os.getenv("DB_NAME", "test")
+DB_NAME = os.getenv("DB_NAME", "events")
 DB_USER = os.getenv("DB_USER")
 DB_PASSWORD = os.getenv("DB_PASSWORD")
 
@@ -51,8 +49,6 @@ async def create_app() -> web.Application:
         [
             web.view("/ping", Ping),
             web.view("/ready", Ready),
-            web.view("/competition-formats", CompetitionFormatsView),
-            web.view("/competition-formats/{id}", CompetitionFormatView),
             web.view("/events", EventsView),
             web.view("/events/{eventId}", EventView),
             web.view(
@@ -77,7 +73,7 @@ async def create_app() -> web.Application:
         mongo = motor.motor_asyncio.AsyncIOMotorClient(
             host=DB_HOST, port=DB_PORT, username=DB_USER, password=DB_PASSWORD
         )
-        db = mongo.DB_NAME
+        db = mongo[f"{DB_NAME}"]
         app["db"] = db
 
         yield
