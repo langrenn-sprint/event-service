@@ -313,7 +313,7 @@ async def _decide_group_order_and_ranking(  # noqa: C901
     return (0, 0, True)  # should not reach this point
 
 
-async def _print_raceclasses(raceclasses: List[Dict]) -> None:
+async def _print_raceclasses(raceclasses: List[Dict]) -> None:  # noqa: E800
     # print("--- RACECLASSES ---")
     # print("group;order;name;ageclasses;no_of_contestants;distance;ranking;event_id")
     # for raceclass in raceclasses:
@@ -339,7 +339,7 @@ async def _print_raceclasses(raceclasses: List[Dict]) -> None:
     pass
 
 
-async def _print_contestants(contestants: List[dict]) -> None:
+async def _print_contestants(contestants: List[dict]) -> None:  # noqa: E800
     # print("--- CONTESTANTS ---")
     # print(f"Number of contestants: {len(contestants)}.")
     # print("bib;ageclass")
