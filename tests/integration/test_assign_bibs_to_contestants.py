@@ -169,6 +169,10 @@ async def test_assign_bibs_to_contestants(
         "event_service.adapters.contestants_adapter.ContestantsAdapter.update_contestant",
         side_effect=update_contestant,
     )
+    mocker.patch(
+        "event_service.adapters.contestants_adapter.ContestantsAdapter.get_contestant_by_bib",
+        return_value=None,
+    )
 
     headers = {
         hdrs.CONTENT_TYPE: "application/json",

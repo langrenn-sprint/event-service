@@ -7,6 +7,7 @@ from .contestants_service import (
 from .event_format_service import EventFormatNotFoundException, EventFormatService
 from .events_service import EventNotFoundException, EventsService
 from .exceptions import (
+    BibAlreadyInUseException,
     CompetitionFormatNotFoundException,
     IllegalValueException,
     InvalidDateFormatException,
