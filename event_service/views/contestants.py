@@ -18,6 +18,7 @@ from multidict import MultiDict
 from event_service.adapters import UsersAdapter
 from event_service.models import Contestant
 from event_service.services import (
+    BibAlreadyInUseException,
     ContestantAllreadyExistException,
     ContestantNotFoundException,
     ContestantsService,
@@ -111,7 +112,7 @@ class ContestantsView(View):
                 raise HTTPNotFound(reason=str(e)) from e
             except IllegalValueException as e:
                 raise HTTPUnprocessableEntity(reason=str(e)) from e
-            except ContestantAllreadyExistException as e:
+            except (BibAlreadyInUseException, ContestantAllreadyExistException) as e:
                 raise HTTPBadRequest(reason=str(e)) from e
 
             if contestant_id:
@@ -240,6 +241,8 @@ class ContestantView(View):
             raise HTTPUnprocessableEntity(reason=str(e)) from e
         except ContestantNotFoundException as e:
             raise HTTPNotFound(reason=str(e)) from e
+        except BibAlreadyInUseException as e:
+            raise HTTPBadRequest(reason=str(e)) from e
         return Response(status=204)
 
     async def delete(self) -> Response:

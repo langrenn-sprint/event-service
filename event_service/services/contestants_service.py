@@ -10,7 +10,11 @@ import pandas as pd
 from event_service.adapters import ContestantsAdapter, RaceclassesAdapter
 from event_service.models import Contestant
 from .events_service import EventNotFoundException, EventsService
-from .exceptions import IllegalValueException, RaceclassNotFoundException
+from .exceptions import (
+    BibAlreadyInUseException,
+    IllegalValueException,
+    RaceclassNotFoundException,
+)
 
 
 def create_id() -> str:  # pragma: no cover
@@ -147,6 +151,7 @@ class ContestantsService:
             Optional[str]: The id of the created contestant. None otherwise.
 
         Raises:
+            BibAlreadyInUseException: If the bib is already in use
             EventNotFoundException: event does not exist
             ContestantAllreadyExistException: contestant allready exists
             IllegalValueException: input object has illegal values
@@ -167,6 +172,11 @@ class ContestantsService:
             raise IllegalValueException(
                 "Cannot create contestant with input id."
             ) from None
+        if await _bib_in_use_by_another_contestant(db, event_id, contestant):
+            raise BibAlreadyInUseException(
+                f"Bib {contestant.bib} allready in use by another contestant."
+            )
+
         # create id
         contestant_id = create_id()
         contestant.id = contestant_id
@@ -317,6 +327,10 @@ class ContestantsService:
         )
         # update the contestant if found:
         if old_contestant:
+            if await _bib_in_use_by_another_contestant(db, event_id, contestant):
+                raise BibAlreadyInUseException(
+                    f"Bib {contestant.bib} allready in use by another contestant."
+                )
             if contestant.id != old_contestant["id"]:
                 raise IllegalValueException(
                     "Cannot change id for contestant."
@@ -368,3 +382,22 @@ async def _contestant_exist(
     if _result:
         return _result
     return None
+
+
+async def _bib_in_use_by_another_contestant(
+    db: Any, event_id: str, contestant: Contestant
+) -> bool:
+    """Checks if bib is in use by another contestants."""
+    # if contestant has minidrett_id:
+    if not contestant.bib:
+        return False
+
+    _contestant = await ContestantsAdapter.get_contestant_by_bib(
+        db, event_id, contestant.bib
+    )
+
+    if not _contestant:
+        return False
+    if _contestant["id"] == contestant.id:
+        return False
+    return True
