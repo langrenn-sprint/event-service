@@ -111,6 +111,10 @@ async def test_create_contestant_good_case(
         "event_service.adapters.contestants_adapter.ContestantsAdapter.create_contestant",  # noqa: B950
         return_value=CONTESTANT_ID,
     )
+    mocker.patch(
+        "event_service.adapters.contestants_adapter.ContestantsAdapter.get_contestant_by_bib",
+        return_value=None,
+    )
 
     request_body = new_contestant
 
@@ -617,6 +621,48 @@ async def test_update_contestant_by_id(
         "event_service.adapters.contestants_adapter.ContestantsAdapter.update_contestant",  # noqa: B950
         return_value=CONTESTANT_ID,
     )
+    mocker.patch(
+        "event_service.adapters.contestants_adapter.ContestantsAdapter.get_contestant_by_bib",
+        return_value=None,
+    )
+
+    headers = {
+        hdrs.CONTENT_TYPE: "application/json",
+        hdrs.AUTHORIZATION: f"Bearer {token}",
+    }
+    request_body = deepcopy(contestant)
+    request_body["last_name"] = "New_Last_Name"
+
+    with aioresponses(passthrough=["http://127.0.0.1"]) as m:
+        m.post("http://example.com:8081/authorize", status=204)
+
+        resp = await client.put(
+            f"/events/{EVENT_ID}/contestants/{CONTESTANT_ID}",
+            headers=headers,
+            json=request_body,
+        )
+        assert resp.status == 204
+
+
+@pytest.mark.integration
+async def test_update_contestant_by_id_existing_bib(
+    client: _TestClient, mocker: MockFixture, token: MockFixture, contestant: dict
+) -> None:
+    """Should return No Content."""
+    EVENT_ID = "event_id_1"
+    CONTESTANT_ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
+    mocker.patch(
+        "event_service.adapters.contestants_adapter.ContestantsAdapter.get_contestant_by_id",  # noqa: B950
+        return_value=contestant,
+    )
+    mocker.patch(
+        "event_service.adapters.contestants_adapter.ContestantsAdapter.update_contestant",  # noqa: B950
+        return_value=CONTESTANT_ID,
+    )
+    mocker.patch(
+        "event_service.adapters.contestants_adapter.ContestantsAdapter.get_contestant_by_bib",
+        return_value=contestant,
+    )
 
     headers = {
         hdrs.CONTENT_TYPE: "application/json",
@@ -977,6 +1023,58 @@ async def test_create_contestant_allready_exist(
         assert resp.status == 400
 
 
+@pytest.mark.integration
+async def test_create_contestant_bib_already_exist(
+    client: _TestClient,
+    mocker: MockFixture,
+    token: MockFixture,
+    event: dict,
+    new_contestant: dict,
+) -> None:
+    """Should return 400 Bad request."""
+    EVENT_ID = "event_id_1"
+    CONTESTANT_ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
+    new_contestant["bib"] = 1
+    mocker.patch(
+        "event_service.adapters.events_adapter.EventsAdapter.get_event_by_id",  # noqa: B950
+        return_value=event,
+    )
+    mocker.patch(
+        "event_service.adapters.contestants_adapter.ContestantsAdapter.get_contestant_by_name",  # noqa: B950
+        return_value=None,
+    )
+    mocker.patch(
+        "event_service.adapters.contestants_adapter.ContestantsAdapter.get_contestant_by_minidrett_id",  # noqa: B950
+        return_value=None,
+    )
+    mocker.patch(
+        "event_service.services.contestants_service.create_id",
+        return_value=CONTESTANT_ID,
+    )
+    mocker.patch(
+        "event_service.adapters.contestants_adapter.ContestantsAdapter.create_contestant",  # noqa: B950
+        return_value=CONTESTANT_ID,
+    )
+    mocker.patch(
+        "event_service.adapters.contestants_adapter.ContestantsAdapter.get_contestant_by_bib",
+        return_value={"id": "different_id", "bib": new_contestant["bib"]},
+    )
+
+    request_body = new_contestant
+
+    headers = {
+        hdrs.CONTENT_TYPE: "application/json",
+        hdrs.AUTHORIZATION: f"Bearer {token}",
+    }
+
+    with aioresponses(passthrough=["http://127.0.0.1"]) as m:
+        m.post("http://example.com:8081/authorize", status=204)
+        resp = await client.post(
+            f"/events/{EVENT_ID}/contestants", headers=headers, json=request_body
+        )
+        assert resp.status == 400
+
+
 # Mandatory properties missing at create and update:
 @pytest.mark.integration
 async def test_create_contestant_missing_mandatory_property(
@@ -1148,6 +1246,11 @@ async def test_create_contestant_adapter_fails(
         "event_service.adapters.contestants_adapter.ContestantsAdapter.create_contestant",  # noqa: B950
         return_value=None,
     )
+    mocker.patch(
+        "event_service.adapters.contestants_adapter.ContestantsAdapter.get_contestant_by_bib",
+        return_value=None,
+    )
+
     request_body = new_contestant
 
     headers = {
@@ -1177,6 +1280,10 @@ async def test_update_contestant_by_id_missing_mandatory_property(
     mocker.patch(
         "event_service.adapters.contestants_adapter.ContestantsAdapter.update_contestant",
         return_value=CONTESTANT_ID,
+    )
+    mocker.patch(
+        "event_service.adapters.contestants_adapter.ContestantsAdapter.get_contestant_by_bib",
+        return_value=None,
     )
 
     headers = {
@@ -1211,6 +1318,10 @@ async def test_update_contestant_by_id_different_id_in_body(
         "event_service.adapters.contestants_adapter.ContestantsAdapter.update_contestant",
         return_value=contestant["id"],
     )
+    mocker.patch(
+        "event_service.adapters.contestants_adapter.ContestantsAdapter.get_contestant_by_bib",
+        return_value=None,
+    )
 
     headers = {
         hdrs.CONTENT_TYPE: "application/json",
@@ -1228,6 +1339,44 @@ async def test_update_contestant_by_id_different_id_in_body(
             json=request_body,
         )
         assert resp.status == 422
+
+
+@pytest.mark.integration
+async def test_update_contestant_by_id_existing_bib_different_contestant(
+    client: _TestClient, mocker: MockFixture, token: MockFixture, contestant: dict
+) -> None:
+    """Should return 400 Bad request."""
+    EVENT_ID = "event_id_1"
+    CONTESTANT_ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
+    mocker.patch(
+        "event_service.adapters.contestants_adapter.ContestantsAdapter.get_contestant_by_id",  # noqa: B950
+        return_value=contestant,
+    )
+    mocker.patch(
+        "event_service.adapters.contestants_adapter.ContestantsAdapter.update_contestant",  # noqa: B950
+        return_value=CONTESTANT_ID,
+    )
+    mocker.patch(
+        "event_service.adapters.contestants_adapter.ContestantsAdapter.get_contestant_by_bib",
+        return_value={"id": "different_id", "bib": contestant["bib"]},
+    )
+
+    headers = {
+        hdrs.CONTENT_TYPE: "application/json",
+        hdrs.AUTHORIZATION: f"Bearer {token}",
+    }
+    request_body = deepcopy(contestant)
+    request_body["last_name"] = "New_Last_Name"
+
+    with aioresponses(passthrough=["http://127.0.0.1"]) as m:
+        m.post("http://example.com:8081/authorize", status=204)
+
+        resp = await client.put(
+            f"/events/{EVENT_ID}/contestants/{CONTESTANT_ID}",
+            headers=headers,
+            json=request_body,
+        )
+        assert resp.status == 400
 
 
 # Unauthorized cases:
@@ -1280,6 +1429,10 @@ async def test_update_contestant_by_id_no_authorization(
     mocker.patch(
         "event_service.adapters.contestants_adapter.ContestantsAdapter.update_contestant",
         return_value=CONTESTANT_ID,
+    )
+    mocker.patch(
+        "event_service.adapters.contestants_adapter.ContestantsAdapter.get_contestant_by_bib",
+        return_value=None,
     )
 
     headers = {
@@ -1409,6 +1562,10 @@ async def test_update_contestant_not_found(
     )
     mocker.patch(
         "event_service.adapters.contestants_adapter.ContestantsAdapter.update_contestant",
+        return_value=None,
+    )
+    mocker.patch(
+        "event_service.adapters.contestants_adapter.ContestantsAdapter.get_contestant_by_bib",
         return_value=None,
     )
 
