@@ -215,8 +215,8 @@ async def test_update_raceclass(
 
         _raceclass = raceclasses[0]
         id = _raceclass["id"]
-        _raceclass["name"] = _raceclass["name"] + "G15"
-        _raceclass["ageclasses"] = _raceclass["ageclasses"].append("G 15 år")
+        _raceclass["name"] = _raceclass["name"] + "/G15"
+        _raceclass["ageclasses"].append("G 15 år")
 
         url = f"{url}/{id}"
         async with session.put(url, headers=headers, json=_raceclass) as response:
