@@ -1,6 +1,7 @@
 """Module for contestants service."""
 from io import StringIO
 import logging
+import re
 from typing import Any, Dict, List, Optional
 import uuid
 
@@ -151,7 +152,6 @@ class ContestantsService:
             Optional[str]: The id of the created contestant. None otherwise.
 
         Raises:
-            BibAlreadyInUseException: If the bib is already in use
             EventNotFoundException: event does not exist
             ContestantAllreadyExistException: contestant allready exists
             IllegalValueException: input object has illegal values
@@ -172,10 +172,7 @@ class ContestantsService:
             raise IllegalValueException(
                 "Cannot create contestant with input id."
             ) from None
-        if await _bib_in_use_by_another_contestant(db, event_id, contestant):
-            raise BibAlreadyInUseException(
-                f"Bib {contestant.bib} allready in use by another contestant."
-            )
+        await _validate_contestant(db, event_id, contestant)
 
         # create id
         contestant_id = create_id()
@@ -264,40 +261,61 @@ class ContestantsService:
         # For every record, create contestant:
         # TODO: consider parallellizing this
         # create id
-        result: Dict[str, int] = {"total": 0, "created": 0, "updated": 0, "failures": 0}
+        result: Dict[str, Any] = {
+            "total": 0,
+            "created": 0,
+            "updated": [],
+            "failures": [],
+        }
         for _c in contestants:
             result["total"] += 1
             _c["event_id"] = event_id  # type: ignore
             contestant_id = create_id()
             _c["id"] = contestant_id  # type: ignore
             contestant = Contestant.from_dict(_c)
-            # insert new contestant
-            # Check if contestant exist. If so, update:
-            _contestant = await _contestant_exist(db, event_id, contestant)
-            if _contestant:
-                updated_contestant = contestant.to_dict()
-                _result = await ContestantsAdapter.update_contestant(
-                    db, event_id, _contestant["id"], updated_contestant
-                )
-                logging.debug(
-                    f"updated event_id/contestant_id: {event_id}/{contestant_id}"
-                )
-                if _result:
-                    result["updated"] += 1
+            # Validate contestant:
+            try:
+                await _validate_contestant(db, event_id, contestant)
+
+                # insert new contestant
+                # Check if contestant exist. If so, update:
+                _contestant = await _contestant_exist(db, event_id, contestant)
+                if _contestant:
+                    updated_contestant = contestant.to_dict()
+                    _result = await ContestantsAdapter.update_contestant(
+                        db, event_id, _contestant["id"], updated_contestant
+                    )
+                    logging.debug(
+                        f"updated event_id/contestant_id: {event_id}/{contestant_id}"
+                    )
+                    if _result:
+                        result["updated"].append(
+                            f"updated event_id/contestant_id: {event_id}/{contestant_id}"
+                        )
+                    else:
+                        result["failures"].append(
+                            f"reason: {_result}: {contestant.to_dict()}"
+                        )
                 else:
-                    result["failures"] += 1
-            else:
-                new_contestant = contestant.to_dict()
-                _result = await ContestantsAdapter.create_contestant(
-                    db, event_id, new_contestant
+                    new_contestant = contestant.to_dict()
+                    _result = await ContestantsAdapter.create_contestant(
+                        db, event_id, new_contestant
+                    )
+                    logging.debug(
+                        f"inserted event_id/contestant_id: {event_id}/{contestant_id}"
+                    )
+                    if _result:
+                        result["created"] += 1
+                    else:
+                        result["failures"].append(
+                            f"reason: {_result}: {contestant.to_dict()}"
+                        )
+            except IllegalValueException as e:
+                logging.error(
+                    f"Failed to create contestant with {contestant.to_dict()}. {e}"
                 )
-                logging.debug(
-                    f"inserted event_id/contestant_id: {event_id}/{contestant_id}"
-                )
-                if _result:
-                    result["created"] += 1
-                else:
-                    result["failures"] += 1
+                result["failures"].append(f"reason: {e}: {contestant.to_dict()}")
+                continue
 
         return result
 
@@ -327,10 +345,8 @@ class ContestantsService:
         )
         # update the contestant if found:
         if old_contestant:
-            if await _bib_in_use_by_another_contestant(db, event_id, contestant):
-                raise BibAlreadyInUseException(
-                    f"Bib {contestant.bib} allready in use by another contestant."
-                )
+            # Validate:
+            await _validate_contestant(db, event_id, contestant)
             if contestant.id != old_contestant["id"]:
                 raise IllegalValueException(
                     "Cannot change id for contestant."
@@ -382,6 +398,21 @@ async def _contestant_exist(
     if _result:
         return _result
     return None
+
+
+async def _validate_contestant(db: Any, event_id: str, contestant: Contestant) -> None:
+    """Validate contestant."""
+    # Check that ageclass is valid:
+    p = re.compile(r"[JGMK]\s\d*\/?\d+?\sår")
+    if not p.match(contestant.ageclass):
+        raise IllegalValueException(
+            f"Ageclass {contestant.ageclass} is not valid. Must be of the form 'J 12 år' or 'J 12/13 år'."  # noqa: B950
+        )
+    # Check that bib is in use by another contestant:
+    if await _bib_in_use_by_another_contestant(db, event_id, contestant):
+        raise BibAlreadyInUseException(
+            f"Bib {contestant.bib} allready in use by another contestant."
+        )
 
 
 async def _bib_in_use_by_another_contestant(

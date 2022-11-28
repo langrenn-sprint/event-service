@@ -186,9 +186,11 @@ async def test_create_contestants_csv_good_case(
 
         assert body["total"] > 0
         assert body["created"] > 0
-        assert body["updated"] == 0
-        assert body["failures"] == 0
-        assert body["total"] == body["created"] + body["updated"] + body["failures"]
+        assert len(body["updated"]) == 0
+        assert len(body["failures"]) == 0
+        assert body["total"] == body["created"] + len(body["updated"]) + len(
+            body["failures"]
+        )
 
 
 @pytest.mark.integration
@@ -246,9 +248,11 @@ async def test_create_contestants_csv_no_minidrett_id_existing_good_case(
 
         assert body["total"] > 0
         assert body["created"] == 0
-        assert body["updated"] > 0
-        assert body["failures"] == 0
-        assert body["total"] == body["created"] + body["updated"] + body["failures"]
+        assert len(body["updated"]) > 0
+        assert len(body["failures"]) == 0
+        assert body["total"] == body["created"] + len(body["updated"]) + len(
+            body["failures"]
+        )
 
 
 @pytest.mark.integration
@@ -301,9 +305,11 @@ async def test_create_contestants_csv_minidrett_id_existing_good_case(
 
         assert body["total"] > 0
         assert body["created"] == 0
-        assert body["updated"] > 0
-        assert body["failures"] == 0
-        assert body["total"] == body["created"] + body["updated"] + body["failures"]
+        assert len(body["updated"]) > 0
+        assert len(body["failures"]) == 0
+        assert body["total"] == body["created"] + len(body["updated"]) + len(
+            body["failures"]
+        )
 
 
 @pytest.mark.integration
@@ -339,10 +345,10 @@ async def test_create_contestants_csv_create_failures_good_case(
     )
     mocker.patch(
         "event_service.adapters.contestants_adapter.ContestantsAdapter.update_contestant",  # noqa: B950
-        return_value=CONTESTANT_ID,
+        return_value=None,
     )
 
-    files = {"file": open("tests/files/contestants_G11.csv", "rb")}
+    files = {"file": open("tests/files/contestants_G11_with_failures.csv", "rb")}
 
     headers = {
         hdrs.AUTHORIZATION: f"Bearer {token}",
@@ -361,9 +367,11 @@ async def test_create_contestants_csv_create_failures_good_case(
 
         assert body["total"] > 0
         assert body["created"] == 0
-        assert body["updated"] == 0
-        assert body["failures"] > 0
-        assert body["total"] == body["created"] + body["updated"] + body["failures"]
+        assert len(body["updated"]) == 0
+        assert len(body["failures"]) == 3
+        assert body["total"] == body["created"] + len(body["updated"]) + len(
+            body["failures"]
+        )
 
 
 @pytest.mark.integration
@@ -395,14 +403,14 @@ async def test_create_contestants_csv_update_failures_good_case(
     )
     mocker.patch(
         "event_service.adapters.contestants_adapter.ContestantsAdapter.create_contestant",  # noqa: B950
-        return_value=CONTESTANT_ID,
+        return_value=None,
     )
     mocker.patch(
         "event_service.adapters.contestants_adapter.ContestantsAdapter.update_contestant",  # noqa: B950
         return_value=None,
     )
 
-    files = {"file": open("tests/files/contestants_G11.csv", "rb")}
+    files = {"file": open("tests/files/contestants_G11_with_failures.csv", "rb")}
 
     headers = {
         hdrs.AUTHORIZATION: f"Bearer {token}",
@@ -420,9 +428,11 @@ async def test_create_contestants_csv_update_failures_good_case(
 
         assert body["total"] > 0
         assert body["created"] == 0
-        assert body["updated"] == 0
-        assert body["failures"] > 0
-        assert body["total"] == body["created"] + body["updated"] + body["failures"]
+        assert len(body["updated"]) == 0
+        assert len(body["failures"]) > 0
+        assert body["total"] == body["created"] + len(body["updated"]) + len(
+            body["failures"]
+        )
 
 
 @pytest.mark.integration
@@ -568,9 +578,11 @@ async def test_create_contestants_csv_good_case_octet_stream(
 
             assert body["total"] > 0
             assert body["created"] > 0
-            assert body["updated"] == 0
-            assert body["failures"] == 0
-            assert body["total"] == body["created"] + body["updated"] + body["failures"]
+            assert len(body["updated"]) == 0
+            assert len(body["failures"]) == 0
+            assert body["total"] == body["created"] + len(body["updated"]) + len(
+                body["failures"]
+            )
 
 
 @pytest.mark.integration
@@ -1206,6 +1218,60 @@ async def test_create_contestant_with_input_id(
         return_value=None,
     )
     request_body = contestant
+
+    headers = {
+        hdrs.CONTENT_TYPE: "application/json",
+        hdrs.AUTHORIZATION: f"Bearer {token}",
+    }
+
+    with aioresponses(passthrough=["http://127.0.0.1"]) as m:
+        m.post("http://example.com:8081/authorize", status=204)
+        resp = await client.post(
+            f"/events/{EVENT_ID}/contestants", headers=headers, json=request_body
+        )
+        assert resp.status == 422
+
+
+@pytest.mark.integration
+async def test_create_contestant_invalid_ageclass(
+    client: _TestClient,
+    mocker: MockFixture,
+    token: MockFixture,
+    event: dict,
+    new_contestant: dict,
+) -> None:
+    """Should return 422 HTTPUnprocessableEntity."""
+    EVENT_ID = "event_id_1"
+    CONTESTANT_ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
+    new_contestant_with_invalid_ageclass = deepcopy(new_contestant)
+    new_contestant_with_invalid_ageclass["ageclass"] = "invalid_ageclass"
+
+    mocker.patch(
+        "event_service.adapters.events_adapter.EventsAdapter.get_event_by_id",  # noqa: B950
+        return_value=event,
+    )
+    mocker.patch(
+        "event_service.adapters.contestants_adapter.ContestantsAdapter.get_contestant_by_name",  # noqa: B950
+        return_value=None,
+    )
+    mocker.patch(
+        "event_service.adapters.contestants_adapter.ContestantsAdapter.get_contestant_by_minidrett_id",  # noqa: B950
+        return_value=None,
+    )
+    mocker.patch(
+        "event_service.services.contestants_service.create_id",
+        return_value=CONTESTANT_ID,
+    )
+    mocker.patch(
+        "event_service.adapters.contestants_adapter.ContestantsAdapter.create_contestant",  # noqa: B950
+        return_value=CONTESTANT_ID,
+    )
+    mocker.patch(
+        "event_service.adapters.contestants_adapter.ContestantsAdapter.get_contestant_by_bib",
+        return_value=None,
+    )
+
+    request_body = new_contestant_with_invalid_ageclass
 
     headers = {
         hdrs.CONTENT_TYPE: "application/json",

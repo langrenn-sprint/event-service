@@ -283,9 +283,11 @@ async def test_create_many_contestants_as_csv_file(
 
     assert body["total"] == 670
     assert body["created"] == 668
-    assert body["updated"] == 2
-    assert body["failures"] == 0
-    assert body["total"] == body["created"] + body["updated"] + body["failures"]
+    assert len(body["updated"]) == 2
+    assert len(body["failures"]) == 0
+    assert body["total"] == body["created"] + len(body["updated"]) + len(
+        body["failures"]
+    )
 
 
 @pytest.mark.contract
@@ -315,9 +317,11 @@ async def test_update_many_existing_contestants_as_csv_file(
 
     assert body["total"] == 3
     assert body["created"] == 0
-    assert body["updated"] == 3
-    assert body["failures"] == 0
-    assert body["total"] == body["created"] + body["updated"] + body["failures"]
+    assert len(body["updated"]) == 3
+    assert len(body["failures"]) == 0
+    assert body["total"] == body["created"] + len(body["updated"]) + len(
+        body["failures"]
+    )
 
 
 @pytest.mark.contract
