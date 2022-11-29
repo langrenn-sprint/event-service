@@ -289,9 +289,7 @@ class ContestantsService:
                         f"updated event_id/contestant_id: {event_id}/{contestant_id}"
                     )
                     if _result:
-                        result["updated"].append(
-                            f"updated event_id/contestant_id: {event_id}/{contestant_id}"
-                        )
+                        result["updated"].append(f"contestant: {contestant.to_dict()}")
                     else:
                         result["failures"].append(
                             f"reason: {_result}: {contestant.to_dict()}"
