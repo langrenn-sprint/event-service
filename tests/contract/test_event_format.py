@@ -78,6 +78,7 @@ async def competition_format(event_id: str) -> dict:
         "intervals": "00:00:30",
         "max_no_of_contestants_in_raceclass": 9999,
         "max_no_of_contestants_in_race": 9999,
+        "timezone": "Europe/Oslo",
         "datatype": "interval_start",
     }
 
