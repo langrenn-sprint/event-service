@@ -4,6 +4,8 @@ import logging
 from typing import Any, List, Optional
 import uuid
 
+import zoneinfo
+
 from event_service.adapters import (
     CompetitionFormatsAdapter,
     CompetitionFormatsAdapterException,
@@ -14,6 +16,7 @@ from .exceptions import (
     CompetitionFormatNotFoundException,
     IllegalValueException,
     InvalidDateFormatException,
+    InvalidTimezoneException,
 )
 
 
@@ -140,6 +143,13 @@ async def validate_event(db: Any, event: Event) -> None:  # noqa: C901
             raise InvalidDateFormatException(
                 'Time "{time_str}" has invalid format.'
             ) from e
+
+    # Validate timezone:
+    if event.timezone:
+        if event.timezone not in zoneinfo.available_timezones():
+            raise InvalidTimezoneException(
+                f"Invalid timezone: {event.timezone}."
+            ) from None
 
     # Validate competition_format:
     if event.competition_format:

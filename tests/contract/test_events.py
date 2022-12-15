@@ -53,6 +53,7 @@ async def event() -> dict:
         "competition_format": "Interval Start",
         "date_of_event": "2021-08-31",
         "time_of_event": "09:00:00",
+        "timezone": "Europe/Oslo",
         "organiser": "Lyn Ski",
         "webpage": "https://example.com",
         "information": "Testarr for å teste den nye løysinga.",
@@ -171,6 +172,7 @@ async def test_get_event_by_id(
     assert body["competition_format"] == event["competition_format"]
     assert body["date_of_event"] == event["date_of_event"]
     assert body["time_of_event"] == event["time_of_event"]
+    assert body["timezone"] == event["timezone"]
     assert body["organiser"] == event["organiser"]
     assert body["webpage"] == event["webpage"]
     assert body["information"] == event["information"]

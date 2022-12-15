@@ -11,6 +11,7 @@ from .exceptions import (
     CompetitionFormatNotFoundException,
     IllegalValueException,
     InvalidDateFormatException,
+    InvalidTimezoneException,
     RaceclassNotFoundException,
 )
 from .raceclasses_service import (
