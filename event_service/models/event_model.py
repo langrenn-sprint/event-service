@@ -13,6 +13,7 @@ class Event(DataClassJsonMixin):
     name: str
     date_of_event: Optional[date] = field(default=None)
     time_of_event: Optional[time] = field(default=None)
+    timezone: Optional[str] = field(default="Europe/Oslo")
     competition_format: Optional[str] = field(default=None)
     organiser: Optional[str] = field(default=None)
     webpage: Optional[str] = field(default=None)

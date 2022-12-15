@@ -22,6 +22,7 @@ from event_service.services import (
     EventsService,
     IllegalValueException,
     InvalidDateFormatException,
+    InvalidTimezoneException,
 )
 from .utils import extract_token_from_request
 
@@ -66,7 +67,7 @@ class EventsView(View):
 
         try:
             event_id = await EventsService.create_event(db, event)
-        except IllegalValueException as e:
+        except (IllegalValueException, InvalidTimezoneException) as e:
             raise HTTPUnprocessableEntity(reason=str(e)) from e
         except (CompetitionFormatNotFoundException, InvalidDateFormatException) as e:
             raise HTTPBadRequest(reason=str(e)) from e

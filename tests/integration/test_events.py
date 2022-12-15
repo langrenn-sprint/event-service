@@ -39,6 +39,8 @@ async def event() -> Dict[str, str]:
         "name": "Oslo Skagen sprint",
         "competition_format": "Individual sprint",
         "date_of_event": "2021-08-31",
+        "time_of_event": "09:00:00",
+        "timezone": "Europe/Oslo",
         "organiser": "Lyn Ski",
         "webpage": "https://example.com",
         "information": "Testarr for å teste den nye løysinga.",
@@ -327,6 +329,44 @@ async def test_create_event_adapter_fails(
         m.post("http://example.com:8081/authorize", status=204)
         resp = await client.post("/events", headers=headers, json=request_body)
         assert resp.status == 400
+
+
+@pytest.mark.integration
+async def test_create_event_invalid_timezone(
+    client: _TestClient,
+    mocker: MockFixture,
+    token: MockFixture,
+    event: dict,
+    competition_format: dict,
+) -> None:
+    """Should return 422 Unprocessable entity."""
+    ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
+    mocker.patch(
+        "event_service.services.events_service.create_id",
+        return_value=ID,
+    )
+    mocker.patch(
+        "event_service.adapters.events_adapter.EventsAdapter.create_event",
+        return_value=ID,
+    )
+    mocker.patch(
+        "event_service.adapters.competition_formats_adapter.CompetitionFormatsAdapter.get_competition_formats_by_name",  # noqa: B950
+        return_value=[competition_format],
+    )
+
+    event_invalid_timezone = deepcopy(event)
+    event_invalid_timezone["timezone"] = "Europe/Invalid"
+    request_body = event_invalid_timezone
+
+    headers = {
+        hdrs.CONTENT_TYPE: "application/json",
+        hdrs.AUTHORIZATION: f"Bearer {token}",
+    }
+
+    with aioresponses(passthrough=["http://127.0.0.1"]) as m:
+        m.post("http://example.com:8081/authorize", status=204)
+        resp = await client.post("/events", headers=headers, json=request_body)
+        assert resp.status == 422
 
 
 @pytest.mark.integration
