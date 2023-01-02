@@ -9,11 +9,17 @@ from urllib.parse import quote
 
 
 from aiohttp import ClientSession, hdrs
+import motor.motor_asyncio
 import pytest
 from pytest_mock import MockFixture
 
 USERS_HOST_SERVER = os.getenv("USERS_HOST_SERVER")
 USERS_HOST_PORT = os.getenv("USERS_HOST_PORT")
+DB_HOST = os.getenv("DB_HOST", "localhost")
+DB_PORT = int(os.getenv("DB_PORT", 27017))
+DB_NAME = os.getenv("DB_NAME")
+DB_USER = os.getenv("DB_USER")
+DB_PASSWORD = os.getenv("DB_PASSWORD")
 
 
 @pytest.fixture(scope="module")
@@ -42,8 +48,32 @@ async def token(http_service: Any) -> str:
     return body["token"]
 
 
+@pytest.fixture(scope="module", autouse=True)
+@pytest.mark.asyncio
+async def clear_db(http_service: Any, token: MockFixture) -> AsyncGenerator:
+    """Clear db before and after tests."""
+    mongo = motor.motor_asyncio.AsyncIOMotorClient(
+        host=DB_HOST, port=DB_PORT, username=DB_USER, password=DB_PASSWORD
+    )
+    try:
+        await mongo.drop_database(f"{DB_NAME}")
+    except Exception as error:
+        logging.error(f"Failed to drop database {DB_NAME}: {error}")
+        raise error
+
+    yield
+
+    try:
+        await mongo.drop_database(f"{DB_NAME}")
+    except Exception as error:
+        logging.error(f"Failed to drop database {DB_NAME}: {error}")
+        raise error
+
+
 @pytest.fixture(scope="module")
-async def event_id(http_service: Any, token: MockFixture) -> Optional[str]:
+async def event_id(
+    http_service: Any, token: MockFixture, clear_db: AsyncGenerator
+) -> Optional[str]:
     """Create an event object for testing."""
     url = f"{http_service}/events"
     headers = {
@@ -71,61 +101,6 @@ async def event_id(http_service: Any, token: MockFixture) -> Optional[str]:
 
 
 @pytest.fixture(scope="module")
-@pytest.mark.asyncio
-async def clear_db(
-    http_service: Any, token: MockFixture, event_id: str
-) -> AsyncGenerator:
-    """Clear db before and after tests."""
-    await delete_contestants(http_service, token)
-    await delete_raceplans(http_service, token)
-    logging.info(" --- Testing starts. ---")
-    yield
-    logging.info(" --- Testing finished. ---")
-    logging.info(" --- Cleaning db after testing. ---")
-    await delete_raceplans(http_service, token)
-    await delete_contestants(http_service, token)
-    logging.info(" --- Cleaning db done. ---")
-
-
-async def delete_contestants(http_service: Any, token: MockFixture) -> None:
-    """Delete all contestants."""
-    url = f"{http_service}/events/{event_id}/contestants"
-    headers = {
-        hdrs.AUTHORIZATION: f"Bearer {token}",
-    }
-
-    async with ClientSession() as session:
-        async with session.get(url) as response:
-            contestants = await response.json()
-            for contestant in contestants:
-                contestant_id = contestant["id"]
-                async with session.delete(
-                    f"{url}/{contestant_id}", headers=headers
-                ) as response:
-                    pass
-    logging.info("Clear_db: Deleted all contestants.")
-
-
-async def delete_raceplans(http_service: Any, token: MockFixture) -> None:
-    """Delete all raceclasses."""
-    url = f"{http_service}/events/{event_id}/raceclasses"
-    headers = {
-        hdrs.AUTHORIZATION: f"Bearer {token}",
-    }
-
-    async with ClientSession() as session:
-        async with session.get(url) as response:
-            raceclasses = await response.json()
-            for raceclass in raceclasses:
-                raceclass_id = raceclass["id"]
-                async with session.delete(
-                    f"{url}/{raceclass_id}", headers=headers
-                ) as response:
-                    pass
-    logging.info("Clear_db: Deleted all raceclasses.")
-
-
-@pytest.fixture(scope="module")
 async def contestant(event_id: str) -> dict:
     """Create a contestant object for testing."""
     return {
@@ -148,7 +123,6 @@ async def test_create_single_contestant(
     http_service: Any,
     token: MockFixture,
     event_id: str,
-    clear_db: None,
     contestant: dict,
 ) -> None:
     """Should return 201 Created, location header and no body."""
@@ -259,7 +233,6 @@ async def test_create_many_contestants_as_csv_file(
     http_service: Any,
     token: MockFixture,
     event_id: str,
-    clear_db: None,
 ) -> None:
     """Should return 200 OK and a report."""
     url = f"{http_service}/events/{event_id}/contestants"
