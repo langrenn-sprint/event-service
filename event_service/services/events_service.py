@@ -3,7 +3,6 @@ from datetime import date, time
 import logging
 from typing import Any, List, Optional
 import uuid
-
 import zoneinfo
 
 from event_service.adapters import (
