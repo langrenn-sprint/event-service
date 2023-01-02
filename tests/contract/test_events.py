@@ -17,7 +17,7 @@ USERS_HOST_SERVER = os.getenv("USERS_HOST_SERVER")
 USERS_HOST_PORT = os.getenv("USERS_HOST_PORT")
 DB_HOST = os.getenv("DB_HOST", "localhost")
 DB_PORT = int(os.getenv("DB_PORT", 27017))
-DB_NAME = os.getenv("DB_NAME", "events")
+DB_NAME = os.getenv("DB_NAME")
 DB_USER = os.getenv("DB_USER")
 DB_PASSWORD = os.getenv("DB_PASSWORD")
 
@@ -28,36 +28,6 @@ def event_loop(request: Any) -> Any:
     loop = asyncio.get_event_loop_policy().new_event_loop()
     yield loop
     loop.close()
-
-
-@pytest.fixture(scope="module", autouse=True)
-@pytest.mark.asyncio
-async def clear_db(http_service: Any, token: MockFixture) -> AsyncGenerator:
-    """Delete all events before we start."""
-    mongo = motor.motor_asyncio.AsyncIOMotorClient(
-        host=DB_HOST, port=DB_PORT, username=DB_USER, password=DB_PASSWORD
-    )
-    try:
-        await mongo.drop_database(f"{DB_NAME}")
-    except Exception as error:
-        logging.error(f"Failed to drop database {DB_NAME}: {error}")
-        raise error
-    yield
-
-
-@pytest.fixture(scope="module")
-async def event() -> dict:
-    """An event object for testing."""
-    return {
-        "name": "Oslo Skagen sprint",
-        "competition_format": "Interval Start",
-        "date_of_event": "2021-08-31",
-        "time_of_event": "09:00:00",
-        "timezone": "Europe/Oslo",
-        "organiser": "Lyn Ski",
-        "webpage": "https://example.com",
-        "information": "Testarr for å teste den nye løysinga.",
-    }
 
 
 @pytest.fixture(scope="module")
@@ -77,6 +47,43 @@ async def token(http_service: Any) -> str:
     if response.status != 200:
         logging.error(f"Got unexpected status {response.status} from {http_service}.")
     return body["token"]
+
+
+@pytest.fixture(scope="module", autouse=True)
+@pytest.mark.asyncio
+async def clear_db(http_service: Any, token: MockFixture) -> AsyncGenerator:
+    """Delete all events before we start."""
+    mongo = motor.motor_asyncio.AsyncIOMotorClient(
+        host=DB_HOST, port=DB_PORT, username=DB_USER, password=DB_PASSWORD
+    )
+    try:
+        await mongo.drop_database(f"{DB_NAME}")
+    except Exception as error:
+        logging.error(f"Failed to drop database {DB_NAME}: {error}")
+        raise error
+
+    yield
+
+    try:
+        await mongo.drop_database(f"{DB_NAME}")
+    except Exception as error:
+        logging.error(f"Failed to drop database {DB_NAME}: {error}")
+        raise error
+
+
+@pytest.fixture(scope="module")
+async def event() -> dict:
+    """An event object for testing."""
+    return {
+        "name": "Oslo Skagen sprint",
+        "competition_format": "Interval Start",
+        "date_of_event": "2021-08-31",
+        "time_of_event": "09:00:00",
+        "timezone": "Europe/Oslo",
+        "organiser": "Lyn Ski",
+        "webpage": "https://example.com",
+        "information": "Testarr for å teste den nye løysinga.",
+    }
 
 
 @pytest.fixture(scope="module")
