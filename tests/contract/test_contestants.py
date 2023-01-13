@@ -56,7 +56,14 @@ async def clear_db(http_service: Any, token: MockFixture) -> AsyncGenerator:
         host=DB_HOST, port=DB_PORT, username=DB_USER, password=DB_PASSWORD
     )
     try:
-        await mongo.drop_database(f"{DB_NAME}")
+        db = mongo[f"{DB_NAME}"]
+        await mongo.drop_database(db)
+        # Create text index for search on contestants:
+        await db.contestants_collection.create_index(
+            [("first_name", "text"), ("last_name", "text")],
+            default_language="norwegian",
+        )
+
     except Exception as error:
         logging.error(f"Failed to drop database {DB_NAME}: {error}")
         raise error
@@ -420,6 +427,29 @@ async def test_get_all_contestants_in_given_event_by_bib(
         assert type(contestants_with_bib) is list
         assert len(contestants_with_bib) == 1
         assert contestants_with_bib[0]["bib"] == 1
+
+
+@pytest.mark.contract
+@pytest.mark.asyncio
+async def test_search_contestant_by_name(
+    http_service: Any, token: MockFixture, event_id: str
+) -> None:
+    """Should return 204 No Content."""
+    url = f"{http_service}/events/{event_id}/contestants/search"
+    body = {"name": "Bjørn"}
+    headers = {
+        hdrs.AUTHORIZATION: f"Bearer {token}",
+        hdrs.CONTENT_TYPE: "application/json",
+    }
+
+    async with ClientSession() as session:
+        async with session.post(url, headers=headers, json=body) as response:
+            if response.status != 200:
+                body = await response.json()
+            assert response.status == 200, body
+            contestants = await response.json()
+
+    assert len(contestants) == 2
 
 
 @pytest.mark.contract
