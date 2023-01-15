@@ -99,3 +99,14 @@ class ContestantsAdapter(Adapter):
         """Delete all contestant function."""
         result = await db.contestants_collection.delete_many({"event_id": event_id})
         return result
+
+    @classmethod
+    async def search_contestants_in_event_by_name(
+        cls: Any, db: Any, event_id: str, name: str
+    ) -> List[dict]:  # pragma: no cover
+        """Perform text-search after contestants function."""
+        list: List[dict] = []
+        _result = db.contestants_collection.find({"$text": {"$search": f"{name}"}})
+        for contestant in await _result.to_list(None):  # we ask for all contestants
+            list.append(contestant)
+        return list

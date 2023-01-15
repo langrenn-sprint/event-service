@@ -9,6 +9,7 @@ import motor.motor_asyncio
 
 from .views import (
     ContestantsAssignBibsView,
+    ContestantsSearchView,
     ContestantsView,
     ContestantView,
     EventFormatView,
@@ -30,6 +31,7 @@ DB_PORT = int(os.getenv("DB_PORT", 27017))
 DB_NAME = os.getenv("DB_NAME", "events")
 DB_USER = os.getenv("DB_USER")
 DB_PASSWORD = os.getenv("DB_PASSWORD")
+CONFIG = os.getenv("CONFIG", "production")
 
 
 async def create_app() -> web.Application:
@@ -61,6 +63,7 @@ async def create_app() -> web.Application:
             web.view(
                 "/events/{eventId}/contestants/assign-bibs", ContestantsAssignBibsView
             ),
+            web.view("/events/{eventId}/contestants/search", ContestantsSearchView),
             web.view("/events/{eventId}/contestants/{contestantId}", ContestantView),
             web.view("/events/{eventId}/results", RaceclassResultsView),
             web.view("/events/{eventId}/results/{raceclass}", RaceclassResultView),
@@ -75,6 +78,16 @@ async def create_app() -> web.Application:
         )
         db = mongo[f"{DB_NAME}"]
         app["db"] = db
+
+        if CONFIG == "production":  # pragma: no cover
+            # Create text index for search on contestants:
+            try:
+                await db.contestants_collection.create_index(
+                    [("first_name", "text"), ("last_name", "text")],
+                    default_language="norwegian",
+                )
+            except Exception as e:
+                logging.error(f"Could not create index on contestants: {e}")
 
         yield
 

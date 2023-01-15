@@ -134,7 +134,7 @@ def contract_tests(session: Session) -> None:
         "-rA",
         *args,
         env={
-            "CONFIG": "test",
+            "CONFIG": "production",
             "ADMIN_USERNAME": "admin",
             "ADMIN_PASSWORD": "password",
             "COMPETITION_FORMAT_HOST_SERVER": "localhost",

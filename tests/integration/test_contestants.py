@@ -848,6 +848,37 @@ async def test_delete_all_contestants_in_event(
         assert len(contestants) == 0
 
 
+@pytest.mark.integration
+async def test_search_contestant_by_name(
+    client: _TestClient,
+    mocker: MockFixture,
+    token: MockFixture,
+    event: dict,
+    new_contestant: dict,
+) -> None:
+    """Should return 200."""
+    EVENT_ID = "event_id_1"
+    mocker.patch(
+        "event_service.adapters.contestants_adapter.ContestantsAdapter.search_contestants_in_event_by_name",  # noqa: B950
+        return_value=[new_contestant],
+    )
+
+    search_params = {"name": "Stant"}
+
+    headers = {
+        hdrs.CONTENT_TYPE: "application/json",
+        hdrs.AUTHORIZATION: f"Bearer {token}",
+    }
+
+    resp = await client.post(
+        f"/events/{EVENT_ID}/contestants/search", headers=headers, json=search_params
+    )
+    assert resp.status == 200
+    result = await resp.json()
+    assert type(result) is list
+    assert len(result) == 1
+
+
 # Bad cases
 # Event not found:
 @pytest.mark.integration
