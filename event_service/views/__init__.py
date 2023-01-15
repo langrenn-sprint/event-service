@@ -1,6 +1,7 @@
 """Package for all views."""
 from .contestants import ContestantsView, ContestantView
 from .contestants_commands import ContestantsAssignBibsView
+from .contestants_search import ContestantsSearchView
 from .event_format import EventFormatView
 from .events import EventsView, EventView
 from .events_commands import EventGenerateRaceclassesView
