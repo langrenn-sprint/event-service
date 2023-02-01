@@ -13,7 +13,9 @@ class RaceclassesAdapter(Adapter):
     ) -> List[dict]:  # pragma: no cover
         """Get all raceclasses function."""
         raceclasses: List = []
-        cursor = db.raceclasses_collection.find({"event_id": event_id})
+        cursor = db.raceclasses_collection.find({"event_id": event_id}).sort(
+            [("id", 1)]
+        )
         for raceclass in await cursor.to_list(None):
             raceclasses.append(raceclass)
         return raceclasses
@@ -49,7 +51,7 @@ class RaceclassesAdapter(Adapter):
                     {"name": name},
                 ]
             }
-        )
+        ).sort([("name", 1)])
         for raceclass in await cursor.to_list(None):
             raceclasses.append(raceclass)
         return raceclasses

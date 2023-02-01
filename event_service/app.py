@@ -7,6 +7,7 @@ from aiohttp import web
 from aiohttp_middlewares import cors_middleware, error_middleware
 import motor.motor_asyncio
 
+from .utils import db_utils
 from .views import (
     ContestantsAssignBibsView,
     ContestantsSearchView,
@@ -82,10 +83,7 @@ async def create_app() -> web.Application:
         if CONFIG == "production":  # pragma: no cover
             # Create text index for search on contestants:
             try:
-                await db.contestants_collection.create_index(
-                    [("event_id", 1), ("first_name", "text"), ("last_name", "text")],
-                    default_language="norwegian",
-                )
+                await db_utils.create_indexes(db)
             except Exception as e:
                 logging.error(f"Could not create index on contestants: {e}")
 

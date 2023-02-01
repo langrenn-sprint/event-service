@@ -21,7 +21,7 @@ from event_service.commands import (
 from event_service.services import (
     EventNotFoundException,
 )
-from .utils import extract_token_from_request
+from event_service.utils.jwt_utils import extract_token_from_request
 
 load_dotenv()
 HOST_SERVER = os.getenv("HOST_SERVER", "localhost")
