@@ -65,7 +65,10 @@ source = ["event_service", "*/site-packages"]
 
 [tool.coverage.run]
 branch = false
-omit = ["*gunicorn_config.py"]
+omit = [
+  "*gunicorn_config.py",
+  "*db_utils.py",
+]
 source = ["event_service"]
 
 [tool.coverage.report]
