@@ -106,7 +106,9 @@ class ContestantsAdapter(Adapter):
     ) -> List[dict]:  # pragma: no cover
         """Perform text-search after contestants function."""
         list: List[dict] = []
-        _result = db.contestants_collection.find({"$text": {"$search": f"{name}"}})
+        _result = db.contestants_collection.find(
+            {"$and": [{"event_id": event_id}, {"$text": {"$search": f"{name}"}}]}
+        ).sort([("bib", 1)])
         for contestant in await _result.to_list(None):  # we ask for all contestants
             list.append(contestant)
         return list
