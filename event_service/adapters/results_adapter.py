@@ -13,7 +13,9 @@ class ResultsAdapter(Adapter):
     ) -> List:  # pragma: no cover
         """Get all results function."""
         results: List = []
-        cursor = db.raceclass_results_collection.find({"event_id": event_id})
+        cursor = db.raceclass_results_collection.find({"event_id": event_id}).sort(
+            [("id", 1)]
+        )
         for result in await cursor.to_list(None):
             results.append(result)
         return results

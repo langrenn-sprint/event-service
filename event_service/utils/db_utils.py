@@ -22,3 +22,25 @@ async def create_indexes(db: Any) -> None:
         [("event_id", 1), ("first_name", "text"), ("last_name", "text")],
         default_language="norwegian",
     )
+    await db.contestants_collection.create_index(
+        [("event_id", 1), ("id", 1)], unique=True
+    )
+    await db.contestants_collection.create_index([("event_id", 1), ("bib", 1)])
+    await db.contestants_collection.create_index([("event_id", 1), ("minidrett_id", 1)])
+
+    # events_collection:
+    await db.events_collection.create_index([("id", 1)], unique=True)
+
+    # raceclasses_collection:
+    await db.raceclasses_collection.create_index(
+        [("event_id", 1), ("id", 1)], unique=True
+    )
+    await db.raceclasses_collection.create_index([("event_id", 1), ("name", 1)])
+
+    # raceclass_results_collection:
+    await db.raceclass_results_collection.create_index(
+        [("event_id", 1), ("id", 1)], unique=True
+    )
+    await db.raceclass_results_collection.create_index(
+        [("event_id", 1), ("raceclass", 1)]
+    )

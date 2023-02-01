@@ -13,7 +13,9 @@ class ContestantsAdapter(Adapter):
     ) -> List:  # pragma: no cover
         """Get all contestants function."""
         contestants: List = []
-        cursor = db.contestants_collection.find({"event_id": event_id})
+        cursor = db.contestants_collection.find({"event_id": event_id}).sort(
+            [("id", 1)]
+        )
         for contestant in await cursor.to_list(None):  # we ask for all contestants
             contestants.append(contestant)
         return contestants

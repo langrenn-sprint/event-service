@@ -11,7 +11,7 @@ class EventsAdapter(Adapter):
     async def get_all_events(cls: Any, db: Any) -> List:  # pragma: no cover
         """Get all events function."""
         events: List = []
-        cursor = db.events_collection.find()
+        cursor = db.events_collection.find().sort([("id", 1)])
         for event in await cursor.to_list(None):
             events.append(event)
         return events
