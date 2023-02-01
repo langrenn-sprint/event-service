@@ -83,7 +83,7 @@ async def create_app() -> web.Application:
             # Create text index for search on contestants:
             try:
                 await db.contestants_collection.create_index(
-                    [("first_name", "text"), ("last_name", "text")],
+                    [("event_id", 1), ("first_name", "text"), ("last_name", "text")],
                     default_language="norwegian",
                 )
             except Exception as e:
