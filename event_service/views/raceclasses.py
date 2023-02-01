@@ -22,7 +22,7 @@ from event_service.services import (
     RaceclassesService,
     RaceclassNotFoundException,
 )
-from .utils import extract_token_from_request
+from event_service.utils.jwt_utils import extract_token_from_request
 
 
 load_dotenv()
