@@ -1,6 +1,5 @@
 """Module for raceclasses service."""
 import logging
-import re
 from typing import Any, List, Optional
 import uuid
 
@@ -212,12 +211,3 @@ async def validate_raceclass(raceclass: Raceclass) -> None:
         raise IllegalValueException(
             f"Raceclass {raceclass.name} order value is not numeric."
         )
-
-    # Check that ageclass is valid:
-    if hasattr(raceclass, "ageclasses"):
-        p = re.compile(r"[JGMK]\s\d*\/?\d+?\sår")
-        for ageclass in raceclass.ageclasses:
-            if not p.match(ageclass):
-                raise IllegalValueException(
-                    f"Ageclass {ageclass} is not valid. Must be of the form 'J 12 år' or 'J 12/13 år'."  # noqa: B950
-                )
