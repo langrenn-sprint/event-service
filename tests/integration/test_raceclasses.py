@@ -696,7 +696,7 @@ async def test_update_raceclass_with_invalid_ageclass_value(
         )
         assert resp.status == 422
 
-        
+
 @pytest.mark.integration
 async def test_create_raceclass_adapter_fails(
     client: _TestClient,
