@@ -98,7 +98,12 @@ def _create_raceclass_name(contestant: Contestant) -> str:
     """Helper function to create name of raceclass."""
     name = contestant.ageclass.replace(" ", "")
     name = name.replace("Menn", "M")
+    name = name.replace("Herrer", "M")
     name = name.replace("Kvinner", "K")
+    name = name.replace("Damer", "K")
+    name = name.replace("Para", "P")
+    name = name.replace("senior", "S")
+    name = name.replace("Senior", "S")
     name = name.replace("junior", "J")
     name = name.replace("Junior", "J")
     name = name.replace("Felles", "F")
