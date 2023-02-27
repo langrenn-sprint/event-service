@@ -78,7 +78,7 @@ class ContestantsService:
         if len(raceclasses) == 1:
             pass
         else:
-            raise RaceclassNotFoundException(f'Raceclass "{raceclass}" not found.')
+            raise RaceclassNotFoundException(f'Raceclass "{raceclass!r}" not found.')
 
         _raceclass: Dict = raceclasses[0]
         # Then filter contestants on ageclasses:
@@ -401,11 +401,8 @@ async def _contestant_exist(
 async def _validate_contestant(db: Any, event_id: str, contestant: Contestant) -> None:
     """Validate contestant."""
     # Check that ageclass is valid:
-    p = re.compile(r"[JGMK]\s\d*\/?\d+?\sår")
-    if not p.match(contestant.ageclass):
-        raise IllegalValueException(
-            f"Ageclass {contestant.ageclass} is not valid. Must be of the form 'J 12 år' or 'J 12/13 år'."  # noqa: B950
-        )
+    await validate_ageclass(contestant.ageclass)
+
     # Check that bib is in use by another contestant:
     if await _bib_in_use_by_another_contestant(db, event_id, contestant):
         raise BibAlreadyInUseException(
@@ -430,3 +427,20 @@ async def _bib_in_use_by_another_contestant(
     if _contestant["id"] == contestant.id:
         return False
     return True
+
+
+async def validate_ageclass(ageclass: str) -> None:
+    """Validator function for raceclasses."""
+    # Check that ageclass is valid against following regexes:
+    p1 = re.compile(r"(?i)([JGMK]\s\d*\/?\d+?\s?(år)?)")
+    p2 = re.compile(r"(?i)((Kvinner|Menn) (junior|senior))")
+    p3 = re.compile(r"(?i)((Felles))")
+    p4 = re.compile(r"(?i)(Para)")
+
+    regexes = [p1, p2, p3, p4]
+
+    pattern = re.compile("|".join([r.pattern for r in regexes]))
+    if not pattern.match(ageclass):
+        raise IllegalValueException(
+            f"Ageclass {ageclass} is not valid. Must be of the form 'J 12 år' or 'J 12/13 år'."  # noqa: B950
+        )

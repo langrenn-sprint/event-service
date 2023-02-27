@@ -1,7 +1,7 @@
 """Module for contestants service."""
 from typing import Any
 
-from event_service.models import Contestant, Raceclass
+from event_service.models import Raceclass
 from event_service.services import (
     ContestantsService,
     EventNotFoundException,
@@ -57,7 +57,7 @@ class EventsCommands:
             # If not found, we create the raceclass:
             else:
                 new_raceclass = Raceclass(
-                    name=_create_raceclass_name(_c),
+                    name=_create_raceclass_name(_c.ageclass),
                     ageclasses=[_c.ageclass],
                     event_id=event_id,
                     no_of_contestants=1,
@@ -94,9 +94,9 @@ class EventsCommands:
 
 
 # helpers
-def _create_raceclass_name(contestant: Contestant) -> str:
+def _create_raceclass_name(ageclass: str) -> str:
     """Helper function to create name of raceclass."""
-    name = contestant.ageclass.replace(" ", "")
+    name = ageclass.replace(" ", "")
     name = name.replace("Menn", "M")
     name = name.replace("Herrer", "M")
     name = name.replace("Kvinner", "K")

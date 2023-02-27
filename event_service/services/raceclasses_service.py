@@ -1,11 +1,11 @@
 """Module for raceclasses service."""
 import logging
-import re
 from typing import Any, List, Optional
 import uuid
 
 from event_service.adapters import RaceclassesAdapter
 from event_service.models import Raceclass
+from .contestants_service import validate_ageclass
 from .events_service import EventNotFoundException, EventsService
 from .exceptions import IllegalValueException, RaceclassNotFoundException
 
@@ -215,9 +215,8 @@ async def validate_raceclass(raceclass: Raceclass) -> None:
 
     # Check that ageclass is valid:
     if hasattr(raceclass, "ageclasses"):
-        p = re.compile(r"[JGMK]\s\d*\/?\d+?\sår")
         for ageclass in raceclass.ageclasses:
-            if not p.match(ageclass):
-                raise IllegalValueException(
-                    f"Ageclass {ageclass} is not valid. Must be of the form 'J 12 år' or 'J 12/13 år'."  # noqa: B950
-                )
+            try:
+                await validate_ageclass(ageclass)
+            except IllegalValueException as e:
+                raise e from e
