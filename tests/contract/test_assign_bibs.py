@@ -117,7 +117,6 @@ async def test_assign_bibs(
     }
 
     async with ClientSession() as session:
-
         # ARRANGE #
 
         # First we need to assert that we have an event:

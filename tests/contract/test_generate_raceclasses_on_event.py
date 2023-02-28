@@ -109,7 +109,6 @@ async def test_generate_raceclasses(
     }
 
     async with ClientSession() as session:
-
         # First we need to find assert that we have an event:
         url = f"{http_service}/events/{event_id}"
         async with session.get(url) as response:

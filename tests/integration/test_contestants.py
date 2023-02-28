@@ -560,7 +560,6 @@ async def test_create_contestants_csv_good_case_octet_stream(
     )
 
     with open("tests/files/contestants_G11.csv", "rb") as f:
-
         headers = {
             hdrs.AUTHORIZATION: f"Bearer {token}",
         }
@@ -1005,7 +1004,6 @@ async def test_create_contestants_csv_octet_stream_event_not_found(
     )
 
     with open("tests/files/contestants_G11.csv", "rb") as f:
-
         headers = {
             hdrs.AUTHORIZATION: f"Bearer {token}",
         }

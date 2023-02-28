@@ -59,6 +59,7 @@ def clean(session: Session) -> None:
     )
     session.run(
         "rm",
+        "-f",
         ".coverage",
         external=True,
     )
@@ -173,7 +174,6 @@ def lint(session: Session) -> None:
         "flake8-import-order",
         "darglint",
         "flake8-assertive",
-        "flake8-eradicate",
     )
     session.run("flake8", *args)
 
