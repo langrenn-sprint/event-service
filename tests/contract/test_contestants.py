@@ -382,7 +382,6 @@ async def test_get_all_contestants_in_given_event_by_bib(
     }
 
     async with ClientSession() as session:
-
         # Also we need to set order for all raceclasses:
         url = f"{http_service}/events/{event_id}/raceclasses"
         async with session.get(url) as response:

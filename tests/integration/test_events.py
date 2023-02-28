@@ -215,6 +215,7 @@ async def test_delete_event_by_id(
 
 # Bad cases
 
+
 # Mandatory properties missing at create and update:
 @pytest.mark.integration
 async def test_create_event_missing_mandatory_property(

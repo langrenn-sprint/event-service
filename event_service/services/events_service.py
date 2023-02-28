@@ -160,16 +160,16 @@ async def validate_event(db: Any, event: Event) -> None:  # noqa: C901
             )
         except CompetitionFormatsAdapterException as e:
             raise CompetitionFormatNotFoundException(
-                f'Competition format "{event.competition_format}" not found.'
+                f'Competition format "{event.competition_format!r}" not found.'
             ) from e
 
         if len(competition_formats) == 1:
             pass
         elif len(competition_formats) == 0:
             raise CompetitionFormatNotFoundException(
-                f'Competition_format "{event.competition_format}" for event not found.'
+                f'Competition_format "{event.competition_format!r}" for event not found.'
             ) from None
         else:
             raise CompetitionFormatNotFoundException(
-                f'Competition_format "{event.competition_format}" for event is ambigous.'
+                f'Competition_format "{event.competition_format!r}" for event is ambigous.'
             ) from None
