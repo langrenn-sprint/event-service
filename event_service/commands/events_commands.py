@@ -79,7 +79,7 @@ class EventsCommands:
         )
         _raceclasses_sorted = sorted(
             raceclasses,
-            key=lambda k: (int(k.name[1:].split("/")[0]), k.name[:1]),
+            key=lambda k: (k.name[1:].split("/")[0], k.name[:1]),
             reverse=True,
         )
         order: int = 1

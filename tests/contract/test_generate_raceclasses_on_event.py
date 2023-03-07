@@ -46,7 +46,7 @@ async def token(http_service: Any) -> str:
     return body["token"]
 
 
-@pytest.fixture(scope="module", autouse=True)
+@pytest.fixture(scope="function", autouse=True)
 @pytest.mark.asyncio
 async def clear_db() -> AsyncGenerator:
     """Delete all events before we start."""
@@ -68,7 +68,7 @@ async def clear_db() -> AsyncGenerator:
         raise error
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="function")
 async def event_id(
     http_service: Any, token: MockFixture, clear_db: AsyncGenerator
 ) -> Optional[str]:
@@ -259,4 +259,75 @@ async def test_generate_raceclasses(
             assert sorted_list[21]["name"] == "M19/20"
             assert sorted_list[21]["no_of_contestants"] == len(
                 [c for c in contestants if c["ageclass"] == "M 19/20 år"]
+            )
+
+
+@pytest.mark.contract
+@pytest.mark.asyncio
+async def test_generate_raceclasses_ageclasses_all_literals(
+    http_service: Any, token: MockFixture, event_id: str
+) -> None:
+    """Should return 201 created and a location header with url to raceclasses."""
+    headers = {
+        hdrs.AUTHORIZATION: f"Bearer {token}",
+    }
+
+    async with ClientSession() as session:
+        # First we need to find assert that we have an event:
+        url = f"{http_service}/events/{event_id}"
+        async with session.get(url) as response:
+            assert response.status == 200
+
+        # Then we add contestants to event:
+        url = f"{http_service}/events/{event_id}/contestants"
+        files = {
+            "file": open("tests/files/contestants_ageclass_all_literals.csv", "rb")
+        }
+        async with session.post(url, headers=headers, data=files) as response:
+            assert response.status == 200
+
+        # We get the list of contestants:
+        url = f"{http_service}/events/{event_id}/contestants"
+        async with session.get(url, headers=headers) as response:
+            assert response.status == 200
+            contestants = await response.json()
+
+        # Finally raceclasses are generated:
+        url = f"{http_service}/events/{event_id}/generate-raceclasses"
+        async with session.post(url, headers=headers) as response:
+            if response.status != 201:
+                body = await response.json()
+            assert response.status == 201, body
+            assert f"/events/{event_id}/raceclasses" in response.headers[hdrs.LOCATION]
+
+        # We check that 22 raceclasses are actually created:
+        url = response.headers[hdrs.LOCATION]
+        async with session.get(url) as response:
+            assert response.status == 200
+            raceclasses = await response.json()
+            assert "application/json" in response.headers[hdrs.CONTENT_TYPE]
+            assert type(raceclasses) is list
+
+            # Check that we have 22+2 raceclasses:
+            assert len(raceclasses) == 3
+
+            # Check sum of contestants is equal to total no of contestants:
+            assert sum(item["no_of_contestants"] for item in raceclasses) == len(
+                contestants
+            )
+
+            # Check that we have all raceclasses and that sum pr class is correct:
+            sorted_list = sorted(raceclasses, key=lambda k: k["name"])
+
+            assert sorted_list[0]["name"] == "J9"
+            assert sorted_list[0]["no_of_contestants"] == len(
+                [c for c in contestants if c["ageclass"] == "J 9 år"]
+            )
+            assert sorted_list[1]["name"] == "KJ"
+            assert sorted_list[1]["no_of_contestants"] == len(
+                [c for c in contestants if c["ageclass"] == "Kvinner junior"]
+            )
+            assert sorted_list[2]["name"] == "MJ"
+            assert sorted_list[2]["no_of_contestants"] == len(
+                [c for c in contestants if c["ageclass"] == "Menn junior"]
             )
