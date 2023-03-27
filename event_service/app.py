@@ -85,7 +85,7 @@ async def create_app() -> web.Application:
             try:
                 await db_utils.create_indexes(db)
             except Exception as e:
-                logging.error(f"Could not create index on contestants: {e}")
+                logging.error(f"Could not create index on contestants: {type(e)}: {e}")
 
         yield
 
