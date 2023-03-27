@@ -53,7 +53,47 @@ In future versions:
 
 Look to the [openAPI specification](./specification.yaml) for the details.
 
-## Running the API locally
+## Develop and run locally
+
+### Requirements
+
+- [pyenv](https://github.com/pyenv/pyenv) (recommended)
+- [poetry](https://python-poetry.org/)
+- [nox](https://nox.thea.codes/en/stable/)
+
+```shell
+% pipx install nox
+% pipx install poetry
+% pipx inject nox nox-poetry
+```
+
+### Install software
+
+```shell
+% git clone https://github.com/langrenn-sprint/race-service.git
+% cd race-service
+% pyenv install 3.11.2
+% pyenv local 3.11.2 3.10.9
+% poetry install
+```
+
+### Environment variables
+
+An example .env file for local development:
+
+```Shell
+JWT_SECRET=secret
+JWT_EXP_DELTA_SECONDS=3600
+ADMIN_USERNAME=admin
+ADMIN_PASSWORD=password
+USERS_HOST_SERVER=localhost
+USERS_HOST_PORT=8086
+DB_USER=event-service
+DB_PASSWORD=password
+LOGGING_LEVEL=DEBUG
+```
+
+### Running the API locally
 
 Start the server locally:
 
@@ -61,13 +101,13 @@ Start the server locally:
 % poetry run adev runserver -p 8080 --aux-port 8089 event_service
 ```
 
-## Running the API in a wsgi-server (gunicorn)
+### Running the API in a wsgi-server (gunicorn)
 
 ```Shell
 % poetry run gunicorn event_service:create_app --bind localhost:8080 --worker-class aiohttp.GunicornWebWorker
 ```
 
-## Running the wsgi-server in Docker
+### Running the wsgi-server in Docker
 
 To build and run the api in a Docker container:
 
@@ -82,7 +122,7 @@ The easier way would be with docker-compose:
 docker-compose up --build
 ```
 
-## Running tests
+### Running tests
 
 We use [pytest](https://docs.pytest.org/en/latest/) for contract testing.
 
@@ -102,20 +142,4 @@ To run tests with logging, do:
 
 ```Shell
 % nox -s integration_tests -- --log-cli-level=DEBUG
-```
-
-## Environment variables
-
-An example .env file for local development:
-
-```Shell
-JWT_SECRET=secret
-JWT_EXP_DELTA_SECONDS=3600
-ADMIN_USERNAME=admin
-ADMIN_PASSWORD=password
-USERS_HOST_SERVER=localhost
-USERS_HOST_PORT=8086
-DB_USER=event-service
-DB_PASSWORD=password
-LOGGING_LEVEL=DEBUG
 ```
