@@ -432,15 +432,9 @@ async def _bib_in_use_by_another_contestant(
 async def validate_ageclass(ageclass: str) -> None:
     """Validator function for raceclasses."""
     # Check that ageclass is valid against following regexes:
-    p1 = re.compile(r"(?i)([JGMK]\s\d*\/?\d+?\s?(år)?)")
-    p2 = re.compile(r"(?i)((Kvinner|Menn) (junior|senior))")
-    p3 = re.compile(r"(?i)((Felles))")
-    p4 = re.compile(r"(?i)(Para)")
-
-    regexes = [p1, p2, p3, p4]
-
-    pattern = re.compile("|".join([r.pattern for r in regexes]))
+    regex = r"(?i)([JGMK]\s\d*\/?\d+?\s?(år)?)|((Kvinner|Menn) (junior|senior))|((Felles))|(Para)"  # noqa: B950
+    pattern = re.compile(regex)
     if not pattern.match(ageclass):
         raise IllegalValueException(
-            f"Ageclass {ageclass} is not valid. Must be of the form 'J 12 år' or 'J 12/13 år'."  # noqa: B950
+            f"Ageclass {ageclass} is not valid. Must be of the form 'J 12 år', 'J 12/13 år', 'Kvinner junior', 'Felles' or 'Para'."  # noqa: B950
         )
