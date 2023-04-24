@@ -1,4 +1,5 @@
 """Module for contestants service."""
+from datetime import datetime
 from io import StringIO
 import logging
 import re
@@ -229,6 +230,7 @@ class ContestantsService:
             "Org.tilhørighet",
             "Krets/region",
             "Team",
+            "Betalt/påmeldt dato",
         ]
         df = pd.read_csv(
             StringIO(contestants),
@@ -252,6 +254,7 @@ class ContestantsService:
             "club",
             "region",
             "team",
+            "registration_time",
         ]
 
         # Need to replace nans with None:
@@ -272,9 +275,14 @@ class ContestantsService:
             _c["event_id"] = event_id  # type: ignore
             contestant_id = create_id()
             _c["id"] = contestant_id  # type: ignore
-            contestant = Contestant.from_dict(_c)
             # Validate contestant:
             try:
+                # datetime to string in isoformat:
+                if _c["registration_time"]:  # type: ignore
+                    _c["registration_time"] = datetime.strptime(  # type: ignore
+                        _c["registration_time"], "%d.%m.%Y %H:%M:%S"  # type: ignore
+                    ).isoformat()
+                contestant = Contestant.from_dict(_c)
                 await _validate_contestant(db, event_id, contestant)
 
                 # insert new contestant

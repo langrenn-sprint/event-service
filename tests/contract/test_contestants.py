@@ -116,6 +116,7 @@ async def contestant(event_id: str) -> dict:
         "team": "Team Kollen",
         "email": "post@example.com",
         "event_id": event_id,
+        "registration_time": "2021-11-08T22:06:30",
     }
 
 
