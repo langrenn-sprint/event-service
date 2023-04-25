@@ -175,6 +175,7 @@ async def test_get_contestant_by_id(
     assert body["club"] == contestant["club"]
     assert body["team"] == contestant["team"]
     assert body["email"] == contestant["email"]
+    assert body["registration_time"] == contestant["registration_time"]
     assert body["event_id"] == event_id
 
 
