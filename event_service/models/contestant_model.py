@@ -1,9 +1,10 @@
 """Contestant data class module."""
 from dataclasses import dataclass, field
-from datetime import date
+from datetime import date, datetime
 from typing import Optional
 
-from dataclasses_json import DataClassJsonMixin
+from dataclasses_json import config, DataClassJsonMixin
+from marshmallow.fields import DateTime
 
 
 @dataclass
@@ -19,6 +20,13 @@ class Contestant(DataClassJsonMixin):
     club: str
     event_id: str
     email: str
+    registration_time: datetime = field(
+        metadata=config(
+            encoder=datetime.isoformat,
+            decoder=datetime.fromisoformat,
+            mm_field=DateTime(format="iso"),
+        )
+    )
     team: Optional[str] = field(default=None)
     minidrett_id: Optional[str] = field(default=None)
     id: Optional[str] = field(default=None)
