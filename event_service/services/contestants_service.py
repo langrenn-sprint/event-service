@@ -1,4 +1,5 @@
 """Module for contestants service."""
+from datetime import datetime
 from io import StringIO
 import logging
 import re
@@ -229,6 +230,7 @@ class ContestantsService:
             "Org.tilhørighet",
             "Krets/region",
             "Team",
+            "Betalt/påmeldt dato",
         ]
         df = pd.read_csv(
             StringIO(contestants),
@@ -252,6 +254,7 @@ class ContestantsService:
             "club",
             "region",
             "team",
+            "registration_time",
         ]
 
         # Need to replace nans with None:
@@ -272,9 +275,19 @@ class ContestantsService:
             _c["event_id"] = event_id  # type: ignore
             contestant_id = create_id()
             _c["id"] = contestant_id  # type: ignore
-            contestant = Contestant.from_dict(_c)
             # Validate contestant:
             try:
+                # datetime to string in isoformat:
+                try:
+                    if _c["registration_time"]:  # type: ignore
+                        _c["registration_time"] = datetime.strptime(  # type: ignore
+                            _c["registration_time"], "%d.%m.%Y %H:%M:%S"  # type: ignore
+                        ).isoformat()
+                except ValueError as e:
+                    raise IllegalValueException(
+                        f'registration_time in "{_c!r}" has invalid datetime format".'
+                    ) from e
+                contestant = Contestant.from_dict(_c)
                 await _validate_contestant(db, event_id, contestant)
 
                 # insert new contestant
@@ -309,10 +322,8 @@ class ContestantsService:
                             f"reason: {_result}: {contestant.to_dict()}"
                         )
             except IllegalValueException as e:
-                logging.error(
-                    f"Failed to create contestant with {contestant.to_dict()}. {e}"
-                )
-                result["failures"].append(f"reason: {e}: {contestant.to_dict()}")
+                logging.error(f"Failed to create contestant with {_c}. {e}")
+                result["failures"].append(f"reason: {e}: {_c}")
                 continue
 
         return result
@@ -334,7 +345,11 @@ class ContestantsService:
 
     @classmethod
     async def update_contestant(
-        cls: Any, db: Any, event_id: str, contestant_id: str, contestant: Contestant
+        cls: Any,
+        db: Any,
+        event_id: str,
+        contestant_id: str,
+        contestant: Contestant,
     ) -> Optional[str]:
         """Update contestant function."""
         # get old document

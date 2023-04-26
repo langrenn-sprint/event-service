@@ -104,6 +104,7 @@ CONTESTANT_LIST = [
         "team": "Team Kollen",
         "email": "post@example.com",
         "event_id": "ref_to_event",
+        "registration_time": "2021-08-31T12:00:00",
     },
     {
         "id": "99999999-99999-9999-9999-99999999999",
@@ -117,6 +118,7 @@ CONTESTANT_LIST = [
         "team": "Team Kollen",
         "email": "post@example.com",
         "event_id": "ref_to_event",
+        "registration_time": "2021-08-31T12:00:00",
     },
 ]
 

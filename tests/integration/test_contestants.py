@@ -49,6 +49,7 @@ async def new_contestant() -> dict:
         "team": "Team Kollen",
         "email": "post@example.com",
         "event_id": "ref_to_event",
+        "registration_time": "2021-08-31T12:00:00",
     }
 
 
@@ -68,6 +69,7 @@ async def contestant() -> dict:
         "email": "post@example.com",
         "event_id": "ref_to_event",
         "bib": 1,
+        "registration_time": "2021-08-31T12:00:00",
     }
 
 
@@ -307,6 +309,65 @@ async def test_create_contestants_csv_minidrett_id_existing_good_case(
         assert body["created"] == 0
         assert len(body["updated"]) > 0
         assert len(body["failures"]) == 0
+        assert body["total"] == body["created"] + len(body["updated"]) + len(
+            body["failures"]
+        )
+
+
+@pytest.mark.integration
+async def test_create_contestants_csv_invalid_registration_date_good_case(
+    client: _TestClient,
+    mocker: MockFixture,
+    token: MockFixture,
+    event: dict,
+    new_contestant: dict,
+) -> None:
+    """Should return 200 OK and simple result report in body."""
+    EVENT_ID = "event_id_1"
+    CONTESTANT_ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
+    mocker.patch(
+        "event_service.adapters.events_adapter.EventsAdapter.get_event_by_id",  # noqa: B950
+        return_value=event,
+    )
+    mocker.patch(
+        "event_service.services.contestants_service.create_id",
+        return_value=CONTESTANT_ID,
+    )
+    mocker.patch(
+        "event_service.adapters.contestants_adapter.ContestantsAdapter.get_contestant_by_minidrett_id",  # noqa: B950
+        return_value={"id": CONTESTANT_ID},
+    )
+    mocker.patch(
+        "event_service.adapters.contestants_adapter.ContestantsAdapter.get_contestant_by_name",  # noqa: B950
+        return_value={"id": CONTESTANT_ID},
+    )
+    mocker.patch(
+        "event_service.adapters.contestants_adapter.ContestantsAdapter.update_contestant",  # noqa: B950
+        return_value=CONTESTANT_ID,
+    )
+
+    files = {
+        "file": open("tests/files/contestants_G11_invalid_registration_time.csv", "rb")
+    }
+
+    headers = {
+        hdrs.AUTHORIZATION: f"Bearer {token}",
+    }
+    with aioresponses(passthrough=["http://127.0.0.1"]) as m:
+        m.post("http://example.com:8081/authorize", status=204)
+        resp = await client.post(
+            f"/events/{EVENT_ID}/contestants", headers=headers, data=files
+        )
+        assert resp.status == 200
+
+        body = await resp.json()
+        print(f"body: {body}")
+        assert type(body) is dict
+
+        assert body["total"] > 0
+        assert body["created"] == 0
+        assert len(body["updated"]) > 0
+        assert len(body["failures"]) == 1
         assert body["total"] == body["created"] + len(body["updated"]) + len(
             body["failures"]
         )
@@ -615,6 +676,7 @@ async def test_get_contestant_by_id(
         assert body["team"] == contestant["team"]
         assert body["email"] == contestant["email"]
         assert body["event_id"] == contestant["event_id"]
+        assert body["registration_time"] == contestant["registration_time"]
 
 
 @pytest.mark.integration
