@@ -33,6 +33,22 @@ def token_unsufficient_role() -> str:
 
 
 @pytest.fixture
+async def event_with_id() -> Dict[str, str]:
+    """An event object for testing."""
+    return {
+        "id": "290e70d5-0933-4af0-bb53-remote",
+        "name": "Oslo Skagen sprint",
+        "competition_format": "Individual sprint",
+        "date_of_event": "2021-08-31",
+        "time_of_event": "09:00:00",
+        "timezone": "Europe/Oslo",
+        "organiser": "Lyn Ski",
+        "webpage": "https://example.com",
+        "information": "Testarr for å teste den nye løysinga.",
+    }
+
+
+@pytest.fixture
 async def event() -> Dict[str, str]:
     """An event object for testing."""
     return {
@@ -86,6 +102,44 @@ async def test_create_event(
     )
 
     request_body = event
+
+    headers = {
+        hdrs.CONTENT_TYPE: "application/json",
+        hdrs.AUTHORIZATION: f"Bearer {token}",
+    }
+
+    with aioresponses(passthrough=["http://127.0.0.1"]) as m:
+        m.post("http://example.com:8081/authorize", status=204)
+        resp = await client.post("/events", headers=headers, json=request_body)
+        assert resp.status == 201
+        assert f"/events/{ID}" in resp.headers[hdrs.LOCATION]
+
+
+@pytest.mark.integration
+async def test_create_event_with_input_id(
+    client: _TestClient,
+    mocker: MockFixture,
+    token: MockFixture,
+    event_with_id: dict,
+    competition_format: dict,
+) -> None:
+    """Should return Created, location header."""
+    ID = "290e70d5-0933-4af0-bb53-remote"
+    mocker.patch(
+        "event_service.adapters.events_adapter.EventsAdapter.create_event",
+        return_value=ID,
+    )
+    mocker.patch(
+        "event_service.adapters.events_adapter.EventsAdapter.get_event_by_id",
+        return_value="",  # type: ignore
+    )
+
+    mocker.patch(
+        "event_service.adapters.competition_formats_adapter.CompetitionFormatsAdapter.get_competition_formats_by_name",  # noqa: B950
+        return_value=[competition_format],
+    )
+
+    request_body = event_with_id
 
     headers = {
         hdrs.CONTENT_TYPE: "application/json",
@@ -282,19 +336,16 @@ async def test_create_event_competition_formats_adapter_raises_exception(
 
 
 @pytest.mark.integration
-async def test_create_event_with_input_id(
-    client: _TestClient, mocker: MockFixture, token: MockFixture
+async def test_create_event_with_input_duplicate_id(
+    client: _TestClient, mocker: MockFixture, token: MockFixture, event_with_id: dict
 ) -> None:
     """Should return 422 HTTPUnprocessableEntity."""
-    ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
+    ID = "290e70d5-0933-4af0-bb53-remote"
     mocker.patch(
-        "event_service.services.events_service.create_id",
-        return_value=ID,
+        "event_service.adapters.events_adapter.EventsAdapter.get_event_by_id",
+        return_value={"id": ID} | event_with_id,  # type: ignore
     )
-    mocker.patch(
-        "event_service.adapters.events_adapter.EventsAdapter.create_event",
-        return_value=ID,
-    )
+
     request_body = {"id": ID, "name": "Oslo Skagen sprint Oppdatert"}
     headers = {
         hdrs.CONTENT_TYPE: "application/json",
