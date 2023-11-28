@@ -242,7 +242,7 @@ class ContestantsService:
             usecols=cols,
         )
 
-        df.columns = [
+        df.columns = [  # type: ignore
             "ageclass",
             "distance",
             "last_name",
@@ -260,7 +260,7 @@ class ContestantsService:
         # Need to replace nans with None:
         df = df.replace({np.nan: None})
 
-        contestants = df.to_dict("records")
+        contestants = df.to_dict("records")  # type: ignore
         # For every record, create contestant:
         # TODO: consider parallellizing this
         # create id

@@ -54,7 +54,7 @@ async def token(http_service: Any) -> str:
 @pytest.mark.asyncio
 async def clear_db() -> AsyncGenerator:
     """Clear db before and after tests."""
-    mongo = motor.motor_asyncio.AsyncIOMotorClient(
+    mongo = motor.motor_asyncio.AsyncIOMotorClient(  # type: ignore
         host=DB_HOST, port=DB_PORT, username=DB_USER, password=DB_PASSWORD
     )
     try:
