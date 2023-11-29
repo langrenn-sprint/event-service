@@ -78,7 +78,8 @@ class EventsService:
         else:
             # create id
             id = create_id()
-            event.id = id        # Validate new event:
+            event.id = id
+        # Validate new event:
         await validate_event(db, event)
         # insert new event
         new_event = event.to_dict()
