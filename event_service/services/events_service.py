@@ -69,13 +69,16 @@ class EventsService:
         Raises:
             IllegalValueException: input object has illegal values
         """
-        # Validation:
         if event.id:
-            raise IllegalValueException("Cannot create event with input id.") from None
-        # create id
-        id = create_id()
-        event.id = id
-        # Validate new event:
+            # Validate for duplicates
+            existing_event = await EventsAdapter.get_event_by_id(db, str(event.id))
+            if existing_event:
+                raise IllegalValueException(f"Event id {event.id} exists.") from None
+            id = event.id
+        else:
+            # create id
+            id = create_id()
+            event.id = id        # Validate new event:
         await validate_event(db, event)
         # insert new event
         new_event = event.to_dict()
