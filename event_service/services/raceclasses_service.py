@@ -199,20 +199,6 @@ class RaceclassesService:
 
 async def validate_raceclass(raceclass: Raceclass) -> None:
     """Validator function for raceclasses."""
-    # Validate `group` property:
-    # Check if raceclasses have only integers group values:
-    if not isinstance(raceclass.group, (int)):
-        raise IllegalValueException(
-            f"Raceclass {raceclass.name} group value is not numeric."
-        )
-
-    # Validate `order` property:
-    # Check if raceclasses have only integers order values:
-    if not isinstance(raceclass.order, (int)):
-        raise IllegalValueException(
-            f"Raceclass {raceclass.name} order value is not numeric."
-        )
-
     # Check that ageclass is valid:
     if hasattr(raceclass, "ageclasses"):
         for ageclass in raceclass.ageclasses:
