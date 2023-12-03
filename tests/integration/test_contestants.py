@@ -1223,7 +1223,7 @@ async def test_get_all_contestants_by_id_when_bib_has_been_set_to_noninteger(
     """Should return OK and a valid json body."""
     EVENT_ID = "event_id_1"
     contestant_2 = deepcopy(contestant)
-    contestant_2["bib"] = ""
+    contestant_2["bib"] = None
     mocker.patch(
         "event_service.adapters.contestants_adapter.ContestantsAdapter.get_all_contestants",  # noqa: B950
         return_value=[contestant, contestant_2],
