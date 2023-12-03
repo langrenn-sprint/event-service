@@ -1,5 +1,4 @@
 """Contract test cases for contestants."""
-import asyncio
 from datetime import date
 import logging
 import os
@@ -21,16 +20,8 @@ DB_USER = os.getenv("DB_USER")
 DB_PASSWORD = os.getenv("DB_PASSWORD")
 
 
-@pytest.fixture(scope="module")
-def event_loop(request: Any) -> Any:
-    """Redefine the event_loop fixture to have the same scope."""
-    loop = asyncio.get_event_loop_policy().new_event_loop()
-    yield loop
-    loop.close()
-
-
-@pytest.fixture(scope="module")
-@pytest.mark.asyncio
+@pytest.fixture(scope="module", autouse=True)
+@pytest.mark.asyncio(scope="module")
 async def token(http_service: Any) -> str:
     """Create a valid token."""
     url = f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/login"
@@ -49,10 +40,10 @@ async def token(http_service: Any) -> str:
 
 
 @pytest.fixture(scope="module", autouse=True)
-@pytest.mark.asyncio
+@pytest.mark.asyncio(scope="module")
 async def clear_db() -> AsyncGenerator:
     """Clear db before and after tests."""
-    mongo = motor.motor_asyncio.AsyncIOMotorClient(
+    mongo = motor.motor_asyncio.AsyncIOMotorClient(  # type: ignore
         host=DB_HOST, port=DB_PORT, username=DB_USER, password=DB_PASSWORD
     )
     try:
@@ -71,7 +62,7 @@ async def clear_db() -> AsyncGenerator:
 
 
 @pytest.fixture(scope="module")
-@pytest.mark.asyncio
+@pytest.mark.asyncio(scope="module")
 async def event_id(
     http_service: Any,
     token: MockFixture,
@@ -105,7 +96,7 @@ async def event_id(
 
 
 @pytest.mark.contract
-@pytest.mark.asyncio
+@pytest.mark.asyncio(scope="module")
 async def test_assign_bibs(
     http_service: Any,
     token: MockFixture,

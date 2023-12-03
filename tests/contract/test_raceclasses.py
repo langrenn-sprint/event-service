@@ -1,5 +1,4 @@
 """Contract test cases for ping."""
-import asyncio
 import logging
 import os
 from typing import Any, AsyncGenerator, Optional
@@ -22,15 +21,7 @@ DB_PASSWORD = os.getenv("DB_PASSWORD")
 
 
 @pytest.fixture(scope="module")
-def event_loop(request: Any) -> Any:
-    """Redefine the event_loop fixture to have the same scope."""
-    loop = asyncio.get_event_loop_policy().new_event_loop()
-    yield loop
-    loop.close()
-
-
-@pytest.fixture(scope="module")
-@pytest.mark.asyncio
+@pytest.mark.asyncio(scope="module")
 async def token(http_service: Any) -> str:
     """Create a valid token."""
     url = f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/login"
@@ -49,10 +40,10 @@ async def token(http_service: Any) -> str:
 
 
 @pytest.fixture(scope="module", autouse=True)
-@pytest.mark.asyncio
+@pytest.mark.asyncio(scope="module")
 async def clear_db() -> AsyncGenerator:
     """Delete all events before we start."""
-    mongo = motor.motor_asyncio.AsyncIOMotorClient(
+    mongo = motor.motor_asyncio.AsyncIOMotorClient(  # type: ignore
         host=DB_HOST, port=DB_PORT, username=DB_USER, password=DB_PASSWORD
     )
     try:
@@ -116,7 +107,7 @@ async def raceclass(event_id: str) -> dict:
 
 
 @pytest.mark.contract
-@pytest.mark.asyncio
+@pytest.mark.asyncio(scope="module")
 async def test_create_raceclass(
     http_service: Any, token: MockFixture, event_id: str, raceclass: dict
 ) -> None:
@@ -137,7 +128,7 @@ async def test_create_raceclass(
 
 
 @pytest.mark.contract
-@pytest.mark.asyncio
+@pytest.mark.asyncio(scope="module")
 async def test_get_all_raceclasses(
     http_service: Any, token: MockFixture, event_id: str
 ) -> None:
@@ -156,7 +147,7 @@ async def test_get_all_raceclasses(
 
 
 @pytest.mark.contract
-@pytest.mark.asyncio
+@pytest.mark.asyncio(scope="module")
 async def test_get_all_raceclasses_by_name(
     http_service: Any, token: MockFixture, event_id: str
 ) -> None:
@@ -177,7 +168,7 @@ async def test_get_all_raceclasses_by_name(
 
 
 @pytest.mark.contract
-@pytest.mark.asyncio
+@pytest.mark.asyncio(scope="module")
 async def test_get_all_raceclasses_by_ageclass_name(
     http_service: Any, token: MockFixture, event_id: str
 ) -> None:
@@ -202,7 +193,7 @@ async def test_get_all_raceclasses_by_ageclass_name(
 
 
 @pytest.mark.contract
-@pytest.mark.asyncio
+@pytest.mark.asyncio(scope="module")
 async def test_get_raceclass_by_id(
     http_service: Any, token: MockFixture, event_id: str, raceclass: dict
 ) -> None:
@@ -229,7 +220,7 @@ async def test_get_raceclass_by_id(
 
 
 @pytest.mark.contract
-@pytest.mark.asyncio
+@pytest.mark.asyncio(scope="module")
 async def test_update_raceclass(
     http_service: Any, token: MockFixture, event_id: str
 ) -> None:
@@ -263,7 +254,7 @@ async def test_update_raceclass(
 
 
 @pytest.mark.contract
-@pytest.mark.asyncio
+@pytest.mark.asyncio(scope="module")
 async def test_delete_raceclass(
     http_service: Any, token: MockFixture, event_id: str
 ) -> None:
@@ -285,7 +276,7 @@ async def test_delete_raceclass(
 
 
 @pytest.mark.contract
-@pytest.mark.asyncio
+@pytest.mark.asyncio(scope="module")
 async def test_delete_all_raceclasses(
     http_service: Any, token: MockFixture, event_id: str
 ) -> None:
