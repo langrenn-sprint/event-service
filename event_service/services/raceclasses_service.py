@@ -5,7 +5,6 @@ import uuid
 
 from event_service.adapters import RaceclassesAdapter
 from event_service.models import Raceclass
-from .contestants_service import validate_ageclass
 from .events_service import EventNotFoundException, EventsService
 from .exceptions import IllegalValueException, RaceclassNotFoundException
 
@@ -84,11 +83,6 @@ class RaceclassesService:
             raise IllegalValueException(
                 "Cannot create raceclass with input id."
             ) from None
-        # Validate raceclasses:
-        try:
-            await validate_raceclass(raceclass)
-        except IllegalValueException as e:
-            raise e from e
         # create id
         raceclass_id = create_id()
         raceclass.id = raceclass_id
@@ -163,11 +157,6 @@ class RaceclassesService:
             ) from None
         if raceclass.id != old_raceclass["id"]:
             raise IllegalValueException("Cannot change id for raceclass.") from None
-        # Validate raceclasses:
-        try:
-            await validate_raceclass(raceclass)
-        except IllegalValueException as e:
-            raise e from e
         # Everything ok, update:
         new_raceclass = raceclass.to_dict()
         result = await RaceclassesAdapter.update_raceclass(
@@ -193,16 +182,3 @@ class RaceclassesService:
         raise RaceclassNotFoundException(
             f"Raceclass with id {raceclass_id} not found"
         ) from None
-
-    # -- helper methods
-
-
-async def validate_raceclass(raceclass: Raceclass) -> None:
-    """Validator function for raceclasses."""
-    # Check that ageclass is valid:
-    if hasattr(raceclass, "ageclasses"):
-        for ageclass in raceclass.ageclasses:
-            try:
-                await validate_ageclass(ageclass)
-            except IllegalValueException as e:
-                raise e from e

@@ -2,7 +2,6 @@
 from datetime import datetime
 from io import StringIO
 import logging
-import re
 from typing import Any, Dict, List, Optional
 import uuid
 
@@ -415,9 +414,6 @@ async def _contestant_exist(
 
 async def _validate_contestant(db: Any, event_id: str, contestant: Contestant) -> None:
     """Validate contestant."""
-    # Check that ageclass is valid:
-    await validate_ageclass(contestant.ageclass)
-
     # Check that bib is in use by another contestant:
     if await _bib_in_use_by_another_contestant(db, event_id, contestant):
         raise BibAlreadyInUseException(
@@ -442,14 +438,3 @@ async def _bib_in_use_by_another_contestant(
     if _contestant["id"] == contestant.id:
         return False
     return True
-
-
-async def validate_ageclass(ageclass: str) -> None:
-    """Validator function for raceclasses."""
-    # Check that ageclass is valid against following regexes:
-    regex = r"(?i)([JGMK]\s\d*\/?\d+?\s?(år)?)|((Kvinner|Menn) (junior|senior))|((Felles))|(Para)"  # noqa: B950
-    pattern = re.compile(regex)
-    if not pattern.match(ageclass):
-        raise IllegalValueException(
-            f"Ageclass {ageclass} is not valid. Must be of the form 'J 12 år', 'J 12/13 år', 'Kvinner junior', 'Felles' or 'Para'."  # noqa: B950
-        )
