@@ -107,5 +107,7 @@ def _create_raceclass_name(ageclass: str) -> str:
     name = name.replace("junior", "J")
     name = name.replace("Junior", "J")
     name = name.replace("Felles", "F")
+    name = name.replace("Gutter", "G")
+    name = name.replace("Jenter", "J")
     name = name.replace("år", "")
     return name
