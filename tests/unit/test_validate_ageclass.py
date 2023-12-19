@@ -32,6 +32,30 @@ async def test_validate_ageclass_ageclass_combined() -> None:
 
 @pytest.mark.unit
 @pytest.mark.asyncio
+async def test_validate_ageclass_Gutter() -> None:
+    """Should not raise exception."""
+    ageclass = "Gutter 15 år"
+
+    try:
+        await validate_ageclass(ageclass)
+    except IllegalValueException:
+        pytest.fail("Should not raise IllegalValueException")
+
+
+@pytest.mark.unit
+@pytest.mark.asyncio
+async def test_validate_ageclass_Jenter() -> None:
+    """Should not raise exception."""
+    ageclass = "Jenter 15 år"
+
+    try:
+        await validate_ageclass(ageclass)
+    except IllegalValueException:
+        pytest.fail("Should not raise IllegalValueException")
+
+
+@pytest.mark.unit
+@pytest.mark.asyncio
 async def test_validate_ageclass_ageclass_Kvinner_junior() -> None:
     """Should raise not IllegalValueException."""
     ageclass = "Kvinner junior"

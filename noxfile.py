@@ -147,7 +147,7 @@ def contract_tests(session: Session) -> None:
             "DB_NAME": "events_test",
             "DB_USER": "event-service",
             "DB_PASSWORD": "password",
-            "LOGGING_LEVEL": "DEBUG",
+            "LOGGING_LEVEL": "INFO",
         },
     )
 

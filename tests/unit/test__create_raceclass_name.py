@@ -58,3 +58,21 @@ async def test__create_raceclass_name_Felles() -> None:
     raceclass_name = _create_raceclass_name("Felles")
 
     assert raceclass_name == "F"
+
+
+@pytest.mark.unit
+@pytest.mark.asyncio
+async def test__create_raceclass_name_Jenter_10_år() -> None:
+    """Should return "J10"."""
+    raceclass_name = _create_raceclass_name("Jenter 10 år")
+
+    assert raceclass_name == "J10"
+
+
+@pytest.mark.unit
+@pytest.mark.asyncio
+async def test__create_raceclass_name_Gutter_9_år() -> None:
+    """Should return "G9"."""
+    raceclass_name = _create_raceclass_name("Gutter 9 år")
+
+    assert raceclass_name == "G9"

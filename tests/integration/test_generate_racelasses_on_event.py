@@ -40,7 +40,7 @@ async def contestant() -> dict:
         "team": "Team Kollen",
         "email": "post@example.com",
         "event_id": "ref_to_event",
-        "registration_time": "2021-08-31T12:00:00",
+        "registration_date_time": "2021-08-31T12:00:00",
     }
 
 

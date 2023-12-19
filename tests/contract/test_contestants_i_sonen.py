@@ -108,7 +108,7 @@ async def contestant(event_id: str) -> dict:
         "team": "Team Kollen",
         "email": "post@example.com",
         "event_id": event_id,
-        "registration_time": "2021-11-08T22:06:30",
+        "registration_date_time": "2021-11-08T22:06:30",
     }
 
 
@@ -167,7 +167,7 @@ async def test_get_contestant_by_id(
     assert body["club"] == contestant["club"]
     assert body["team"] == contestant["team"]
     assert body["email"] == contestant["email"]
-    assert body["registration_time"] == contestant["registration_time"]
+    assert body["registration_date_time"] == contestant["registration_date_time"]
     assert body["event_id"] == event_id
 
 
@@ -225,7 +225,7 @@ async def test_delete_contestant(
 
 @pytest.mark.contract
 @pytest.mark.asyncio(scope="module")
-async def test_create_many_contestants_as_csv_file(
+async def test_create_many_contestants_as_csv_file_from_iSonen(
     http_service: Any,
     token: MockFixture,
     event_id: str,
@@ -237,7 +237,7 @@ async def test_create_many_contestants_as_csv_file(
     }
 
     # Send csv-file in request:
-    files = {"file": open("tests/files/contestants_all.csv", "rb")}
+    files = {"file": open("tests/files/contestants_iSonen.csv", "rb")}
     async with ClientSession() as session:
         async with session.delete(url) as response:
             pass
@@ -250,43 +250,9 @@ async def test_create_many_contestants_as_csv_file(
 
     assert len(body) > 0
 
-    assert body["total"] == 670
-    assert body["created"] == 668
-    assert len(body["updated"]) == 2
-    assert len(body["failures"]) == 0
-    assert body["total"] == body["created"] + len(body["updated"]) + len(
-        body["failures"]
-    )
-
-
-@pytest.mark.contract
-@pytest.mark.asyncio(scope="module")
-async def test_update_many_existing_contestants_as_csv_file(
-    http_service: Any,
-    token: MockFixture,
-    event_id: str,
-) -> None:
-    """Should return 200 OK and a report."""
-    url = f"{http_service}/events/{event_id}/contestants"
-    headers = {
-        hdrs.AUTHORIZATION: f"Bearer {token}",
-    }
-
-    # Send csv-file in request:
-    files = {"file": open("tests/files/contestants_G11.csv", "rb")}
-    async with ClientSession() as session:
-        async with session.post(url, headers=headers, data=files) as response:
-            status = response.status
-            body = await response.json()
-
-    assert status == 200
-    assert "application/json" in response.headers[hdrs.CONTENT_TYPE]
-
-    assert len(body) > 0
-
-    assert body["total"] == 3
-    assert body["created"] == 0
-    assert len(body["updated"]) == 3
+    assert body["total"] == 70
+    assert body["created"] == 70
+    assert len(body["updated"]) == 0
     assert len(body["failures"]) == 0
     assert body["total"] == body["created"] + len(body["updated"]) + len(
         body["failures"]
@@ -308,7 +274,7 @@ async def test_get_all_contestants_in_given_event(
     assert response.status == 200
     assert "application/json" in response.headers[hdrs.CONTENT_TYPE]
     assert type(contestants) is list
-    assert len(contestants) == 668
+    assert len(contestants) == 70
 
 
 @pytest.mark.contract
@@ -332,12 +298,12 @@ async def test_get_all_contestants_in_given_event_by_raceclass(
         async with session.get(url) as response:
             contestants = await response.json()
 
-    assert response.status == 200
+    assert response.status == 200, response
     assert "application/json" in response.headers[hdrs.CONTENT_TYPE]
     assert type(contestants) is list
-    assert len(contestants) == 26
+    assert len(contestants) == 1
     for contestant in contestants:
-        assert contestant["ageclass"] == "J 15 år"
+        assert contestant["ageclass"] == "Jenter 15"
 
 
 @pytest.mark.contract
@@ -350,7 +316,7 @@ async def test_get_all_contestants_in_given_event_by_ageclass(
         hdrs.AUTHORIZATION: f"Bearer {token}",
     }
     async with ClientSession() as session:
-        query_param = f'ageclass={quote("J 15 år")}'
+        query_param = f'ageclass={quote("Jenter 15")}'
         url = f"{http_service}/events/{event_id}/contestants"
         async with session.get(f"{url}?{query_param}", headers=headers) as response:
             contestants = await response.json()
@@ -358,9 +324,9 @@ async def test_get_all_contestants_in_given_event_by_ageclass(
     assert response.status == 200
     assert "application/json" in response.headers[hdrs.CONTENT_TYPE]
     assert type(contestants) is list
-    assert len(contestants) == 26
+    assert len(contestants) == 1
     for contestant in contestants:
-        assert contestant["ageclass"] == "J 15 år"
+        assert contestant["ageclass"] == "Jenter 15"
 
 
 @pytest.mark.contract
@@ -422,9 +388,9 @@ async def test_get_all_contestants_in_given_event_by_bib(
 async def test_search_contestant_by_name(
     http_service: Any, token: MockFixture, event_id: str
 ) -> None:
-    """Should return 204 No Content."""
+    """Should return 200 OK."""
     url = f"{http_service}/events/{event_id}/contestants/search"
-    body = {"name": "Bjørn"}
+    body = {"name": "Clara"}
     headers = {
         hdrs.AUTHORIZATION: f"Bearer {token}",
         hdrs.CONTENT_TYPE: "application/json",
@@ -437,7 +403,7 @@ async def test_search_contestant_by_name(
             assert response.status == 200, body
             contestants = await response.json()
 
-    assert len(contestants) == 2
+    assert len(contestants) == 1
 
 
 @pytest.mark.contract
