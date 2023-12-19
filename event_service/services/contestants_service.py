@@ -196,7 +196,7 @@ class ContestantsService:
         await ContestantsAdapter.delete_all_contestants(db, event_id)
 
     @classmethod
-    async def create_contestants(
+    async def create_contestants(  # noqa: C901
         cls: Any, db: Any, event_id: str, contestants: str
     ) -> dict:
         """Create contestants function.
@@ -211,51 +211,18 @@ class ContestantsService:
 
         Raises:
             EventNotFoundException: event does not exist
+            IllegalValueException: input object has illegal values
         """
         # First we have to check if the event exist:
         try:
             _ = await EventsService.get_event_by_id(db, event_id)
         except EventNotFoundException as e:
             raise e from e
-        # Parse str as csv:
-        cols = [
-            "Klasse",
-            "Øvelse",
-            "Etternavn",
-            "Fornavn",
-            "Kjønn",
-            "Fødselsdato",
-            "Idrettsnr",
-            "E-post",
-            "Org.tilhørighet",
-            "Krets/region",
-            "Team",
-            "Betalt/påmeldt dato",
-        ]
-        df = pd.read_csv(
-            StringIO(contestants),
-            sep=";",
-            encoding="utf-8",
-            dtype=str,
-            skiprows=2,
-            header=0,
-            usecols=cols,
-        )
 
-        df.columns = [
-            "ageclass",
-            "distance",
-            "last_name",
-            "first_name",
-            "gender",
-            "birth_date",
-            "minidrett_id",
-            "email",
-            "club",
-            "region",
-            "team",
-            "registration_time",
-        ]
+        try:
+            df = await parse_contestants(contestants)
+        except IllegalValueException as e:
+            raise e from e
 
         # Need to replace nans with None:
         df = df.replace({np.nan: None})
@@ -279,24 +246,24 @@ class ContestantsService:
             try:
                 # datetime to string in isoformat:
                 try:
-                    if _c["registration_time"]:  # type: ignore
-                        _c["registration_time"] = datetime.strptime(  # type: ignore
-                            _c["registration_time"], "%d.%m.%Y %H:%M:%S"  # type: ignore
+                    if _c["registration_date_time"]:  # type: ignore
+                        _c["registration_date_time"] = datetime.strptime(  # type: ignore
+                            _c["registration_date_time"], "%d.%m.%Y %H:%M:%S"  # type: ignore
                         ).isoformat()
                 except ValueError as e:
                     raise IllegalValueException(
-                        f'registration_time in "{_c!r}" has invalid datetime format".'
+                        f'registration_date_time in "{_c!r}" has invalid datetime format".'
                     ) from e
                 contestant = Contestant.from_dict(_c)
                 await _validate_contestant(db, event_id, contestant)
 
                 # insert new contestant
                 # Check if contestant exist. If so, update:
-                _contestant = await _contestant_exist(db, event_id, contestant)
-                if _contestant:
+                _existing_contestant = await _contestant_exist(db, event_id, contestant)
+                if _existing_contestant:
                     updated_contestant = contestant.to_dict()
                     _result = await ContestantsAdapter.update_contestant(
-                        db, event_id, _contestant["id"], updated_contestant
+                        db, event_id, _existing_contestant["id"], updated_contestant
                     )
                     logging.debug(
                         f"updated event_id/contestant_id: {event_id}/{contestant_id}"
@@ -392,7 +359,127 @@ class ContestantsService:
             f"Contestant with id {contestant_id} not found"
         ) from None
 
-    # -- helper methods
+
+# -- helper methods
+
+
+async def parse_contestants(contestants: str) -> pd.DataFrame:
+    """Parse contestants from csv."""
+    # We try to parse the contestants as csv, Sportsadmin format:
+    try:
+        df = await _parse_contestants_sportsadmin(contestants)
+        return df
+    except IllegalValueException:
+        # Try a iSonen format:
+        try:
+            df = await _parse_contestants_i_sonen(contestants)
+            return df
+        except IllegalValueException as e:
+            raise e from e
+
+
+async def _parse_contestants_sportsadmin(contestants: str) -> pd.DataFrame:
+    """Parse contestants from csv, Sportsadmin format."""
+    try:
+        cols = [
+            "Klasse",
+            "Øvelse",
+            "Etternavn",
+            "Fornavn",
+            "Kjønn",
+            "Fødselsdato",
+            "Idrettsnr",
+            "E-post",
+            "Org.tilhørighet",
+            "Krets/region",
+            "Team",
+            "Betalt/påmeldt dato",
+        ]
+        df = pd.read_csv(
+            StringIO(contestants),
+            sep=";",
+            encoding="utf-8",
+            dtype=str,
+            skiprows=2,
+            header=0,
+            usecols=cols,
+        )
+        df.columns = [
+            "ageclass",
+            "distance",
+            "last_name",
+            "first_name",
+            "gender",
+            "birth_date",
+            "minidrett_id",
+            "email",
+            "club",
+            "region",
+            "team",
+            "registration_date_time",
+        ]
+
+        return df
+
+    except ValueError as e:
+        raise IllegalValueException(
+            f"Failed to parse contestants. Please check format. Reason: {e}"
+        ) from e
+
+
+async def _parse_contestants_i_sonen(contestants: str) -> pd.DataFrame:
+    """Parse contestants from csv, iSonen format."""
+    try:
+        cols = [
+            "Fornavn",
+            "Etternavn",
+            "Kjønn",
+            "Fødselsdato",
+            "Person ID",
+            "E-post",
+            "Klubb",
+            "Krets/region",
+            "Team",
+            "Påmeldt dato",
+            "Påmeldt kl.",
+            "Klasse",
+            "Øvelse",
+        ]
+        df = pd.read_csv(
+            StringIO(contestants),
+            sep=";",
+            encoding="utf-8",
+            dtype=str,
+            header=0,
+            usecols=cols,
+        )
+        df.columns = [
+            "first_name",
+            "last_name",
+            "email",
+            "birth_date",
+            "gender",
+            "minidrett_id",
+            "club",
+            "region",
+            "ageclass",
+            "distance",
+            "team",
+            "registration_date",
+            "registration_time",
+        ]
+
+        # We need to combine registration_date and registration_time to one column:
+        df["registration_date_time"] = (
+            df["registration_date"] + " " + df["registration_time"] + ":00"
+        )
+
+        return df
+
+    except ValueError as e:
+        raise IllegalValueException(
+            f"Failed to parse contestants. Please check format. Reason: {e}"
+        ) from e
 
 
 async def _contestant_exist(
@@ -447,9 +534,29 @@ async def _bib_in_use_by_another_contestant(
 async def validate_ageclass(ageclass: str) -> None:
     """Validator function for raceclasses."""
     # Check that ageclass is valid against following regexes:
-    regex = r"(?i)([JGMK]\s\d*\/?\d+?\s?(år)?)|((Kvinner|Menn) (junior|senior))|((Felles))|(Para)"  # noqa: B950
-    pattern = re.compile(regex)
+    # regex = r"(?i)([JGMK]\s\d*\/?\d+?\s?(år)?)|((Kvinner|Menn) (junior|senior))|((Felles))|(Para)"  # noqa: B950
+    global_flags = r"(?i)"
+    regex_JGMK = r"([JGMK]\s\d*\/?\d+?\s?(år)?)"
+    regex_Gutter = r"(Gutter\s\d*\/?\d+?\s?(år)?)"
+    regex_Jenter = r"(Jenter\s\d*\/?\d+?\s?(år)?)"
+    regex_Kvinner_Menn = r"((Kvinner|Menn) (junior|senior))"
+    regex_Felles = r"((Felles))"
+    regex_Para = r"((Para))"
+    pattern = re.compile(
+        global_flags
+        + regex_JGMK
+        + "|"
+        + regex_Gutter
+        + "|"
+        + regex_Jenter
+        + "|"
+        + regex_Kvinner_Menn
+        + "|"
+        + regex_Felles
+        + "|"
+        + regex_Para
+    )
     if not pattern.match(ageclass):
         raise IllegalValueException(
-            f"Ageclass {ageclass} is not valid. Must be of the form 'J 12 år', 'J 12/13 år', 'Kvinner junior', 'Felles' or 'Para'."  # noqa: B950
+            f"Ageclass '!r{ageclass}' is not valid. Must be of the form 'Jenter 12 år' 'J 12 år', 'J 12/13 år', 'Kvinner junior', 'Felles' or 'Para'."  # noqa: B950
         )

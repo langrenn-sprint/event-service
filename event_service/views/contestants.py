@@ -145,6 +145,8 @@ class ContestantsView(View):
                     )
                 except EventNotFoundException as e:
                     raise HTTPNotFound(reason=str(e)) from e
+                except IllegalValueException as e:
+                    raise HTTPBadRequest(reason=str(e)) from e
 
                 logging.debug(f"result:\n {result}")
                 body = json.dumps(result)

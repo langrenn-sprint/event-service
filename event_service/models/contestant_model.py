@@ -20,7 +20,7 @@ class Contestant(DataClassJsonMixin):
     club: str
     event_id: str
     email: str
-    registration_time: datetime = field(
+    registration_date_time: datetime = field(
         metadata=config(
             encoder=datetime.isoformat,
             decoder=datetime.fromisoformat,

@@ -96,7 +96,11 @@ class EventsCommands:
 # helpers
 def _create_raceclass_name(ageclass: str) -> str:
     """Helper function to create name of raceclass."""
-    name = ageclass.replace(" ", "")
+    name = ageclass
+    # Replace substrings to create raceclass name:
+    name = name.replace("Jenter", "J")
+    name = name.replace("Gutter", "G")
+    name = name.replace(" ", "")
     name = name.replace("Menn", "M")
     name = name.replace("Herrer", "M")
     name = name.replace("Kvinner", "K")

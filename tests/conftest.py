@@ -7,8 +7,8 @@ from typing import Any
 from aiohttp.test_utils import TestClient as _TestClient
 from dotenv import load_dotenv
 import pytest
-import requests
-from requests.exceptions import ConnectionError
+import requests  # type: ignore
+from requests.exceptions import ConnectionError  # type: ignore
 
 from event_service import create_app
 

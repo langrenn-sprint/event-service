@@ -35,7 +35,7 @@ aioresponses = "^0.7.6"
 black = "^23.11.0"
 codecov = "^2.1.13"
 coverage = "^7.3.2"
-docker = "^6.1.3"
+docker = "^7.0.0"
 flake8 = "^6.1.0"
 flake8-annotations = "^3.0.1"
 flake8-bandit = "^4.1.1"
@@ -47,6 +47,7 @@ mypy = "^1.7.1"
 nox = "^2023.4.22"
 nox-poetry = "^1.0.3"
 pep8-naming = "^0.13.2"
+poetry = "^1.7.1"
 pytest = "^7.4.3"
 pytest-aiohttp = "^1.0.5"
 pytest-asyncio = "^0.23.0"
@@ -56,7 +57,6 @@ pytest-dotenv = "^0.5.2"
 pytest-mock = "^3.12.0"
 requests = "^2.31.0"
 safety = "^2.4.0b2"
-poetry = "^1.7.1"
 
 [tool.coverage.paths]
 source = ["event_service", "*/site-packages"]
@@ -85,7 +85,6 @@ warn_unreachable = true
 ignore_missing_imports = true
 module = [
   "gunicorn.*",
-  "requests.*",
   "motor.*",
   "pytest_mock",
   "aioresponses.*",
