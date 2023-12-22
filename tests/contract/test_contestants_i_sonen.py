@@ -250,8 +250,8 @@ async def test_create_many_contestants_as_csv_file_from_iSonen(
 
     assert len(body) > 0
 
-    assert body["total"] == 70
-    assert body["created"] == 70
+    assert body["total"] == 77
+    assert body["created"] == 77
     assert len(body["updated"]) == 0
     assert len(body["failures"]) == 0
     assert body["total"] == body["created"] + len(body["updated"]) + len(
@@ -274,7 +274,7 @@ async def test_get_all_contestants_in_given_event(
     assert response.status == 200
     assert "application/json" in response.headers[hdrs.CONTENT_TYPE]
     assert type(contestants) is list
-    assert len(contestants) == 70
+    assert len(contestants) == 77
 
 
 @pytest.mark.contract
@@ -292,7 +292,7 @@ async def test_get_all_contestants_in_given_event_by_raceclass(
         async with session.post(url, headers=headers) as response:
             assert response.status == 201
 
-        raceclass_parameter = "J15"
+        raceclass_parameter = "J12"
         url = f"{http_service}/events/{event_id}/contestants?raceclass={raceclass_parameter}"
 
         async with session.get(url) as response:
@@ -303,7 +303,7 @@ async def test_get_all_contestants_in_given_event_by_raceclass(
     assert type(contestants) is list
     assert len(contestants) == 1
     for contestant in contestants:
-        assert contestant["ageclass"] == "Jenter 15"
+        assert contestant["ageclass"] == "Jenter 12"
 
 
 @pytest.mark.contract
@@ -316,7 +316,7 @@ async def test_get_all_contestants_in_given_event_by_ageclass(
         hdrs.AUTHORIZATION: f"Bearer {token}",
     }
     async with ClientSession() as session:
-        query_param = f'ageclass={quote("Jenter 15")}'
+        query_param = f'ageclass={quote("Jenter 12")}'
         url = f"{http_service}/events/{event_id}/contestants"
         async with session.get(f"{url}?{query_param}", headers=headers) as response:
             contestants = await response.json()
@@ -326,7 +326,7 @@ async def test_get_all_contestants_in_given_event_by_ageclass(
     assert type(contestants) is list
     assert len(contestants) == 1
     for contestant in contestants:
-        assert contestant["ageclass"] == "Jenter 15"
+        assert contestant["ageclass"] == "Jenter 12"
 
 
 @pytest.mark.contract
@@ -390,7 +390,7 @@ async def test_search_contestant_by_name(
 ) -> None:
     """Should return 200 OK."""
     url = f"{http_service}/events/{event_id}/contestants/search"
-    body = {"name": "Clara"}
+    body = {"name": "Turid"}
     headers = {
         hdrs.AUTHORIZATION: f"Bearer {token}",
         hdrs.CONTENT_TYPE: "application/json",
@@ -475,4 +475,12 @@ async def _decide_group_order_and_ranking(  # noqa: C901
         return (8, 1, False)
     elif raceclass["name"] == "J9":
         return (8, 2, False)
+    elif raceclass["name"] == "KJ":
+        return (9, 1, False)
+    elif raceclass["name"] == "KS":
+        return (9, 2, False)
+    elif raceclass["name"] == "MJ":
+        return (10, 1, False)
+    elif raceclass["name"] == "MS":
+        return (10, 2, False)
     return (0, 0, True)  # should not reach this point
