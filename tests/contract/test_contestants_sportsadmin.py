@@ -237,7 +237,7 @@ async def test_create_many_contestants_as_csv_file(
     }
 
     # Send csv-file in request:
-    files = {"file": open("tests/files/contestants_all.csv", "rb")}
+    files = {"file": open("tests/files/contestants_Sportsadmin.csv", "rb")}
     async with ClientSession() as session:
         async with session.delete(url) as response:
             pass
@@ -251,8 +251,8 @@ async def test_create_many_contestants_as_csv_file(
     assert len(body) > 0
 
     assert body["total"] == 670
-    assert body["created"] == 668
-    assert len(body["updated"]) == 2
+    assert body["created"] == 670
+    assert len(body["updated"]) == 0
     assert len(body["failures"]) == 0
     assert body["total"] == body["created"] + len(body["updated"]) + len(
         body["failures"]
@@ -273,7 +273,7 @@ async def test_update_many_existing_contestants_as_csv_file(
     }
 
     # Send csv-file in request:
-    files = {"file": open("tests/files/contestants_G11.csv", "rb")}
+    files = {"file": open("tests/files/contestants_G11_Sportsadmin.csv", "rb")}
     async with ClientSession() as session:
         async with session.post(url, headers=headers, data=files) as response:
             status = response.status
@@ -308,7 +308,7 @@ async def test_get_all_contestants_in_given_event(
     assert response.status == 200
     assert "application/json" in response.headers[hdrs.CONTENT_TYPE]
     assert type(contestants) is list
-    assert len(contestants) == 668
+    assert len(contestants) == 670
 
 
 @pytest.mark.contract
@@ -335,7 +335,7 @@ async def test_get_all_contestants_in_given_event_by_raceclass(
     assert response.status == 200, response
     assert "application/json" in response.headers[hdrs.CONTENT_TYPE]
     assert type(contestants) is list
-    assert len(contestants) == 26
+    assert len(contestants) == 28
     for contestant in contestants:
         assert contestant["ageclass"] == "J 15 år"
 
@@ -358,7 +358,7 @@ async def test_get_all_contestants_in_given_event_by_ageclass(
     assert response.status == 200
     assert "application/json" in response.headers[hdrs.CONTENT_TYPE]
     assert type(contestants) is list
-    assert len(contestants) == 26
+    assert len(contestants) == 28
     for contestant in contestants:
         assert contestant["ageclass"] == "J 15 år"
 
@@ -437,7 +437,7 @@ async def test_search_contestant_by_name(
             assert response.status == 200, body
             contestants = await response.json()
 
-    assert len(contestants) == 2
+    assert len(contestants) == 3
 
 
 @pytest.mark.contract
@@ -465,10 +465,14 @@ async def test_delete_all_contestant(
 async def _decide_group_order_and_ranking(  # noqa: C901
     raceclass: dict,
 ) -> Tuple[int, int, bool]:
-    if raceclass["name"] == "M19/20":
+    if raceclass["name"] == "MS":
         return (1, 1, True)
-    elif raceclass["name"] == "K19/20":
+    elif raceclass["name"] == "KS":
         return (1, 2, True)
+    elif raceclass["name"] == "M19/20":
+        return (1, 3, True)
+    elif raceclass["name"] == "K19/20":
+        return (1, 4, True)
     elif raceclass["name"] == "M18":
         return (2, 1, True)
     elif raceclass["name"] == "K18":

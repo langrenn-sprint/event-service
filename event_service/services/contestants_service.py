@@ -539,7 +539,8 @@ async def validate_ageclass(ageclass: str) -> None:
     regex_JGMK = r"([JGMK]\s\d*\/?\d+?\s?(år)?)"
     regex_Gutter = r"(Gutter\s\d*\/?\d+?\s?(år)?)"
     regex_Jenter = r"(Jenter\s\d*\/?\d+?\s?(år)?)"
-    regex_Kvinner_Menn = r"((Kvinner|Menn) (junior|senior))"
+    regex_junior = r"((Kvinner|Menn)\s\d*\/?\d+?\s?(år)?)"
+    regex_senior = r"((Kvinner|Menn) senior)"
     regex_Felles = r"((Felles))"
     regex_Para = r"((Para))"
     pattern = re.compile(
@@ -550,7 +551,9 @@ async def validate_ageclass(ageclass: str) -> None:
         + "|"
         + regex_Jenter
         + "|"
-        + regex_Kvinner_Menn
+        + regex_junior
+        + "|"
+        + regex_senior
         + "|"
         + regex_Felles
         + "|"
