@@ -118,7 +118,7 @@ async def test_assign_bibs(
 
         # Then we add contestants to event:
         url = f"{http_service}/events/{event_id}/contestants"
-        files = {"file": open("tests/files/contestants_all.csv", "rb")}
+        files = {"file": open("tests/files/contestants_iSonen.csv", "rb")}
         async with session.post(url, headers=headers, data=files) as response:
             assert response.status == 200
 
@@ -139,11 +139,11 @@ async def test_assign_bibs(
         await _print_raceclasses(raceclasses)
 
         # We assign ageclasses "G 16 år" and "G 15 år" to the same new raceclass "G15/16":
-        raceclass_G16 = await _get_raceclass_by_ageclass(raceclasses, "G 16 år")
-        raceclass_G15 = await _get_raceclass_by_ageclass(raceclasses, "G 15 år")
+        raceclass_G16 = await _get_raceclass_by_ageclass(raceclasses, "Gutter 16")
+        raceclass_G15 = await _get_raceclass_by_ageclass(raceclasses, "Gutter 15")
         raceclass_G15_16: Dict = {
             "event_id": event_id,
-            "name": "G15/16",
+            "name": "G15-16",
             "ageclasses": raceclass_G15["ageclasses"] + raceclass_G16["ageclasses"],
             "no_of_contestants": raceclass_G15["no_of_contestants"]
             + raceclass_G16["no_of_contestants"],
@@ -242,10 +242,14 @@ async def _get_raceclass_by_ageclass(raceclasses: List[Dict], ageclass: str) -> 
 async def _decide_group_order_and_ranking(  # noqa: C901
     raceclass: dict,
 ) -> Tuple[int, int, bool]:
-    if raceclass["name"] == "M19/20":
+    if raceclass["name"] == "KS":
         return (1, 1, True)
-    elif raceclass["name"] == "K19/20":
+    elif raceclass["name"] == "MS":
         return (1, 2, True)
+    elif raceclass["name"] == "M19-20":
+        return (1, 3, True)
+    elif raceclass["name"] == "K19-20":
+        return (1, 4, True)
     elif raceclass["name"] == "M18":
         return (2, 1, True)
     elif raceclass["name"] == "K18":
@@ -254,7 +258,7 @@ async def _decide_group_order_and_ranking(  # noqa: C901
         return (3, 1, True)
     elif raceclass["name"] == "K17":
         return (3, 2, True)
-    elif raceclass["name"] == "G15/16":
+    elif raceclass["name"] == "G15-16":
         return (4, 1, True)
     elif raceclass["name"] == "J16":
         return (4, 2, True)

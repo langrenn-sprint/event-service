@@ -292,7 +292,7 @@ async def test_get_all_contestants_in_given_event_by_raceclass(
         async with session.post(url, headers=headers) as response:
             assert response.status == 201
 
-        raceclass_parameter = "J12"
+        raceclass_parameter = "J13"
         url = f"{http_service}/events/{event_id}/contestants?raceclass={raceclass_parameter}"
 
         async with session.get(url) as response:
@@ -301,9 +301,9 @@ async def test_get_all_contestants_in_given_event_by_raceclass(
     assert response.status == 200, response
     assert "application/json" in response.headers[hdrs.CONTENT_TYPE]
     assert type(contestants) is list
-    assert len(contestants) == 1
+    assert len(contestants) == 3
     for contestant in contestants:
-        assert contestant["ageclass"] == "Jenter 12"
+        assert contestant["ageclass"] == "Jenter 13"
 
 
 @pytest.mark.contract
@@ -316,7 +316,7 @@ async def test_get_all_contestants_in_given_event_by_ageclass(
         hdrs.AUTHORIZATION: f"Bearer {token}",
     }
     async with ClientSession() as session:
-        query_param = f'ageclass={quote("Jenter 12")}'
+        query_param = f'ageclass={quote("Jenter 13")}'
         url = f"{http_service}/events/{event_id}/contestants"
         async with session.get(f"{url}?{query_param}", headers=headers) as response:
             contestants = await response.json()
@@ -324,9 +324,9 @@ async def test_get_all_contestants_in_given_event_by_ageclass(
     assert response.status == 200
     assert "application/json" in response.headers[hdrs.CONTENT_TYPE]
     assert type(contestants) is list
-    assert len(contestants) == 1
+    assert len(contestants) == 3
     for contestant in contestants:
-        assert contestant["ageclass"] == "Jenter 12"
+        assert contestant["ageclass"] == "Jenter 13"
 
 
 @pytest.mark.contract
@@ -431,10 +431,14 @@ async def test_delete_all_contestant(
 async def _decide_group_order_and_ranking(  # noqa: C901
     raceclass: dict,
 ) -> Tuple[int, int, bool]:
-    if raceclass["name"] == "M19/20":
+    if raceclass["name"] == "KS":
         return (1, 1, True)
-    elif raceclass["name"] == "K19/20":
+    elif raceclass["name"] == "MS":
         return (1, 2, True)
+    elif raceclass["name"] == "M19-20":
+        return (1, 3, True)
+    elif raceclass["name"] == "K19-20":
+        return (1, 4, True)
     elif raceclass["name"] == "M18":
         return (2, 1, True)
     elif raceclass["name"] == "K18":
@@ -475,12 +479,4 @@ async def _decide_group_order_and_ranking(  # noqa: C901
         return (8, 1, False)
     elif raceclass["name"] == "J9":
         return (8, 2, False)
-    elif raceclass["name"] == "KJ":
-        return (9, 1, False)
-    elif raceclass["name"] == "KS":
-        return (9, 2, False)
-    elif raceclass["name"] == "MJ":
-        return (10, 1, False)
-    elif raceclass["name"] == "MS":
-        return (10, 2, False)
     return (0, 0, True)  # should not reach this point

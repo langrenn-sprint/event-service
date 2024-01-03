@@ -1,0 +1,4 @@
+Fornavn;Etternavn;E-post;Mobil;Adresse;Postnummer;Sted;Alder;Fødselsdato;Kjønn;Land;Landskode;Bypass ID;Person ID;Klubb;Klubb-ID;Gruppe-ID;Krets/region-id;Krets/region;Sport;Øvelse;Klasse;Team;Påmeldt dato;Påmeldt kl.
+Trond;Birkeland;maune@example.com;44397062;Rasmussentunet 87;3187;Anitastad;10;2013-01-22;M;Norway;NO;334690067;2455928;Lyn Ski - Ski;90992;93640;517;Oslo Skikrets;Ski;Gutter 11;;;99.99.2023;11:11
+Rolf;Sæther;svein17@example.org;933 48 083;Nilsenlyngen 1;5674;Eliassen;10;2013-04-05;M;Norway;NO;404014741;6006968;Lyn Ski - Ski;90992;71323;885;Oslo Skikrets;Ski;Gutter 11;;;28.06.2023;20:13
+Nils;Lund;qsaether@example.com;+4715331907;Moenstranda 4;9927;Anettefjell;10;2013-04-19;M;Norway;NO;732829663;1058649;Røa Allianseidrettslag - Ski;17384;57690;964;Oslo Skikrets;Ski;Gutter 11;;;13.01.2023;06:31

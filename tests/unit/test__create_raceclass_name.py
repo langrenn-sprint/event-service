@@ -35,15 +35,6 @@ async def test__create_raceclass_name_J_10_år() -> None:
 
 @pytest.mark.unit
 @pytest.mark.asyncio
-async def test__create_raceclass_name_Kvinner_Junior() -> None:
-    """Should return "KJ"."""
-    raceclass_name = _create_raceclass_name("Kvinner Junior")
-
-    assert raceclass_name == "KJ"
-
-
-@pytest.mark.unit
-@pytest.mark.asyncio
 async def test__create_raceclass_name_Para() -> None:
     """Should return "P"."""
     raceclass_name = _create_raceclass_name("Para")
@@ -76,3 +67,57 @@ async def test__create_raceclass_name_Gutter_9_år() -> None:
     raceclass_name = _create_raceclass_name("Gutter 9 år")
 
     assert raceclass_name == "G9"
+
+
+# iSonen:
+@pytest.mark.unit
+@pytest.mark.asyncio
+async def test__create_raceclass_name_Menn_17() -> None:
+    """Should return "G9"."""
+    raceclass_name = _create_raceclass_name("Menn 17")
+
+    assert raceclass_name == "M17"
+
+
+@pytest.mark.unit
+@pytest.mark.asyncio
+async def test__create_raceclass_name_Kvinner_17() -> None:
+    """Should return "G9"."""
+    raceclass_name = _create_raceclass_name("Kvinner 17")
+
+    assert raceclass_name == "K17"
+
+
+@pytest.mark.unit
+@pytest.mark.asyncio
+async def test__create_raceclass_name_Menn_19_20() -> None:
+    """Should return "G9"."""
+    raceclass_name = _create_raceclass_name("Menn 19-20")
+
+    assert raceclass_name == "M19-20"
+
+
+@pytest.mark.unit
+@pytest.mark.asyncio
+async def test__create_raceclass_name_Kvinner_19_20() -> None:
+    """Should return "G9"."""
+    raceclass_name = _create_raceclass_name("Kvinner 19-20")
+
+    assert raceclass_name == "K19-20"
+
+
+@pytest.mark.unit
+@pytest.mark.asyncio
+async def test__create_raceclass_name_Menn_senior() -> None:
+    """Should return "G9"."""
+    raceclass_name = _create_raceclass_name("Menn senior")
+
+    assert raceclass_name == "MS"
+
+
+@pytest.mark.unit
+@pytest.mark.asyncio
+async def test__create_raceclass_name_Kvinner_senior() -> None:
+    """Should return "G9"."""
+    raceclass_name = _create_raceclass_name("Kvinner senior")
+    assert raceclass_name == "KS"
