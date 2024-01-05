@@ -173,6 +173,9 @@ class ContestantsService:
             raise IllegalValueException(
                 "Cannot create contestant with input id."
             ) from None
+        # Strip ageclass for whitespace:
+        contestant.ageclass = contestant.ageclass.strip()
+        # Validate:
         await _validate_contestant(db, event_id, contestant)
 
         # create id
@@ -255,6 +258,9 @@ class ContestantsService:
                         f'registration_date_time in "{_c!r}" has invalid datetime format".'
                     ) from e
                 contestant = Contestant.from_dict(_c)
+                # Strip ageclass for whitespace:
+                contestant.ageclass = contestant.ageclass.strip()
+                # Validate:
                 await _validate_contestant(db, event_id, contestant)
 
                 # insert new contestant
@@ -325,6 +331,8 @@ class ContestantsService:
         )
         # update the contestant if found:
         if old_contestant:
+            # Strip ageclass for whitespace:
+            contestant.ageclass = contestant.ageclass.strip()
             # Validate:
             await _validate_contestant(db, event_id, contestant)
             if contestant.id != old_contestant["id"]:
@@ -537,12 +545,12 @@ async def validate_ageclass(ageclass: str) -> None:
     # regex = r"(?i)([JGMK]\s\d*\/?\d+?\s?(år)?)|((Kvinner|Menn) (junior|senior))|((Felles))|(Para)"  # noqa: B950
     global_flags = r"(?i)"
     regex_JGMK = r"([JGMK]\s\d*\/?\d+?\s?(år)?)"
-    regex_Gutter = r"(Gutter\s\d*\/?\d+?\s?(år)?)"
-    regex_Jenter = r"(Jenter\s\d*\/?\d+?\s?(år)?)"
-    regex_junior = r"((Kvinner|Menn)\s\d*\/?\d+?\s?(år)?)"
-    regex_senior = r"((Kvinner|Menn) senior)"
-    regex_Felles = r"((Felles))"
-    regex_Para = r"((Para))"
+    regex_Gutter = r"(\bGutter\b\s\d*\/?\d+?\s?(år)?)"
+    regex_Jenter = r"(\bJenter\b\s\d*\/?\d+?\s?(år)?)"
+    regex_junior = r"((\bKvinner\b|\bMenn\b)\s\d*\/?\d+?\s?(år)?)"
+    regex_senior = r"((\bKvinner\b|\bMenn\b) \bsenior\b)"
+    regex_Felles = r"((\bFelles\b))"
+    regex_Para = r"((\bPara\b))"
     pattern = re.compile(
         global_flags
         + regex_JGMK
@@ -561,5 +569,5 @@ async def validate_ageclass(ageclass: str) -> None:
     )
     if not pattern.match(ageclass):
         raise IllegalValueException(
-            f"Ageclass '!r{ageclass}' is not valid. Must be of the form 'Jenter 12 år' 'J 12 år', 'J 12/13 år', 'Kvinner junior', 'Felles' or 'Para'."  # noqa: B950
+            f"Ageclass {ageclass!r} is not valid. Must be of the form 'Jenter 12 år' 'J 12 år', 'J 12/13 år', 'Kvinner 18-19', 'Kvinner senior', 'Felles' or 'Para'."  # noqa: B950
         )
