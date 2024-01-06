@@ -84,6 +84,11 @@ class RaceclassesService:
             raise IllegalValueException(
                 "Cannot create raceclass with input id."
             ) from None
+        # Remove spaces from ageclasses:
+        _ageclasses = []
+        for ageclass in raceclass.ageclasses:
+            _ageclasses.append(ageclass.strip())
+        raceclass.ageclasses = _ageclasses
         # Validate raceclasses:
         try:
             await validate_raceclass(raceclass)
@@ -163,6 +168,11 @@ class RaceclassesService:
             ) from None
         if raceclass.id != old_raceclass["id"]:
             raise IllegalValueException("Cannot change id for raceclass.") from None
+        # Remove spaces from ageclasses:
+        _ageclasses = []
+        for ageclass in raceclass.ageclasses:
+            _ageclasses.append(ageclass.strip())
+        raceclass.ageclasses = _ageclasses
         # Validate raceclasses:
         try:
             await validate_raceclass(raceclass)

@@ -6,6 +6,7 @@ from event_service.services import (
     ContestantsService,
     EventNotFoundException,
     EventsService,
+    IllegalValueException,
     RaceclassesService,
 )
 
@@ -55,6 +56,7 @@ class ContestantsCommands:
 
         Raises:
             EventNotFoundException: event not found
+            IllegalValueException: an illegal value is specified for the contestant
             NoRaceclassInEventException: there are no raceclasses in event
             NoValueForGroupInRaceclassExcpetion: raceclass does not have value for group
             NoValueForOrderInRaceclassExcpetion: raceclass does not have value for order
@@ -94,13 +96,22 @@ class ContestantsCommands:
         _list: List[dict] = list()
         for c in contestants:
             c_dict = c.to_dict()
-            c_dict["raceclass_group"] = next(
-                item for item in raceclasses if c_dict["ageclass"] in item.ageclasses
-            ).group
-            c_dict["raceclass_order"] = next(
-                item for item in raceclasses if c_dict["ageclass"] in item.ageclasses
-            ).order
-            _list.append(c_dict)
+            try:
+                c_dict["raceclass_group"] = next(
+                    item
+                    for item in raceclasses
+                    if c_dict["ageclass"] in item.ageclasses
+                ).group
+                c_dict["raceclass_order"] = next(
+                    item
+                    for item in raceclasses
+                    if c_dict["ageclass"] in item.ageclasses
+                ).order
+                _list.append(c_dict)
+            except StopIteration as e:
+                raise IllegalValueException(
+                    f"Ageclass {c_dict['ageclass']!r} not found in raceclasses."
+                ) from e
 
         # Sort on racelass_group and racelass_order:
         _list_sorted_on_raceclass = sorted(

@@ -20,6 +20,7 @@ from event_service.commands import (
 )
 from event_service.services import (
     EventNotFoundException,
+    IllegalValueException,
 )
 from event_service.utils.jwt_utils import extract_token_from_request
 
@@ -51,6 +52,7 @@ class ContestantsAssignBibsView(View):
         except (
             NoValueForGroupInRaceclassExcpetion,
             NoValueForOrderInRaceclassExcpetion,
+            IllegalValueException,
         ) as e:
             raise HTTPBadRequest(reason=str(e)) from e
 
