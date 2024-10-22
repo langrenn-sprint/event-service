@@ -72,8 +72,8 @@ Look to the [openAPI specification](./specification.yaml) for the details.
 ```shell
 % git clone https://github.com/langrenn-sprint/race-service.git
 % cd race-service
-% pyenv install 3.11.2
-% pyenv local 3.11.2 3.10.9
+% pyenv install 3.12.7
+% pyenv local 3.12.7 3.11.9
 % poetry install
 ```
 

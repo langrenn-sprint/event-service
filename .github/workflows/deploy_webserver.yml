@@ -10,21 +10,20 @@ jobs:
   build-and-deploy:
     name: Build, test and deploy to GitHub Container registry
     runs-on: ubuntu-latest
-    if: github.event.pull_request.draft == false
 
     steps:
       - uses: actions/checkout@v3
 
-      - name: Set up Python 3.11
+      - name: Set up Python 3.12
         uses: actions/setup-python@v4
         with:
-          python-version: "3.11"
+          python-version: "3.12"
           architecture: x64
 
       - name: Install dependencies
         run: |-
-          pipx install poetry==1.4.1
-          pipx install nox==2022.11.21
+          pipx install poetry==1.8.3
+          pipx install nox==2024.4.15
           pipx inject nox nox-poetry
 
       - name: Build image and test with nox
