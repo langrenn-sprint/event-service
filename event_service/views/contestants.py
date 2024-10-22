@@ -1,4 +1,5 @@
 """Resource module for contestants resources."""
+
 import json
 import logging
 import os
@@ -130,14 +131,14 @@ class ContestantsView(View):
                 raise HTTPBadRequest() from None
 
         elif "multipart/form-data" in self.request.headers[hdrs.CONTENT_TYPE]:
-            async for part in (await self.request.multipart()):
-                logging.debug(f"part.name {part.name}.")
-                if "text/csv" in part.headers[hdrs.CONTENT_TYPE]:
+            async for part in await self.request.multipart():
+                logging.debug(f"part.name {part.name}.")  # type: ignore
+                if "text/csv" in part.headers[hdrs.CONTENT_TYPE]:  # type: ignore
                     # process csv:
-                    contestants = (await part.read()).decode()
+                    contestants = (await part.read()).decode()  # type: ignore
                 else:
                     raise HTTPBadRequest(
-                        reason=f"File's content-type {part.headers[hdrs.CONTENT_TYPE]} not supported."  # noqa: B950
+                        reason=f"File's content-type {part.headers[hdrs.CONTENT_TYPE]} not supported."  # type: ignore # noqa: B950
                     ) from None
                 try:
                     result = await ContestantsService.create_contestants(

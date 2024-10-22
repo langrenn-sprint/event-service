@@ -1,4 +1,5 @@
 """Module for users adapter."""
+
 import os
 from typing import Any, Optional
 
@@ -31,7 +32,7 @@ class UsersAdapter:
                     raise HTTPUnauthorized() from None
                 elif response.status == 403:
                     raise HTTPForbidden() from None
-                else:
+                else:  # pragma: no cover
                     raise HTTPInternalServerError(
                         reason=f"Got unknown status from users service: {response.status}."
                     ) from None
