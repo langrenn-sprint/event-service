@@ -1,4 +1,5 @@
 """Module for event_format service."""
+
 import logging
 from typing import Any, Optional
 import uuid

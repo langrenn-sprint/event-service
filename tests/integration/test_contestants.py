@@ -1,4 +1,5 @@
 """Integration test cases for the contestant route."""
+
 from copy import deepcopy
 from datetime import date
 import os

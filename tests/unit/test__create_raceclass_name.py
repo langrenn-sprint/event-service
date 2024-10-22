@@ -1,4 +1,5 @@
 """Unit test cases for the create_raceclass_name function."""
+
 import pytest
 
 from event_service.commands.events_commands import (

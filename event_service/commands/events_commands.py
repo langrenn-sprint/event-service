@@ -1,4 +1,5 @@
 """Module for contestants service."""
+
 from typing import Any
 
 from event_service.models import Raceclass

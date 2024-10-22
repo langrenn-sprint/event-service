@@ -1,4 +1,5 @@
 """Resource module for event specific format resources."""
+
 import logging
 import os
 from typing import Union

@@ -1,4 +1,5 @@
 """Package for all views."""
+
 from .contestants import ContestantsView, ContestantView
 from .contestants_commands import ContestantsAssignBibsView
 from .contestants_search import ContestantsSearchView

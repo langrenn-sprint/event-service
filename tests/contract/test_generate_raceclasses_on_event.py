@@ -1,4 +1,5 @@
 """Contract test cases for generate-raceclass command."""
+
 import logging
 import os
 from typing import Any, AsyncGenerator, Optional
@@ -20,7 +21,6 @@ DB_PASSWORD = os.getenv("DB_PASSWORD")
 
 
 @pytest.fixture(scope="module")
-@pytest.mark.asyncio(scope="module")
 async def token(http_service: Any) -> str:
     """Create a valid token."""
     url = f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/login"
@@ -39,7 +39,6 @@ async def token(http_service: Any) -> str:
 
 
 @pytest.fixture(scope="function", autouse=True)
-@pytest.mark.asyncio(scope="module")
 async def clear_db() -> AsyncGenerator:
     """Delete all events before we start."""
     mongo = motor.motor_asyncio.AsyncIOMotorClient(  # type: ignore
@@ -91,7 +90,6 @@ async def event_id(
 
 
 @pytest.mark.contract
-@pytest.mark.asyncio(scope="module")
 async def test_generate_raceclasses(
     http_service: Any, token: MockFixture, event_id: str
 ) -> None:

@@ -1,4 +1,5 @@
 """Integration test cases for the contestant route."""
+
 from datetime import date
 import os
 from typing import Any, List

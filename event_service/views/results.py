@@ -1,4 +1,5 @@
 """Resource module for raceclass results resources."""
+
 import json
 import logging
 import os

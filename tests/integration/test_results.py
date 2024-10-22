@@ -1,4 +1,5 @@
 """Integration test cases for the results route."""
+
 import os
 from typing import Dict
 

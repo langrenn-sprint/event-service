@@ -1,4 +1,5 @@
 """Integration test cases for the events route."""
+
 from copy import deepcopy
 import os
 from typing import Dict, Union
@@ -658,9 +659,9 @@ async def test_create_event_invalid_competition_format(
     )
 
     event_invalid_competition_format = deepcopy(event)
-    event_invalid_competition_format[
-        "competition_format"
-    ] = "Invalid Competition Format"
+    event_invalid_competition_format["competition_format"] = (
+        "Invalid Competition Format"
+    )
 
     headers = {
         hdrs.CONTENT_TYPE: "application/json",

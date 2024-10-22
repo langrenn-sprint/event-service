@@ -1,4 +1,5 @@
 """Integration test cases for the events route."""
+
 from datetime import date
 import os
 

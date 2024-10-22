@@ -1,4 +1,5 @@
 """Contract test cases for contestants."""
+
 import copy
 from datetime import date
 import logging
@@ -24,7 +25,6 @@ DB_PASSWORD = os.getenv("DB_PASSWORD")
 
 
 @pytest.fixture(scope="module")
-@pytest.mark.asyncio(scope="module")
 async def token(http_service: Any) -> str:
     """Create a valid token."""
     url = f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/login"
@@ -43,7 +43,6 @@ async def token(http_service: Any) -> str:
 
 
 @pytest.fixture(scope="module", autouse=True)
-@pytest.mark.asyncio(scope="module")
 async def clear_db() -> AsyncGenerator:
     """Clear db before and after tests."""
     mongo = motor.motor_asyncio.AsyncIOMotorClient(  # type: ignore
@@ -113,7 +112,6 @@ async def contestant(event_id: str) -> dict:
 
 
 @pytest.mark.contract
-@pytest.mark.asyncio(scope="module")
 async def test_create_single_contestant(
     http_service: Any,
     token: MockFixture,
@@ -137,7 +135,6 @@ async def test_create_single_contestant(
 
 
 @pytest.mark.contract
-@pytest.mark.asyncio(scope="module")
 async def test_get_contestant_by_id(
     http_service: Any, token: MockFixture, event_id: str, contestant: dict
 ) -> None:
@@ -172,7 +169,6 @@ async def test_get_contestant_by_id(
 
 
 @pytest.mark.contract
-@pytest.mark.asyncio(scope="module")
 async def test_update_contestant(
     http_service: Any, token: MockFixture, event_id: str, contestant: dict
 ) -> None:
@@ -200,7 +196,6 @@ async def test_update_contestant(
 
 
 @pytest.mark.contract
-@pytest.mark.asyncio(scope="module")
 async def test_delete_contestant(
     http_service: Any, token: MockFixture, event_id: str
 ) -> None:
@@ -224,7 +219,6 @@ async def test_delete_contestant(
 
 
 @pytest.mark.contract
-@pytest.mark.asyncio(scope="module")
 async def test_create_many_contestants_as_csv_file_from_iSonen(
     http_service: Any,
     token: MockFixture,
@@ -260,7 +254,6 @@ async def test_create_many_contestants_as_csv_file_from_iSonen(
 
 
 @pytest.mark.contract
-@pytest.mark.asyncio(scope="module")
 async def test_get_all_contestants_in_given_event(
     http_service: Any, token: MockFixture, event_id: str
 ) -> None:
@@ -278,7 +271,6 @@ async def test_get_all_contestants_in_given_event(
 
 
 @pytest.mark.contract
-@pytest.mark.asyncio(scope="module")
 async def test_get_all_contestants_in_given_event_by_raceclass(
     http_service: Any, token: MockFixture, event_id: str
 ) -> None:
@@ -307,7 +299,6 @@ async def test_get_all_contestants_in_given_event_by_raceclass(
 
 
 @pytest.mark.contract
-@pytest.mark.asyncio(scope="module")
 async def test_get_all_contestants_in_given_event_by_ageclass(
     http_service: Any, token: MockFixture, event_id: str
 ) -> None:
@@ -330,7 +321,6 @@ async def test_get_all_contestants_in_given_event_by_ageclass(
 
 
 @pytest.mark.contract
-@pytest.mark.asyncio(scope="module")
 async def test_get_all_contestants_in_given_event_by_bib(
     http_service: Any, token: MockFixture, event_id: str
 ) -> None:
@@ -384,7 +374,6 @@ async def test_get_all_contestants_in_given_event_by_bib(
 
 
 @pytest.mark.contract
-@pytest.mark.asyncio(scope="module")
 async def test_search_contestant_by_name(
     http_service: Any, token: MockFixture, event_id: str
 ) -> None:
@@ -407,7 +396,6 @@ async def test_search_contestant_by_name(
 
 
 @pytest.mark.contract
-@pytest.mark.asyncio(scope="module")
 async def test_delete_all_contestant(
     http_service: Any, token: MockFixture, event_id: str
 ) -> None:

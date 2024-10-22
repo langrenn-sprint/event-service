@@ -1,4 +1,5 @@
 """Competition format data class module."""
+
 from abc import ABC
 from dataclasses import dataclass, field
 from datetime import time

@@ -1,4 +1,5 @@
 """Drop db and recreate indexes."""
+
 from typing import Any
 
 

@@ -1,4 +1,5 @@
 """Package for all services."""
+
 from .contestants_service import (
     ContestantAllreadyExistException,
     ContestantNotFoundException,
