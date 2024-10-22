@@ -1,4 +1,5 @@
 """Module for event_format adapter."""
+
 from typing import Any, Optional
 
 from .adapter import Adapter

@@ -1,4 +1,5 @@
 """Package for all adapters."""
+
 from .competition_formats_adapter import (
     CompetitionFormatsAdapter,
     CompetitionFormatsAdapterException,

@@ -1,4 +1,5 @@
 """Module for competition_format adapter."""
+
 import logging
 import os
 from typing import Any, List

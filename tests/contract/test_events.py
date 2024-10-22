@@ -1,4 +1,5 @@
 """Contract test cases for ping."""
+
 from copy import deepcopy
 from json import load
 import logging
@@ -24,7 +25,6 @@ DB_PASSWORD = os.getenv("DB_PASSWORD")
 
 
 @pytest.fixture(scope="module")
-@pytest.mark.asyncio(scope="module")
 async def token(http_service: Any) -> str:
     """Create a valid token."""
     url = f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/login"
@@ -43,7 +43,6 @@ async def token(http_service: Any) -> str:
 
 
 @pytest.fixture(scope="module", autouse=True)
-@pytest.mark.asyncio(scope="module")
 async def clear_db() -> AsyncGenerator:
     """Delete all events before we start."""
     mongo = motor.motor_asyncio.AsyncIOMotorClient(  # type: ignore
@@ -88,7 +87,6 @@ async def competition_format_interval_start() -> dict:
 
 
 @pytest.mark.contract
-@pytest.mark.asyncio(scope="module")
 async def test_create_event(
     http_service: Any,
     token: MockFixture,
@@ -132,7 +130,6 @@ async def test_create_event(
 
 
 @pytest.mark.contract
-@pytest.mark.asyncio(scope="module")
 async def test_get_all_events(http_service: Any, token: MockFixture) -> None:
     """Should return OK and a list of events as json."""
     url = f"{http_service}/events"
@@ -149,7 +146,6 @@ async def test_get_all_events(http_service: Any, token: MockFixture) -> None:
 
 
 @pytest.mark.contract
-@pytest.mark.asyncio(scope="module")
 async def test_get_event_by_id(
     http_service: Any, token: MockFixture, event: dict
 ) -> None:
@@ -179,7 +175,6 @@ async def test_get_event_by_id(
 
 
 @pytest.mark.contract
-@pytest.mark.asyncio(scope="module")
 async def test_update_event(http_service: Any, token: MockFixture, event: dict) -> None:
     """Should return No Content."""
     url = f"{http_service}/events"
@@ -215,7 +210,6 @@ async def test_update_event(http_service: Any, token: MockFixture, event: dict) 
 
 
 @pytest.mark.contract
-@pytest.mark.asyncio(scope="module")
 async def test_delete_event(http_service: Any, token: MockFixture) -> None:
     """Should return No Content."""
     url = f"{http_service}/events"

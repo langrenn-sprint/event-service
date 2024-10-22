@@ -1,4 +1,5 @@
 """Module for contestants service."""
+
 from random import shuffle
 from typing import Any, List
 

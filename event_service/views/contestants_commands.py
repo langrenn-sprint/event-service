@@ -1,4 +1,5 @@
 """Resource module for events resources."""
+
 import os
 
 from aiohttp import hdrs

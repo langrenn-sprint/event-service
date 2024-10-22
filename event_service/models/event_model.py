@@ -1,4 +1,5 @@
 """Event data class module."""
+
 from dataclasses import dataclass, field
 from datetime import date, time
 from typing import Optional

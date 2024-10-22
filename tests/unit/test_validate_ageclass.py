@@ -1,4 +1,5 @@
 """Unit test cases for the validate_ageclass function."""
+
 import pytest
 
 from event_service.services.contestants_service import (

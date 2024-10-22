@@ -1,4 +1,5 @@
 """Module for events service."""
+
 from datetime import date, time
 import logging
 from typing import Any, List, Optional

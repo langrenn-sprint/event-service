@@ -1,4 +1,5 @@
 """Module for contestants service."""
+
 from datetime import datetime
 from io import StringIO
 import logging
