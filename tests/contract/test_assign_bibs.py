@@ -136,8 +136,8 @@ async def test_assign_bibs(
         await _print_raceclasses(raceclasses)
 
         # We assign ageclasses "G 16 år" and "G 15 år" to the same new raceclass "G15/16":
-        raceclass_G16 = await _get_raceclass_by_ageclass(raceclasses, "Gutter 16")
-        raceclass_G15 = await _get_raceclass_by_ageclass(raceclasses, "Gutter 15")
+        raceclass_G16 = await _get_raceclass_by_ageclass(raceclasses, "G 16 år")
+        raceclass_G15 = await _get_raceclass_by_ageclass(raceclasses, "G 15 år")
         raceclass_G15_16: Dict = {
             "event_id": event_id,
             "name": "G15-16",

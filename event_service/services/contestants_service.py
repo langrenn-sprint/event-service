@@ -252,7 +252,8 @@ class ContestantsService:
                 try:
                     if _c["registration_date_time"]:  # type: ignore
                         _c["registration_date_time"] = datetime.strptime(  # type: ignore
-                            _c["registration_date_time"], "%d.%m.%Y %H:%M:%S"  # type: ignore
+                            _c["registration_date_time"],  # type: ignore
+                            "%d.%m.%Y %H:%M:%S",  # type: ignore
                         ).isoformat()
                 except ValueError as e:
                     raise IllegalValueException(
@@ -462,27 +463,29 @@ async def _parse_contestants_i_sonen(contestants: str) -> pd.DataFrame:
             header=0,
             usecols=cols,
         )
-        df.columns = [
-            "first_name",
-            "last_name",
-            "email",
-            "birth_date",
-            "gender",
-            "minidrett_id",
-            "club",
-            "region",
-            "ageclass",
-            "distance",
-            "team",
-            "registration_date",
-            "registration_time",
-        ]
-
+        # Need to map column names to dataclass:
+        df.rename(
+            columns={
+                "Fornavn": "first_name",
+                "Etternavn": "last_name",
+                "Kjønn": "gender",
+                "Fødselsdato": "birth_date",
+                "Person ID": "minidrett_id",
+                "E-post": "email",
+                "Klubb": "club",
+                "Krets/region": "region",
+                "Team": "team",
+                "Påmeldt dato": "registration_date",
+                "Påmeldt kl.": "registration_time",
+                "Klasse": "ageclass",
+                "Øvelse": "distance",
+            },
+            inplace=True,
+        )
         # We need to combine registration_date and registration_time to one column:
         df["registration_date_time"] = (
             df["registration_date"] + " " + df["registration_time"] + ":00"
         )
-
         return df
 
     except ValueError as e:
