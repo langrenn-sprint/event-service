@@ -88,6 +88,7 @@ ADMIN_USERNAME=admin
 ADMIN_PASSWORD=password
 USERS_HOST_SERVER=localhost
 USERS_HOST_PORT=8086
+DB_HOST=localhost
 DB_NAME=events_test
 DB_USER=event-service
 DB_PASSWORD=password

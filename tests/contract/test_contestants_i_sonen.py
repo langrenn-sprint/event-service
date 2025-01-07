@@ -295,7 +295,7 @@ async def test_get_all_contestants_in_given_event_by_raceclass(
     assert type(contestants) is list
     assert len(contestants) == 3
     for contestant in contestants:
-        assert contestant["ageclass"] == "Jenter 13"
+        assert contestant["ageclass"] == "J 13 år"
 
 
 @pytest.mark.contract
@@ -307,7 +307,7 @@ async def test_get_all_contestants_in_given_event_by_ageclass(
         hdrs.AUTHORIZATION: f"Bearer {token}",
     }
     async with ClientSession() as session:
-        query_param = f'ageclass={quote("Jenter 13")}'
+        query_param = f'ageclass={quote("J 13 år")}'
         url = f"{http_service}/events/{event_id}/contestants"
         async with session.get(f"{url}?{query_param}", headers=headers) as response:
             contestants = await response.json()
@@ -317,7 +317,7 @@ async def test_get_all_contestants_in_given_event_by_ageclass(
     assert type(contestants) is list
     assert len(contestants) == 3
     for contestant in contestants:
-        assert contestant["ageclass"] == "Jenter 13"
+        assert contestant["ageclass"] == "J 13 år"
 
 
 @pytest.mark.contract
