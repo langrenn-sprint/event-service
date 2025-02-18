@@ -16,10 +16,10 @@ from multidict import MultiDict
 from event_service.adapters import UsersAdapter
 from event_service.commands import EventsCommands
 from event_service.services import (
-    EventNotFoundException,
-    RaceclassCreateException,
-    RaceclassNotUniqueNameException,
-    RaceclassUpdateException,
+    EventNotFoundError,
+    RaceclassCreateError,
+    RaceclassNotUniqueNameError,
+    RaceclassUpdateError,
 )
 from event_service.utils.jwt_utils import extract_token_from_request
 
@@ -46,11 +46,11 @@ class EventGenerateRaceclassesView(View):
         event_id = self.request.match_info["eventId"]
         try:
             await EventsCommands.generate_raceclasses(db, event_id)
-        except EventNotFoundException as e:
+        except EventNotFoundError as e:
             raise HTTPNotFound(reason=str(e)) from e
-        except RaceclassNotUniqueNameException as e:
+        except RaceclassNotUniqueNameError as e:
             raise HTTPUnprocessableEntity(reason=str(e)) from e
-        except (RaceclassCreateException, RaceclassUpdateException) as e:
+        except (RaceclassCreateError, RaceclassUpdateError) as e:
             raise HTTPBadRequest(reason=str(e)) from e
         headers = MultiDict(
             [(hdrs.LOCATION, f"{BASE_URL}/events/{event_id}/raceclasses")]

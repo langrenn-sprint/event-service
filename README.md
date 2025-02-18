@@ -57,14 +57,10 @@ Look to the [openAPI specification](./specification.yaml) for the details.
 
 ### Requirements
 
-- [pyenv](https://github.com/pyenv/pyenv) (recommended)
-- [poetry](https://python-poetry.org/)
-- [nox](https://nox.thea.codes/en/stable/)
+- [uv](https://docs.astral.sh/uv/)
 
 ```shell
-% pipx install nox
-% pipx install poetry
-% pipx inject nox nox-poetry
+% curl -LsSf https://astral.sh/uv/install.sh | sh
 ```
 
 ### Install software
@@ -72,9 +68,7 @@ Look to the [openAPI specification](./specification.yaml) for the details.
 ```shell
 % git clone https://github.com/langrenn-sprint/race-service.git
 % cd race-service
-% pyenv install 3.12.7
-% pyenv local 3.12.7 3.11.9
-% poetry install
+% uv sync
 ```
 
 ### Environment variables
@@ -94,19 +88,18 @@ DB_USER=event-service
 DB_PASSWORD=password
 LOGGING_LEVEL=DEBUG
 ```
-
 ### Running the API locally
 
 Start the server locally:
 
-```Shell
-% poetry run adev runserver -p 8080 --aux-port 8089 event_service
+```shell
+% uv run adev runserver -p 8080 --aux-port 8089 race_service
 ```
 
 ### Running the API in a wsgi-server (gunicorn)
 
-```Shell
-% poetry run gunicorn event_service:create_app --bind localhost:8080 --worker-class aiohttp.GunicornWebWorker
+```shell
+% uv run gunicorn race_service:create_app --bind localhost:8080 --worker-class aiohttp.GunicornWebWorker
 ```
 
 ### Running the wsgi-server in Docker
@@ -130,18 +123,18 @@ We use [pytest](https://docs.pytest.org/en/latest/) for contract testing.
 
 To run linters, checkers and tests:
 
-```Shell
-% nox
+```shell
+% uv run poe release
 ```
 
 To run specific test:
 
-```Shell
-% nox -s integration_tests -- -k test_create_event_adapter_fails
+```shell
+% uv run poe integration_test --no-cov -- test_create_event_adapter_fails
 ```
 
 To run tests with logging, do:
 
-```Shell
-% nox -s integration_tests -- --log-cli-level=DEBUG
+```shell
+% uv run poe integration_test  --log-cli-level=DEBUG
 ```

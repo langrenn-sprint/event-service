@@ -1,13 +1,14 @@
 """Contract test cases for contestants."""
 
-from datetime import date
 import logging
 import os
-from typing import Any, AsyncGenerator, Dict, List, Optional, Tuple
+from collections.abc import AsyncGenerator
+from datetime import date
+from typing import Any
 
-from aiohttp import ClientSession, hdrs
 import motor.motor_asyncio
 import pytest
+from aiohttp import ClientSession, hdrs
 from pytest_mock import MockFixture
 
 from event_service.utils import db_utils
@@ -42,13 +43,13 @@ async def token(http_service: Any) -> str:
 @pytest.fixture(scope="module", autouse=True)
 async def clear_db() -> AsyncGenerator:
     """Clear db before and after tests."""
-    mongo = motor.motor_asyncio.AsyncIOMotorClient(  # type: ignore
+    mongo = motor.motor_asyncio.AsyncIOMotorClient(
         host=DB_HOST, port=DB_PORT, username=DB_USER, password=DB_PASSWORD
     )
     try:
         await db_utils.drop_db_and_recreate_indexes(mongo, DB_NAME)
     except Exception as error:
-        logging.error(f"Failed to drop database {DB_NAME}: {error}")
+        logging.exception(f"Failed to drop database {DB_NAME}: {error}")
         raise error
 
     yield
@@ -56,7 +57,7 @@ async def clear_db() -> AsyncGenerator:
     try:
         await db_utils.drop_db(mongo, DB_NAME)
     except Exception as error:
-        logging.error(f"Failed to drop database {DB_NAME}: {error}")
+        logging.exception(f"Failed to drop database {DB_NAME}: {error}")
         raise error
 
 
@@ -65,7 +66,7 @@ async def event_id(
     http_service: Any,
     token: MockFixture,
     clear_db: AsyncGenerator,
-) -> Optional[str]:
+) -> str | None:
     """Create an event object for testing."""
     url = f"{http_service}/events"
     headers = {
@@ -88,9 +89,8 @@ async def event_id(
         event_id = response.headers[hdrs.LOCATION].split("/")[-1]
         logging.debug(f"Created event with id {event_id}.")
         return event_id
-    else:
-        logging.error(f"Got unsuccesful status when creating event: {status}.")
-        return None
+    logging.error(f"Got unsuccesful status when creating event: {status}.")
+    return None
 
 
 @pytest.mark.contract
@@ -124,7 +124,7 @@ async def test_assign_bibs(
         async with session.post(url, headers=headers) as response:
             if response.status != 201:
                 body = await response.json()
-            assert response.status == 201, body["detail"]
+            assert response.status == 201, body["detail"] # type: ignore [reportAttributeAccessIssue]
             assert f"/events/{event_id}/raceclasses" in response.headers[hdrs.LOCATION]
 
         # We need to work on the raceclasses:
@@ -138,7 +138,7 @@ async def test_assign_bibs(
         # We assign ageclasses "G 16 år" and "G 15 år" to the same new raceclass "G15/16":
         raceclass_G16 = await _get_raceclass_by_ageclass(raceclasses, "G 16 år")
         raceclass_G15 = await _get_raceclass_by_ageclass(raceclasses, "G 15 år")
-        raceclass_G15_16: Dict = {
+        raceclass_G15_16: dict = {
             "event_id": event_id,
             "name": "G15-16",
             "ageclasses": raceclass_G15["ageclasses"] + raceclass_G16["ageclasses"],
@@ -151,10 +151,10 @@ async def test_assign_bibs(
         url = f"{http_service}/events/{event_id}/raceclasses"
         async with session.post(url, headers=headers, json=request_body) as response:
             assert response.status == 201
-        url = f'{http_service}/events/{event_id}/raceclasses/{raceclass_G15["id"]}'
+        url = f"{http_service}/events/{event_id}/raceclasses/{raceclass_G15['id']}"
         async with session.delete(url, headers=headers) as response:
             assert response.status == 204
-        url = f'{http_service}/events/{event_id}/raceclasses/{raceclass_G16["id"]}'
+        url = f"{http_service}/events/{event_id}/raceclasses/{raceclass_G16['id']}"
         async with session.delete(url, headers=headers) as response:
             assert response.status == 204
 
@@ -191,7 +191,7 @@ async def test_assign_bibs(
         async with session.post(url, headers=headers) as response:
             if response.status != 201:
                 body = await response.json()
-            assert response.status == 201, body
+            assert response.status == 201, body  # type: ignore [reportAttributeAccessIssue]
             assert f"/events/{event_id}/contestants" in response.headers[hdrs.LOCATION]
 
         # ASSERT #
@@ -228,7 +228,7 @@ async def test_assign_bibs(
 
 
 # ---
-async def _get_raceclass_by_ageclass(raceclasses: List[Dict], ageclass: str) -> Dict:
+async def _get_raceclass_by_ageclass(raceclasses: list[dict], ageclass: str) -> dict:
     # Pick out the raceclass where ageclass is in its ageclasses-list:
     for raceclass in raceclasses:
         if ageclass in raceclass["ageclasses"]:
@@ -238,57 +238,57 @@ async def _get_raceclass_by_ageclass(raceclasses: List[Dict], ageclass: str) -> 
 
 async def _decide_group_order_and_ranking(  # noqa: C901
     raceclass: dict,
-) -> Tuple[int, int, bool]:
+) -> tuple[int, int, bool]:
     if raceclass["name"] == "KS":
         return (1, 1, True)
-    elif raceclass["name"] == "MS":
+    if raceclass["name"] == "MS":
         return (1, 2, True)
-    elif raceclass["name"] == "M19-20":
+    if raceclass["name"] == "M19-20":
         return (1, 3, True)
-    elif raceclass["name"] == "K19-20":
+    if raceclass["name"] == "K19-20":
         return (1, 4, True)
-    elif raceclass["name"] == "M18":
+    if raceclass["name"] == "M18":
         return (2, 1, True)
-    elif raceclass["name"] == "K18":
+    if raceclass["name"] == "K18":
         return (2, 2, True)
-    elif raceclass["name"] == "M17":
+    if raceclass["name"] == "M17":
         return (3, 1, True)
-    elif raceclass["name"] == "K17":
+    if raceclass["name"] == "K17":
         return (3, 2, True)
-    elif raceclass["name"] == "G15-16":
+    if raceclass["name"] == "G15-16":
         return (4, 1, True)
-    elif raceclass["name"] == "J16":
+    if raceclass["name"] == "J16":
         return (4, 2, True)
-    elif raceclass["name"] == "J15":
+    if raceclass["name"] == "J15":
         return (4, 3, True)
-    elif raceclass["name"] == "G14":
+    if raceclass["name"] == "G14":
         return (5, 1, True)
-    elif raceclass["name"] == "J14":
+    if raceclass["name"] == "J14":
         return (5, 2, True)
-    elif raceclass["name"] == "G13":
+    if raceclass["name"] == "G13":
         return (5, 3, True)
-    elif raceclass["name"] == "J13":
+    if raceclass["name"] == "J13":
         return (5, 4, True)
-    elif raceclass["name"] == "G12":
+    if raceclass["name"] == "G12":
         return (6, 1, True)
-    elif raceclass["name"] == "J12":
+    if raceclass["name"] == "J12":
         return (6, 2, True)
-    elif raceclass["name"] == "G11":
+    if raceclass["name"] == "G11":
         return (6, 3, True)
-    elif raceclass["name"] == "J11":
+    if raceclass["name"] == "J11":
         return (6, 4, True)
-    elif raceclass["name"] == "G10":
+    if raceclass["name"] == "G10":
         return (7, 1, False)
-    elif raceclass["name"] == "J10":
+    if raceclass["name"] == "J10":
         return (7, 2, False)
-    elif raceclass["name"] == "G9":
+    if raceclass["name"] == "G9":
         return (8, 1, False)
-    elif raceclass["name"] == "J9":
+    if raceclass["name"] == "J9":
         return (8, 2, False)
     return (0, 0, True)  # should not reach this point
 
 
-async def _print_raceclasses(raceclasses: List[Dict]) -> None:  # noqa: E800
+async def _print_raceclasses(raceclasses: list[dict]) -> None:
     # print("--- RACECLASSES ---")
     # print("group;order;name;ageclasses;no_of_contestants;distance;ranking;event_id")
     # for raceclass in raceclasses:
@@ -314,7 +314,7 @@ async def _print_raceclasses(raceclasses: List[Dict]) -> None:  # noqa: E800
     pass
 
 
-async def _print_contestants(contestants: List[dict]) -> None:  # noqa: E800
+async def _print_contestants(contestants: list[dict]) -> None:
     # print("--- CONTESTANTS ---")
     # print(f"Number of contestants: {len(contestants)}.")
     # print("bib;ageclass")
@@ -323,7 +323,7 @@ async def _print_contestants(contestants: List[dict]) -> None:  # noqa: E800
     pass
 
 
-async def _dump_contestants_to_json(contestants: List[dict]) -> None:
+async def _dump_contestants_to_json(contestants: list[dict]) -> None:
     # with open("tests/files/tmp_startlist.json", "w") as file:
     #     json.dump(contestants, file)
     pass

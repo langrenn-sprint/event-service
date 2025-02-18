@@ -2,8 +2,16 @@
 
 from .contestants_commands import (
     ContestantsCommands,
-    NoRaceclassInEventException,
-    NoValueForGroupInRaceclassExcpetion,
-    NoValueForOrderInRaceclassExcpetion,
+    NoRaceclassInEventError,
+    NoValueForGroupInRaceclassError,
+    NoValueForOrderInRaceclassError,
 )
 from .events_commands import EventsCommands
+
+__all__ = [
+    "ContestantsCommands",
+    "EventsCommands",
+    "NoRaceclassInEventError",
+    "NoValueForGroupInRaceclassError",
+    "NoValueForOrderInRaceclassError",
+]

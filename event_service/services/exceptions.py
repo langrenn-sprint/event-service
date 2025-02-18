@@ -1,7 +1,7 @@
 """Module for service exceptions."""
 
 
-class IllegalValueException(Exception):
+class IllegalValueError(Exception):
     """Class representing custom exception for create method."""
 
     def __init__(self, message: str) -> None:
@@ -10,7 +10,7 @@ class IllegalValueException(Exception):
         super().__init__(message)
 
 
-class InvalidDateFormatException(Exception):
+class InvalidDateFormatError(Exception):
     """Class representing custom exception for date time methods."""
 
     def __init__(self, message: str) -> None:
@@ -19,7 +19,7 @@ class InvalidDateFormatException(Exception):
         super().__init__(message)
 
 
-class InvalidTimezoneException(Exception):
+class InvalidTimezoneError(Exception):
     """Class representing custom exception for date time methods."""
 
     def __init__(self, message: str) -> None:
@@ -28,7 +28,7 @@ class InvalidTimezoneException(Exception):
         super().__init__(message)
 
 
-class RaceclassNotFoundException(Exception):
+class RaceclassNotFoundError(Exception):
     """Class representing custom exception for fetch method."""
 
     def __init__(self, message: str) -> None:
@@ -37,7 +37,7 @@ class RaceclassNotFoundException(Exception):
         super().__init__(message)
 
 
-class CompetitionFormatNotFoundException(Exception):
+class CompetitionFormatNotFoundError(Exception):
     """Class representing custom exception for fetch method."""
 
     def __init__(self, message: str) -> None:
@@ -46,7 +46,7 @@ class CompetitionFormatNotFoundException(Exception):
         super().__init__(message)
 
 
-class BibAlreadyInUseException(Exception):
+class BibAlreadyInUseError(Exception):
     """Class representing custom exception for create method."""
 
     def __init__(self, message: str) -> None:

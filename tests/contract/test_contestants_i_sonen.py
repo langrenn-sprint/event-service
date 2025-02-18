@@ -1,16 +1,16 @@
 """Contract test cases for contestants."""
 
 import copy
-from datetime import date
 import logging
 import os
-from typing import Any, AsyncGenerator, Optional, Tuple
+from collections.abc import AsyncGenerator
+from datetime import date
+from typing import Any
 from urllib.parse import quote
 
-
-from aiohttp import ClientSession, hdrs
 import motor.motor_asyncio
 import pytest
+from aiohttp import ClientSession, hdrs
 from pytest_mock import MockFixture
 
 from event_service.utils import db_utils
@@ -45,13 +45,13 @@ async def token(http_service: Any) -> str:
 @pytest.fixture(scope="module", autouse=True)
 async def clear_db() -> AsyncGenerator:
     """Clear db before and after tests."""
-    mongo = motor.motor_asyncio.AsyncIOMotorClient(  # type: ignore
+    mongo = motor.motor_asyncio.AsyncIOMotorClient(
         host=DB_HOST, port=DB_PORT, username=DB_USER, password=DB_PASSWORD
     )
     try:
         await db_utils.drop_db_and_recreate_indexes(mongo, DB_NAME)
     except Exception as error:
-        logging.error(f"Failed to drop database {DB_NAME}: {error}")
+        logging.exception(f"Failed to drop database {DB_NAME}: {error}")
         raise error
 
     yield
@@ -59,14 +59,14 @@ async def clear_db() -> AsyncGenerator:
     try:
         await db_utils.drop_db(mongo, DB_NAME)
     except Exception as error:
-        logging.error(f"Failed to drop database {DB_NAME}: {error}")
+        logging.exception(f"Failed to drop database {DB_NAME}: {error}")
         raise error
 
 
 @pytest.fixture(scope="module")
 async def event_id(
     http_service: Any, token: MockFixture, clear_db: AsyncGenerator
-) -> Optional[str]:
+) -> str | None:
     """Create an event object for testing."""
     url = f"{http_service}/events"
     headers = {
@@ -88,9 +88,8 @@ async def event_id(
     if status == 201:
         # return the event_id, which is the last item of the path
         return response.headers[hdrs.LOCATION].split("/")[-1]
-    else:
-        logging.error(f"Got unsuccesful status when creating event: {status}.")
-        return None
+    logging.error(f"Got unsuccesful status when creating event: {status}.")
+    return None
 
 
 @pytest.fixture(scope="module")
@@ -307,7 +306,7 @@ async def test_get_all_contestants_in_given_event_by_ageclass(
         hdrs.AUTHORIZATION: f"Bearer {token}",
     }
     async with ClientSession() as session:
-        query_param = f'ageclass={quote("J 13 år")}'
+        query_param = f"ageclass={quote('J 13 år')}"
         url = f"{http_service}/events/{event_id}/contestants"
         async with session.get(f"{url}?{query_param}", headers=headers) as response:
             contestants = await response.json()
@@ -418,53 +417,53 @@ async def test_delete_all_contestant(
 # ---
 async def _decide_group_order_and_ranking(  # noqa: C901
     raceclass: dict,
-) -> Tuple[int, int, bool]:
+) -> tuple[int, int, bool]:
     if raceclass["name"] == "KS":
         return (1, 1, True)
-    elif raceclass["name"] == "MS":
+    if raceclass["name"] == "MS":
         return (1, 2, True)
-    elif raceclass["name"] == "M19-20":
+    if raceclass["name"] == "M19-20":
         return (1, 3, True)
-    elif raceclass["name"] == "K19-20":
+    if raceclass["name"] == "K19-20":
         return (1, 4, True)
-    elif raceclass["name"] == "M18":
+    if raceclass["name"] == "M18":
         return (2, 1, True)
-    elif raceclass["name"] == "K18":
+    if raceclass["name"] == "K18":
         return (2, 2, True)
-    elif raceclass["name"] == "M17":
+    if raceclass["name"] == "M17":
         return (3, 1, True)
-    elif raceclass["name"] == "K17":
+    if raceclass["name"] == "K17":
         return (3, 2, True)
-    elif raceclass["name"] == "G16":
+    if raceclass["name"] == "G16":
         return (4, 1, True)
-    elif raceclass["name"] == "J16":
+    if raceclass["name"] == "J16":
         return (4, 2, True)
-    elif raceclass["name"] == "G15":
+    if raceclass["name"] == "G15":
         return (4, 3, True)
-    elif raceclass["name"] == "J15":
+    if raceclass["name"] == "J15":
         return (4, 4, True)
-    elif raceclass["name"] == "G14":
+    if raceclass["name"] == "G14":
         return (5, 1, True)
-    elif raceclass["name"] == "J14":
+    if raceclass["name"] == "J14":
         return (5, 2, True)
-    elif raceclass["name"] == "G13":
+    if raceclass["name"] == "G13":
         return (5, 3, True)
-    elif raceclass["name"] == "J13":
+    if raceclass["name"] == "J13":
         return (5, 4, True)
-    elif raceclass["name"] == "G12":
+    if raceclass["name"] == "G12":
         return (6, 1, True)
-    elif raceclass["name"] == "J12":
+    if raceclass["name"] == "J12":
         return (6, 2, True)
-    elif raceclass["name"] == "G11":
+    if raceclass["name"] == "G11":
         return (6, 3, True)
-    elif raceclass["name"] == "J11":
+    if raceclass["name"] == "J11":
         return (6, 4, True)
-    elif raceclass["name"] == "G10":
+    if raceclass["name"] == "G10":
         return (7, 1, False)
-    elif raceclass["name"] == "J10":
+    if raceclass["name"] == "J10":
         return (7, 2, False)
-    elif raceclass["name"] == "G9":
+    if raceclass["name"] == "G9":
         return (8, 1, False)
-    elif raceclass["name"] == "J9":
+    if raceclass["name"] == "J9":
         return (8, 2, False)
     return (0, 0, True)  # should not reach this point

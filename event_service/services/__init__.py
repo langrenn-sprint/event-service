@@ -1,24 +1,52 @@
 """Package for all services."""
 
 from .contestants_service import (
-    ContestantAllreadyExistException,
-    ContestantNotFoundException,
+    ContestantAllreadyExistError,
+    ContestantNotFoundError,
     ContestantsService,
 )
-from .event_format_service import EventFormatNotFoundException, EventFormatService
-from .events_service import EventNotFoundException, EventsService
+from .event_format_service import (
+    EventFormatNotFoundError,
+    EventFormatNotSupportedError,
+    EventFormatService,
+)
+from .events_service import EventNotFoundError, EventsService
 from .exceptions import (
-    BibAlreadyInUseException,
-    CompetitionFormatNotFoundException,
-    IllegalValueException,
-    InvalidDateFormatException,
-    InvalidTimezoneException,
-    RaceclassNotFoundException,
+    BibAlreadyInUseError,
+    CompetitionFormatNotFoundError,
+    IllegalValueError,
+    InvalidDateFormatError,
+    InvalidTimezoneError,
+    RaceclassNotFoundError,
 )
 from .raceclasses_service import (
-    RaceclassCreateException,
+    RaceclassCreateError,
     RaceclassesService,
-    RaceclassNotUniqueNameException,
-    RaceclassUpdateException,
+    RaceclassNotUniqueNameError,
+    RaceclassUpdateError,
 )
-from .results_service import ResultNotFoundException, ResultsService
+from .results_service import ResultNotFoundError, ResultsService
+
+__all__ = [
+    "BibAlreadyInUseError",
+    "CompetitionFormatNotFoundError",
+    "ContestantAllreadyExistError",
+    "ContestantNotFoundError",
+    "ContestantsService",
+    "EventFormatNotFoundError",
+    "EventFormatNotSupportedError",
+    "EventFormatService",
+    "EventNotFoundError",
+    "EventsService",
+    "IllegalValueError",
+    "InvalidDateFormatError",
+    "InvalidTimezoneError",
+    "RaceclassCreateError",
+    "RaceclassNotFoundError",
+    "RaceclassNotUniqueNameError",
+    "RaceclassUpdateError",
+    "RaceclassesService",
+    "ResultNotFoundError",
+    "ResultsService",
+    "ResultsService",
+]

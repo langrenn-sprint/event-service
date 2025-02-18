@@ -1,18 +1,18 @@
 """Module for contestants service."""
 
 from random import shuffle
-from typing import Any, List
+from typing import Any
 
 from event_service.services import (
     ContestantsService,
-    EventNotFoundException,
+    EventNotFoundError,
     EventsService,
-    IllegalValueException,
+    IllegalValueError,
     RaceclassesService,
 )
 
 
-class NoRaceclassInEventException(Exception):
+class NoRaceclassInEventError(Exception):
     """Class representing custom exception for fetch method."""
 
     def __init__(self, message: str) -> None:
@@ -21,7 +21,7 @@ class NoRaceclassInEventException(Exception):
         super().__init__(message)
 
 
-class NoValueForOrderInRaceclassExcpetion(Exception):
+class NoValueForOrderInRaceclassError(Exception):
     """Class representing custom exception for fetch method."""
 
     def __init__(self, message: str) -> None:
@@ -30,7 +30,7 @@ class NoValueForOrderInRaceclassExcpetion(Exception):
         super().__init__(message)
 
 
-class NoValueForGroupInRaceclassExcpetion(Exception):
+class NoValueForGroupInRaceclassError(Exception):
     """Class representing custom exception for fetch method."""
 
     def __init__(self, message: str) -> None:
@@ -56,37 +56,34 @@ class ContestantsCommands:
             event_id: the id of the event
 
         Raises:
-            EventNotFoundException: event not found
-            IllegalValueException: an illegal value is specified for the contestant
-            NoRaceclassInEventException: there are no raceclasses in event
-            NoValueForGroupInRaceclassExcpetion: raceclass does not have value for group
-            NoValueForOrderInRaceclassExcpetion: raceclass does not have value for order
+            EventNotFoundError: event not found
+            IllegalValueError: an illegal value is specified for the contestant
+            NoRaceclassInEventError: there are no raceclasses in event
+            NoValueForGroupInRaceclassError: raceclass does not have value for group
+            NoValueForOrderInRaceclassError: raceclass does not have value for order
         """
         # Check if event exists:
         try:
             await EventsService.get_event_by_id(db, event_id)
-        except EventNotFoundException as e:
+        except EventNotFoundError as e:
             raise e from e
 
         # Get the raceclasses:
         raceclasses = await RaceclassesService.get_all_raceclasses(db, event_id)
         if len(raceclasses) == 0:
-            raise NoRaceclassInEventException(
-                f"Event {event_id} has no raceclasses. Not able to assign bibs."
-            ) from None
+            msg = f"Event {event_id} has no raceclasses. Not able to assign bibs."
+            raise NoRaceclassInEventError(msg) from None
 
         # Check if all raceclasses has value for group:
         for raceclass in raceclasses:
             if not raceclass.group:
-                raise NoValueForGroupInRaceclassExcpetion(
-                    f"Raceclass {raceclass.name} does not have value for group."
-                )
+                msg = f"Raceclass {raceclass.name} does not have value for group."
+                raise NoValueForGroupInRaceclassError(msg)
         # Check if all raceclasses has value for order:
         for raceclass in raceclasses:
             if not raceclass.order:
-                raise NoValueForOrderInRaceclassExcpetion(
-                    f"Raceclass {raceclass.name} does not have value for order."
-                )
+                msg = f"Raceclass {raceclass.name} does not have value for order."
+                raise NoValueForOrderInRaceclassError(msg)
         # Get all contestants in event:
         contestants = await ContestantsService.get_all_contestants(db, event_id)
 
@@ -94,7 +91,7 @@ class ContestantsCommands:
         shuffle(contestants)
 
         # Create temporary list, lookup correct raceclasses, and convert to dict:
-        _list: List[dict] = list()
+        _list: list[dict] = []
         for c in contestants:
             c_dict = c.to_dict()
             try:
@@ -110,9 +107,8 @@ class ContestantsCommands:
                 ).order
                 _list.append(c_dict)
             except StopIteration as e:
-                raise IllegalValueException(
-                    f"Ageclass {c_dict['ageclass']!r} not found in raceclasses."
-                ) from e
+                msg = f"Ageclass {c_dict['ageclass']!r} not found in raceclasses."
+                raise IllegalValueError(msg) from e
 
         # Sort on racelass_group and racelass_order:
         _list_sorted_on_raceclass = sorted(
@@ -121,7 +117,7 @@ class ContestantsCommands:
         # For every contestant, assign unique bib
         bib_no = 0
         for d in _list_sorted_on_raceclass:
-            bib_no += 1
+            bib_no += 1  # noqa: SIM113
             d["bib"] = bib_no
 
         # finally update contestant record:
@@ -130,5 +126,7 @@ class ContestantsCommands:
                 item for item in _list_sorted_on_raceclass if item["id"] == _c.id
             )
             _c.bib = c_with_bib["bib"]
-            assert _c.id is not None
-            await ContestantsService.update_contestant(db, event_id, _c.id, _c)
+            if _c.bib is None:  # pragma: no cover
+                msg = f"Bib number not assigned for contestant with id {_c.id}"
+                raise ValueError(msg)
+            await ContestantsService.update_contestant(db, event_id, _c.id, _c) # type: ignore [reportArgumentType]

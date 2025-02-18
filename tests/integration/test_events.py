@@ -1,18 +1,23 @@
 """Integration test cases for the events route."""
 
-from copy import deepcopy
 import os
-from typing import Dict, Union
+from copy import deepcopy
 
+import jwt
+import pytest
 from aiohttp import hdrs
 from aiohttp.test_utils import TestClient as _TestClient
 from aioresponses import aioresponses
-import jwt
+from dotenv import load_dotenv
 from multidict import MultiDict
-import pytest
 from pytest_mock import MockFixture
 
-from event_service.adapters import CompetitionFormatsAdapterException
+from event_service.adapters import CompetitionFormatsAdapterError
+
+load_dotenv()
+
+USERS_HOST_SERVER = os.getenv("USERS_HOST_SERVER")
+USERS_HOST_PORT = os.getenv("USERS_HOST_PORT")
 
 
 @pytest.fixture
@@ -21,7 +26,7 @@ def token() -> str:
     secret = os.getenv("JWT_SECRET")
     algorithm = "HS256"
     payload = {"identity": os.getenv("ADMIN_USERNAME"), "roles": ["admin"]}
-    return jwt.encode(payload, secret, algorithm)  # type: ignore
+    return jwt.encode(payload, secret, algorithm)
 
 
 @pytest.fixture
@@ -30,11 +35,11 @@ def token_unsufficient_role() -> str:
     secret = os.getenv("JWT_SECRET")
     algorithm = "HS256"
     payload = {"identity": "user", "roles": ["user"]}
-    return jwt.encode(payload, secret, algorithm)  # type: ignore
+    return jwt.encode(payload, secret, algorithm)
 
 
 @pytest.fixture
-async def event() -> Dict[str, str]:
+async def event() -> dict[str, str]:
     """An event object for testing."""
     return {
         "name": "Oslo Skagen sprint",
@@ -49,7 +54,7 @@ async def event() -> Dict[str, str]:
 
 
 @pytest.fixture
-async def event_with_id() -> Dict[str, str]:
+async def event_with_id() -> dict[str, str]:
     """An event object for testing."""
     return {
         "id": "290e70d5-0933-4af0-bb53-remote",
@@ -65,7 +70,7 @@ async def event_with_id() -> Dict[str, str]:
 
 
 @pytest.fixture
-async def competition_format() -> Dict[str, Union[int, str]]:
+async def competition_format() -> dict[str, int | str]:
     """An competition_format object for testing."""
     return {
         "name": "Interval Start",
@@ -98,7 +103,7 @@ async def test_create_event(
         return_value=ID,
     )
     mocker.patch(
-        "event_service.adapters.competition_formats_adapter.CompetitionFormatsAdapter.get_competition_formats_by_name",  # noqa: B950
+        "event_service.adapters.competition_formats_adapter.CompetitionFormatsAdapter.get_competition_formats_by_name",
         return_value=[competition_format],
     )
 
@@ -110,7 +115,7 @@ async def test_create_event(
     }
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
-        m.post("http://example.com:8081/authorize", status=204)
+        m.post(f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/authorize", status=204)
         resp = await client.post("/events", headers=headers, json=request_body)
         assert resp.status == 201
         assert f"/events/{ID}" in resp.headers[hdrs.LOCATION]
@@ -132,11 +137,11 @@ async def test_create_event_with_input_id(
     )
     mocker.patch(
         "event_service.adapters.events_adapter.EventsAdapter.get_event_by_id",
-        return_value={},  # type: ignore
+        return_value={},
     )
 
     mocker.patch(
-        "event_service.adapters.competition_formats_adapter.CompetitionFormatsAdapter.get_competition_formats_by_name",  # noqa: B950
+        "event_service.adapters.competition_formats_adapter.CompetitionFormatsAdapter.get_competition_formats_by_name",
         return_value=[competition_format],
     )
 
@@ -148,7 +153,7 @@ async def test_create_event_with_input_id(
     }
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
-        m.post("http://example.com:8081/authorize", status=204)
+        m.post(f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/authorize", status=204)
         resp = await client.post("/events", headers=headers, json=request_body)
         assert resp.status == 201
         assert f"/events/{ID}" in resp.headers[hdrs.LOCATION]
@@ -156,17 +161,17 @@ async def test_create_event_with_input_id(
 
 @pytest.mark.integration
 async def test_get_event_by_id(
-    client: _TestClient, mocker: MockFixture, token: MockFixture, event: Dict[str, str]
+    client: _TestClient, mocker: MockFixture, token: MockFixture, event: dict[str, str]
 ) -> None:
     """Should return OK, and a body containing one event."""
     ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
     mocker.patch(
         "event_service.adapters.events_adapter.EventsAdapter.get_event_by_id",
-        return_value={"id": ID} | event,  # type: ignore
+        return_value={"id": ID} | event,
     )
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
-        m.post("http://example.com:8081/authorize", status=204)
+        m.post(f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/authorize", status=204)
 
         resp = await client.get(f"/events/{ID}")
         assert resp.status == 200
@@ -194,14 +199,14 @@ async def test_update_event_by_id(
     ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
     mocker.patch(
         "event_service.adapters.events_adapter.EventsAdapter.get_event_by_id",
-        return_value={"id": ID} | event,  # type: ignore
+        return_value={"id": ID} | event,
     )
     mocker.patch(
         "event_service.adapters.events_adapter.EventsAdapter.update_event",
-        return_value={"id": ID} | event,  # type: ignore
+        return_value={"id": ID} | event,
     )
     mocker.patch(
-        "event_service.adapters.competition_formats_adapter.CompetitionFormatsAdapter.get_competition_formats_by_name",  # noqa: B950
+        "event_service.adapters.competition_formats_adapter.CompetitionFormatsAdapter.get_competition_formats_by_name",
         return_value=[competition_format],
     )
 
@@ -215,7 +220,7 @@ async def test_update_event_by_id(
     request_body["name"] = new_name
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
-        m.post("http://example.com:8081/authorize", status=204)
+        m.post(f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/authorize", status=204)
 
         resp = await client.put(f"/events/{ID}", headers=headers, json=request_body)
         assert resp.status == 204
@@ -233,14 +238,14 @@ async def test_get_all_events(
     )
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
-        m.post("http://example.com:8081/authorize", status=204)
+        m.post(f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/authorize", status=204)
         resp = await client.get("/events")
         assert resp.status == 200
         assert "application/json" in resp.headers[hdrs.CONTENT_TYPE]
         events = await resp.json()
         assert type(events) is list
         assert len(events) > 0
-        assert ID == events[0]["id"]
+        assert events[0]["id"] == ID
 
 
 @pytest.mark.integration
@@ -262,7 +267,7 @@ async def test_delete_event_by_id(
     }
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
-        m.post("http://example.com:8081/authorize", status=204)
+        m.post(f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/authorize", status=204)
 
         resp = await client.delete(f"/events/{ID}", headers=headers)
         assert resp.status == 204
@@ -293,7 +298,7 @@ async def test_create_event_missing_mandatory_property(
     }
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
-        m.post("http://example.com:8081/authorize", status=204)
+        m.post(f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/authorize", status=204)
         resp = await client.post("/events", headers=headers, json=request_body)
         assert resp.status == 422
 
@@ -317,8 +322,8 @@ async def test_create_event_competition_formats_adapter_raises_exception(
         return_value=ID,
     )
     mocker.patch(
-        "event_service.adapters.competition_formats_adapter.CompetitionFormatsAdapter.get_competition_formats_by_name",  # noqa: B950
-        side_effect=CompetitionFormatsAdapterException(
+        "event_service.adapters.competition_formats_adapter.CompetitionFormatsAdapter.get_competition_formats_by_name",
+        side_effect=CompetitionFormatsAdapterError(
             "Got unknown status 500 from competition_formats service."
         ),
     )
@@ -331,7 +336,7 @@ async def test_create_event_competition_formats_adapter_raises_exception(
     }
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
-        m.post("http://example.com:8081/authorize", status=204)
+        m.post(f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/authorize", status=204)
         resp = await client.post("/events", headers=headers, json=request_body)
         assert resp.status == 400
 
@@ -344,7 +349,7 @@ async def test_create_event_with_input_duplicate_id(
     ID = "290e70d5-0933-4af0-bb53-remote"
     mocker.patch(
         "event_service.adapters.events_adapter.EventsAdapter.get_event_by_id",
-        return_value={"id": ID} | event_with_id,  # type: ignore
+        return_value={"id": ID} | event_with_id,
     )
     mocker.patch(
         "event_service.services.events_service.create_id",
@@ -361,7 +366,7 @@ async def test_create_event_with_input_duplicate_id(
     }
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
-        m.post("http://example.com:8081/authorize", status=204)
+        m.post(f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/authorize", status=204)
         resp = await client.post("/events", headers=headers, json=request_body)
         assert resp.status == 422
 
@@ -386,7 +391,7 @@ async def test_create_event_adapter_fails(
     }
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
-        m.post("http://example.com:8081/authorize", status=204)
+        m.post(f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/authorize", status=204)
         resp = await client.post("/events", headers=headers, json=request_body)
         assert resp.status == 400
 
@@ -410,7 +415,7 @@ async def test_create_event_invalid_timezone(
         return_value=ID,
     )
     mocker.patch(
-        "event_service.adapters.competition_formats_adapter.CompetitionFormatsAdapter.get_competition_formats_by_name",  # noqa: B950
+        "event_service.adapters.competition_formats_adapter.CompetitionFormatsAdapter.get_competition_formats_by_name",
         return_value=[competition_format],
     )
 
@@ -424,7 +429,7 @@ async def test_create_event_invalid_timezone(
     }
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
-        m.post("http://example.com:8081/authorize", status=204)
+        m.post(f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/authorize", status=204)
         resp = await client.post("/events", headers=headers, json=request_body)
         assert resp.status == 422
 
@@ -451,7 +456,7 @@ async def test_update_event_by_id_missing_mandatory_property(
     request_body = {"id": ID, "optional_property": "Optional_property"}
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
-        m.post("http://example.com:8081/authorize", status=204)
+        m.post(f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/authorize", status=204)
 
         resp = await client.put(f"/events/{ID}", headers=headers, json=request_body)
         assert resp.status == 422
@@ -479,7 +484,7 @@ async def test_update_event_by_id_different_id_in_body(
     request_body = {"id": "different_id", "name": "Oslo Skagen sprint Oppdatert"}
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
-        m.post("http://example.com:8081/authorize", status=204)
+        m.post(f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/authorize", status=204)
 
         resp = await client.put(f"/events/{ID}", headers=headers, json=request_body)
         assert resp.status == 422
@@ -509,7 +514,7 @@ async def test_create_event_invalid_date(
     }
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
-        m.post("http://example.com:8081/authorize", status=204)
+        m.post(f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/authorize", status=204)
         resp = await client.post("/events", headers=headers, json=event_invalid_date)
         assert resp.status == 400
 
@@ -538,7 +543,7 @@ async def test_create_event_invalid_time(
     }
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
-        m.post("http://example.com:8081/authorize", status=204)
+        m.post(f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/authorize", status=204)
         resp = await client.post("/events", headers=headers, json=event_invalid_time)
         assert resp.status == 400
 
@@ -551,11 +556,11 @@ async def test_update_event_invalid_date(
     ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
     mocker.patch(
         "event_service.adapters.events_adapter.EventsAdapter.get_event_by_id",
-        return_value={"id": ID} | event,  # type: ignore
+        return_value={"id": ID} | event,
     )
     mocker.patch(
         "event_service.adapters.events_adapter.EventsAdapter.update_event",
-        return_value={"id": ID} | event,  # type: ignore
+        return_value={"id": ID} | event,
     )
 
     headers = {
@@ -567,7 +572,7 @@ async def test_update_event_invalid_date(
     request_body["date_of_event"] = "9999-99-99"
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
-        m.post("http://example.com:8081/authorize", status=204)
+        m.post(f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/authorize", status=204)
 
         resp = await client.put(f"/events/{ID}", headers=headers, json=request_body)
         assert resp.status == 400
@@ -581,11 +586,11 @@ async def test_update_event_invalid_time(
     ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
     mocker.patch(
         "event_service.adapters.events_adapter.EventsAdapter.get_event_by_id",
-        return_value={"id": ID} | event,  # type: ignore
+        return_value={"id": ID} | event,
     )
     mocker.patch(
         "event_service.adapters.events_adapter.EventsAdapter.update_event",
-        return_value={"id": ID} | event,  # type: ignore
+        return_value={"id": ID} | event,
     )
 
     headers = {
@@ -597,7 +602,7 @@ async def test_update_event_invalid_time(
     request_body["time_of_event"] = "99:99:99"
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
-        m.post("http://example.com:8081/authorize", status=204)
+        m.post(f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/authorize", status=204)
 
         resp = await client.put(f"/events/{ID}", headers=headers, json=request_body)
         assert resp.status == 400
@@ -622,7 +627,7 @@ async def test_create_event_multiple_competition_formats(
         return_value=ID,
     )
     mocker.patch(
-        "event_service.adapters.competition_formats_adapter.CompetitionFormatsAdapter.get_competition_formats_by_name",  # noqa: B950
+        "event_service.adapters.competition_formats_adapter.CompetitionFormatsAdapter.get_competition_formats_by_name",
         return_value=[competition_format, competition_format],
     )
 
@@ -634,7 +639,7 @@ async def test_create_event_multiple_competition_formats(
     }
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
-        m.post("http://example.com:8081/authorize", status=204)
+        m.post(f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/authorize", status=204)
         resp = await client.post("/events", headers=headers, json=request_body)
         assert resp.status == 400
 
@@ -654,7 +659,7 @@ async def test_create_event_invalid_competition_format(
         return_value=ID,
     )
     mocker.patch(
-        "event_service.adapters.competition_formats_adapter.CompetitionFormatsAdapter.get_competition_formats_by_name",  # noqa: B950
+        "event_service.adapters.competition_formats_adapter.CompetitionFormatsAdapter.get_competition_formats_by_name",
         return_value=[],
     )
 
@@ -669,7 +674,7 @@ async def test_create_event_invalid_competition_format(
     }
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
-        m.post("http://example.com:8081/authorize", status=204)
+        m.post(f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/authorize", status=204)
         resp = await client.post(
             "/events", headers=headers, json=event_invalid_competition_format
         )
@@ -684,14 +689,14 @@ async def test_update_event_invalid_competition_format(
     ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
     mocker.patch(
         "event_service.adapters.events_adapter.EventsAdapter.get_event_by_id",
-        return_value={"id": ID} | event,  # type: ignore
+        return_value={"id": ID} | event,
     )
     mocker.patch(
         "event_service.adapters.events_adapter.EventsAdapter.update_event",
-        return_value={"id": ID} | event,  # type: ignore
+        return_value={"id": ID} | event,
     )
     mocker.patch(
-        "event_service.adapters.competition_formats_adapter.CompetitionFormatsAdapter.get_competition_formats_by_name",  # noqa: B950
+        "event_service.adapters.competition_formats_adapter.CompetitionFormatsAdapter.get_competition_formats_by_name",
         return_value=[],
     )
 
@@ -704,7 +709,7 @@ async def test_update_event_invalid_competition_format(
     request_body["competition_format"] = "Invalid Competition Format"
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
-        m.post("http://example.com:8081/authorize", status=204)
+        m.post(f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/authorize", status=204)
 
         resp = await client.put(f"/events/{ID}", headers=headers, json=request_body)
         assert resp.status == 400
@@ -732,7 +737,7 @@ async def test_create_event_no_authorization(
     headers = MultiDict([(hdrs.CONTENT_TYPE, "application/json")])
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
-        m.post("http://example.com:8081/authorize", status=401)
+        m.post(f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/authorize", status=401)
 
         resp = await client.post("/events", headers=headers, json=request_body)
         assert resp.status == 401
@@ -760,7 +765,7 @@ async def test_update_event_by_id_no_authorization(
     request_body = {"id": ID, "name": "Oslo Skagen sprint Oppdatert"}
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
-        m.post("http://example.com:8081/authorize", status=401)
+        m.post(f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/authorize", status=401)
 
         resp = await client.put(f"/events/{ID}", headers=headers, json=request_body)
         assert resp.status == 401
@@ -778,7 +783,7 @@ async def test_delete_event_by_id_no_authorization(
     )
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
-        m.post("http://example.com:8081/authorize", status=401)
+        m.post(f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/authorize", status=401)
 
         resp = await client.delete(f"/events/{ID}")
         assert resp.status == 401
@@ -806,7 +811,7 @@ async def test_create_event_insufficient_role(
     }
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
-        m.post("http://example.com:8081/authorize", status=403)
+        m.post(f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/authorize", status=403)
         resp = await client.post("/events", headers=headers, json=request_body)
         assert resp.status == 403
 
@@ -826,7 +831,7 @@ async def test_get_event_not_found(
     )
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
-        m.post("http://example.com:8081/authorize", status=204)
+        m.post(f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/authorize", status=204)
 
         resp = await client.get(f"/events/{ID}")
         assert resp.status == 404
@@ -858,7 +863,7 @@ async def test_update_event_not_found(
 
     ID = "does-not-exist"
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
-        m.post("http://example.com:8081/authorize", status=204)
+        m.post(f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/authorize", status=204)
         resp = await client.put(f"/events/{ID}", headers=headers, json=request_body)
         assert resp.status == 404
 
@@ -882,6 +887,6 @@ async def test_delete_event_not_found(
         hdrs.AUTHORIZATION: f"Bearer {token}",
     }
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
-        m.post("http://example.com:8081/authorize", status=204)
+        m.post(f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/authorize", status=204)
         resp = await client.delete(f"/events/{ID}", headers=headers)
         assert resp.status == 404

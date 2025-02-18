@@ -1,22 +1,23 @@
 """Module for events service."""
 
-from datetime import date, time
 import logging
-from typing import Any, List, Optional
 import uuid
 import zoneinfo
+from datetime import date, time
+from typing import Any
 
 from event_service.adapters import (
     CompetitionFormatsAdapter,
-    CompetitionFormatsAdapterException,
+    CompetitionFormatsAdapterError,
     EventsAdapter,
 )
 from event_service.models import Event
+
 from .exceptions import (
-    CompetitionFormatNotFoundException,
-    IllegalValueException,
-    InvalidDateFormatException,
-    InvalidTimezoneException,
+    CompetitionFormatNotFoundError,
+    IllegalValueError,
+    InvalidDateFormatError,
+    InvalidTimezoneError,
 )
 
 
@@ -25,7 +26,7 @@ def create_id() -> str:  # pragma: no cover
     return str(uuid.uuid4())
 
 
-class EventNotFoundException(Exception):
+class EventNotFoundError(Exception):
     """Class representing custom exception for fetch method."""
 
     def __init__(self, message: str) -> None:
@@ -38,13 +39,11 @@ class EventsService:
     """Class representing a service for events."""
 
     @classmethod
-    async def get_all_events(cls: Any, db: Any) -> List[Event]:
+    async def get_all_events(cls: Any, db: Any) -> list[Event]:
         """Get all events function."""
-        events: List[Event] = []
         _events = await EventsAdapter.get_all_events(db)
-        for e in _events:
-            events.append(Event.from_dict(e))
-        _s = sorted(
+        events = [Event.from_dict(e) for e in _events]
+        return sorted(
             events,
             key=lambda k: (
                 k.date_of_event is not None,
@@ -54,10 +53,9 @@ class EventsService:
             ),
             reverse=True,
         )
-        return _s
 
     @classmethod
-    async def create_event(cls: Any, db: Any, event: Event) -> Optional[str]:
+    async def create_event(cls: Any, db: Any, event: Event) -> str | None:
         """Create event function.
 
         Args:
@@ -68,92 +66,93 @@ class EventsService:
             Optional[str]: The id of the created event. None otherwise.
 
         Raises:
-            IllegalValueException: input object has illegal values
+            IllegalValueError: input object has illegal values
         """
         if event.id:
             # Validate for duplicates
             existing_event = await EventsAdapter.get_event_by_id(db, str(event.id))
             if existing_event:
-                raise IllegalValueException(f"Event id {event.id} exists.") from None
-            id = event.id
+                msg = f"Event id {event.id} exists."
+                raise IllegalValueError(msg) from None
+            event_id = event.id
         else:
             # create id
-            id = create_id()
-            event.id = id
+            event_id = create_id()
+            event.id = event_id
         # Validate new event:
         await validate_event(db, event)
         # insert new event
         new_event = event.to_dict()
         result = await EventsAdapter.create_event(db, new_event)
-        logging.debug(f"inserted event with id: {id}")
-        if result:
-            return id
-        return None
+        logging.debug(f"inserted event with id: {event_id}")
+        if not result:
+            return None
+        return event_id
 
     @classmethod
-    async def get_event_by_id(cls: Any, db: Any, id: str) -> Event:
+    async def get_event_by_id(cls: Any, db: Any, event_id: str) -> Event:
         """Get event function."""
-        event = await EventsAdapter.get_event_by_id(db, id)
+        event = await EventsAdapter.get_event_by_id(db, event_id)
         # return the document if found:
-        if event:
-            return Event.from_dict(event)
-        raise EventNotFoundException(f"Event with id {id} not found") from None
+        if not event:
+            msg = f"Event with id {event_id} not found"
+            raise EventNotFoundError(msg) from None
+        return Event.from_dict(event)
 
     @classmethod
-    async def update_event(cls: Any, db: Any, id: str, event: Event) -> Optional[str]:
+    async def update_event(
+        cls: Any, db: Any, event_id: str, event: Event
+    ) -> str | None:
         """Get event function."""
         # validate:
         await validate_event(db, event)
         # get old document
-        old_event = await EventsAdapter.get_event_by_id(db, id)
+        old_event = await EventsAdapter.get_event_by_id(db, event_id)
         # update the event if found:
-        if old_event:
-            if event.id != old_event["id"]:
-                raise IllegalValueException("Cannot change id for event.") from None
-            new_event = event.to_dict()
-            result = await EventsAdapter.update_event(db, id, new_event)
-            return result
-        raise EventNotFoundException(f"Event with id {id} not found.") from None
+        if not old_event:
+            msg = f"Event with id {event_id} not found"
+            raise EventNotFoundError(msg) from None
+        if event.id != old_event["id"]:
+            msg = f"Cannot change id for event with id {event_id}"
+            raise IllegalValueError(msg) from None
+        new_event = event.to_dict()
+        return await EventsAdapter.update_event(db, event_id, new_event)
 
     @classmethod
-    async def delete_event(cls: Any, db: Any, id: str) -> Optional[str]:
+    async def delete_event(cls: Any, db: Any, event_id: str) -> str | None:
         """Get event function."""
         # get old document
-        event = await EventsAdapter.get_event_by_id(db, id)
+        event = await EventsAdapter.get_event_by_id(db, event_id)
         # delete the document if found:
-        if event:
-            result = await EventsAdapter.delete_event(db, id)
-            return result
-        raise EventNotFoundException(f"Event with id {id} not found") from None
+        if not event:
+            msg = f"Event with id {event_id} not found"
+            raise EventNotFoundError(msg) from None
+        return await EventsAdapter.delete_event(db, event_id)
 
 
 #   Validation:
-async def validate_event(db: Any, event: Event) -> None:  # noqa: C901
+async def validate_event(db: Any, event: Event) -> None:
     """Validate the event."""
     # Validate date_of_event if set:
     if event.date_of_event:
         try:
-            date.fromisoformat(event.date_of_event)  # type: ignore
+            date.fromisoformat(event.date_of_event) # type: ignore [reportArgumentType]
         except ValueError as e:
-            raise InvalidDateFormatException(
-                'Time "{time_str}" has invalid format.'
-            ) from e
+            msg = f'Date "{event.date_of_event}" has invalid format.'
+            raise InvalidDateFormatError(msg) from e
 
     # Validate time_of_event if set:
     if event.time_of_event:
         try:
-            time.fromisoformat(event.time_of_event)  # type: ignore
+            time.fromisoformat(event.time_of_event) # type: ignore [reportArgumentType]
         except ValueError as e:
-            raise InvalidDateFormatException(
-                'Time "{time_str}" has invalid format.'
-            ) from e
+            msg = f'Time "{event.time_of_event}" has invalid format.'
+            raise InvalidDateFormatError(msg) from e
 
     # Validate timezone:
-    if event.timezone:
-        if event.timezone not in zoneinfo.available_timezones():
-            raise InvalidTimezoneException(
-                f"Invalid timezone: {event.timezone}."
-            ) from None
+    if event.timezone and event.timezone not in zoneinfo.available_timezones():
+        msg = f"Invalid timezone: {event.timezone}."
+        raise InvalidTimezoneError(msg) from None
 
     # Validate competition_format:
     if event.competition_format:
@@ -163,18 +162,15 @@ async def validate_event(db: Any, event: Event) -> None:  # noqa: C901
                     db, event.competition_format
                 )
             )
-        except CompetitionFormatsAdapterException as e:
-            raise CompetitionFormatNotFoundException(
-                f'Competition format "{event.competition_format!r}" not found.'
-            ) from e
+        except CompetitionFormatsAdapterError as e:
+            msg = f'Competition format "{event.competition_format!r}" not found.'
+            raise CompetitionFormatNotFoundError(msg) from e
 
         if len(competition_formats) == 1:
             pass
         elif len(competition_formats) == 0:
-            raise CompetitionFormatNotFoundException(
-                f'Competition_format "{event.competition_format!r}" for event not found.'
-            ) from None
+            msg = f'Competition_format "{event.competition_format!r}" for event not found.'
+            raise CompetitionFormatNotFoundError(msg) from None
         else:
-            raise CompetitionFormatNotFoundException(
-                f'Competition_format "{event.competition_format!r}" for event is ambigous.'
-            ) from None
+            msg = f'Competition_format "{event.competition_format!r}" for event is ambigous.'
+            raise CompetitionFormatNotFoundError(msg) from None

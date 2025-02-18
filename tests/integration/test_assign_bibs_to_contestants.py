@@ -1,15 +1,21 @@
 """Integration test cases for the contestant route."""
 
-from datetime import date
 import os
-from typing import Any, List
+from datetime import date
+from typing import Any
 
+import jwt
+import pytest
 from aiohttp import hdrs
 from aiohttp.test_utils import TestClient as _TestClient
 from aioresponses import aioresponses
-import jwt
-import pytest
+from dotenv import load_dotenv
 from pytest_mock import MockFixture
+
+load_dotenv()
+
+USERS_HOST_SERVER = os.getenv("USERS_HOST_SERVER")
+USERS_HOST_PORT = os.getenv("USERS_HOST_PORT")
 
 
 @pytest.fixture
@@ -18,7 +24,7 @@ def token() -> str:
     secret = os.getenv("JWT_SECRET")
     algorithm = "HS256"
     payload = {"identity": os.getenv("ADMIN_USERNAME")}
-    return jwt.encode(payload, secret, algorithm)  # type: ignore
+    return jwt.encode(payload, secret, algorithm)
 
 
 @pytest.fixture
@@ -28,7 +34,7 @@ async def event() -> dict:
 
 
 @pytest.fixture
-async def raceclasses() -> List[dict]:
+async def raceclasses() -> list[dict]:
     """Create a mock raceclasses object."""
     return [
         {
@@ -51,7 +57,7 @@ async def raceclasses() -> List[dict]:
 
 
 @pytest.fixture
-async def raceclasses_without_group() -> List[dict]:
+async def raceclasses_without_group() -> list[dict]:
     """Create a mock raceclasses object."""
     return [
         {
@@ -72,7 +78,7 @@ async def raceclasses_without_group() -> List[dict]:
 
 
 @pytest.fixture
-async def raceclasses_without_order() -> List[dict]:
+async def raceclasses_without_order() -> list[dict]:
     """Create a mock raceclasses object."""
     return [
         {
@@ -125,7 +131,7 @@ CONTESTANT_LIST = [
 
 
 @pytest.fixture
-async def contestants() -> List[dict]:
+async def contestants() -> list[dict]:
     """Create a mock contestant object."""
     return CONTESTANT_LIST
 
@@ -148,8 +154,8 @@ async def test_assign_bibs_to_contestants(
     mocker: MockFixture,
     token: MockFixture,
     event: dict,
-    raceclasses: List[dict],
-    contestants: List[dict],
+    raceclasses: list[dict],
+    contestants: list[dict],
 ) -> None:
     """Should return 201 Created, location header."""
     mocker.patch(
@@ -184,7 +190,7 @@ async def test_assign_bibs_to_contestants(
 
     event_id = event["id"]
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
-        m.post("http://example.com:8081/authorize", status=204)
+        m.post(f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/authorize", status=204)
         resp = await client.post(
             f"/events/{event_id}/contestants/assign-bibs", headers=headers
         )
@@ -198,8 +204,8 @@ async def test_assign_bibs_to_contestants_event_not_found(
     client: _TestClient,
     mocker: MockFixture,
     token: MockFixture,
-    raceclasses: List[dict],
-    contestants: List[dict],
+    raceclasses: list[dict],
+    contestants: list[dict],
 ) -> None:
     """Should return 404 Not found."""
     mocker.patch(
@@ -221,7 +227,7 @@ async def test_assign_bibs_to_contestants_event_not_found(
     }
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
-        m.post("http://example.com:8081/authorize", status=204)
+        m.post(f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/authorize", status=204)
         resp = await client.post(
             "/events/does_not_exist/contestants/assign-bibs", headers=headers
         )
@@ -234,8 +240,8 @@ async def test_assign_bibs_to_contestants_no_raceclasses(
     mocker: MockFixture,
     token: MockFixture,
     event: dict,
-    raceclasses: List[dict],
-    contestants: List[dict],
+    raceclasses: list[dict],
+    contestants: list[dict],
 ) -> None:
     """Should return 404 Not found."""
     mocker.patch(
@@ -258,7 +264,7 @@ async def test_assign_bibs_to_contestants_no_raceclasses(
 
     event_id = event["id"]
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
-        m.post("http://example.com:8081/authorize", status=204)
+        m.post(f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/authorize", status=204)
         resp = await client.post(
             f"/events/{event_id}/contestants/assign-bibs", headers=headers
         )
@@ -271,8 +277,8 @@ async def test_assign_bibs_to_contestants_raceclasses_without_group(
     mocker: MockFixture,
     token: MockFixture,
     event: dict,
-    raceclasses_without_group: List[dict],
-    contestants: List[dict],
+    raceclasses_without_group: list[dict],
+    contestants: list[dict],
 ) -> None:
     """Should return 400 Bad request."""
     mocker.patch(
@@ -303,7 +309,7 @@ async def test_assign_bibs_to_contestants_raceclasses_without_group(
 
     event_id = event["id"]
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
-        m.post("http://example.com:8081/authorize", status=204)
+        m.post(f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/authorize", status=204)
         resp = await client.post(
             f"/events/{event_id}/contestants/assign-bibs", headers=headers
         )
@@ -316,8 +322,8 @@ async def test_assign_bibs_to_contestants_raceclasses_without_order(
     mocker: MockFixture,
     token: MockFixture,
     event: dict,
-    raceclasses_without_order: List[dict],
-    contestants: List[dict],
+    raceclasses_without_order: list[dict],
+    contestants: list[dict],
 ) -> None:
     """Should return 400 Bad request."""
     mocker.patch(
@@ -348,7 +354,7 @@ async def test_assign_bibs_to_contestants_raceclasses_without_order(
 
     event_id = event["id"]
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
-        m.post("http://example.com:8081/authorize", status=204)
+        m.post(f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/authorize", status=204)
         resp = await client.post(
             f"/events/{event_id}/contestants/assign-bibs", headers=headers
         )
@@ -361,8 +367,8 @@ async def test_assign_bibs_to_contestants_unknow_ageclass(
     mocker: MockFixture,
     token: MockFixture,
     event: dict,
-    raceclasses: List[dict],
-    contestants: List[dict],
+    raceclasses: list[dict],
+    contestants: list[dict],
 ) -> None:
     """Should return 400 Bad request."""
     mocker.patch(
@@ -400,7 +406,7 @@ async def test_assign_bibs_to_contestants_unknow_ageclass(
 
     event_id = event["id"]
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
-        m.post("http://example.com:8081/authorize", status=204)
+        m.post(f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/authorize", status=204)
         resp = await client.post(
             f"/events/{event_id}/contestants/assign-bibs", headers=headers
         )
@@ -415,8 +421,8 @@ async def test_assign_bibs_to_contestants_no_authorization(
     client: _TestClient,
     mocker: MockFixture,
     event: dict,
-    raceclasses: List[dict],
-    contestants: List[dict],
+    raceclasses: list[dict],
+    contestants: list[dict],
 ) -> None:
     """Should return 401 Unauthorized."""
     mocker.patch(
@@ -436,7 +442,7 @@ async def test_assign_bibs_to_contestants_no_authorization(
 
     event_id = event["id"]
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
-        m.post("http://example.com:8081/authorize", status=401)
+        m.post(f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/authorize", status=401)
 
         resp = await client.post(
             f"/events/{event_id}/contestants/assign-bibs",
