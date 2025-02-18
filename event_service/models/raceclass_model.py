@@ -1,7 +1,6 @@
 """Raceclass data class module."""
 
 from dataclasses import dataclass, field
-from typing import Dict, List, Optional
 
 from dataclasses_json import DataClassJsonMixin
 
@@ -11,15 +10,15 @@ class Raceclass(DataClassJsonMixin):
     """Data class with details about an raceclass."""
 
     name: str
-    ageclasses: List[str]
+    ageclasses: list[str]
     event_id: str
     group: int = 0
     order: int = 0
     no_of_contestants: int = 0
     ranking: bool = True
     seeding: bool = False
-    distance: Optional[str] = field(default=None)
-    id: Optional[str] = field(default=None)
+    distance: str | None = field(default=None)
+    id: str | None = field(default=None)
 
 
 @dataclass
@@ -30,6 +29,6 @@ class RaceclassResult(DataClassJsonMixin):
     raceclass: str
     timing_point: str
     no_of_contestants: int
-    ranking_sequence: List[Dict]  # list of references to bib
+    ranking_sequence: list[dict]  # list of references to bib
     status: int  # int with reference to RaceResultStatus
-    id: Optional[str] = field(default=None)
+    id: str | None = field(default=None)

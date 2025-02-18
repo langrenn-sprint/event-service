@@ -1,22 +1,23 @@
 """Module for contestants service."""
 
-from datetime import datetime
-from io import StringIO
 import logging
 import re
-from typing import Any, Dict, List, Optional
 import uuid
+from datetime import datetime
+from io import StringIO
+from typing import Any
 
 import numpy as np
 import pandas as pd
 
 from event_service.adapters import ContestantsAdapter, RaceclassesAdapter
 from event_service.models import Contestant
-from .events_service import EventNotFoundException, EventsService
+
+from .events_service import EventNotFoundError, EventsService
 from .exceptions import (
-    BibAlreadyInUseException,
-    IllegalValueException,
-    RaceclassNotFoundException,
+    BibAlreadyInUseError,
+    IllegalValueError,
+    RaceclassNotFoundError,
 )
 
 
@@ -25,7 +26,7 @@ def create_id() -> str:  # pragma: no cover
     return str(uuid.uuid4())
 
 
-class ContestantNotFoundException(Exception):
+class ContestantNotFoundError(Exception):
     """Class representing custom exception for fetch method."""
 
     def __init__(self, message: str) -> None:
@@ -34,7 +35,7 @@ class ContestantNotFoundException(Exception):
         super().__init__(message)
 
 
-class ContestantAllreadyExistException(Exception):
+class ContestantAllreadyExistError(Exception):
     """Class representing custom exception for fetch method."""
 
     def __init__(self, message: str) -> None:
@@ -47,13 +48,11 @@ class ContestantsService:
     """Class representing a service for contestants."""
 
     @classmethod
-    async def get_all_contestants(cls: Any, db: Any, event_id: str) -> List[Contestant]:
+    async def get_all_contestants(cls: Any, db: Any, event_id: str) -> list[Contestant]:
         """Get all contestants function."""
-        contestants = []
         _contestants = await ContestantsAdapter.get_all_contestants(db, event_id)
-        for c in _contestants:
-            contestants.append(Contestant.from_dict(c))
-        _s = sorted(
+        contestants = [Contestant.from_dict(c) for c in _contestants]
+        return sorted(
             contestants,
             key=lambda k: (
                 k.bib is not None,
@@ -65,14 +64,12 @@ class ContestantsService:
             ),
             reverse=False,
         )
-        return _s
 
     @classmethod
     async def get_contestants_by_raceclass(
         cls: Any, db: Any, event_id: str, raceclass: str
-    ) -> List[Contestant]:
+    ) -> list[Contestant]:
         """Get all contestants function filter by raceclass."""
-        contestants = []
         # Need to get the raceclass, to get the corresponding ageclasses:
         raceclasses = await RaceclassesAdapter.get_raceclass_by_name(
             db, event_id, raceclass
@@ -80,17 +77,20 @@ class ContestantsService:
         if len(raceclasses) == 1:
             pass
         else:
-            raise RaceclassNotFoundException(f'Raceclass "{raceclass!r}" not found.')
+            msg = f'Raceclass "{raceclass!r}" not found.'
+            raise RaceclassNotFoundError(msg)
 
-        _raceclass: Dict = raceclasses[0]
+        _raceclass: dict = raceclasses[0]
         # Then filter contestants on ageclasses:
         _contestants = await ContestantsAdapter.get_all_contestants(db, event_id)
-        for _c in _contestants:
-            if _c["ageclass"] in _raceclass["ageclasses"]:
-                contestants.append(Contestant.from_dict(_c))
+        contestants = [
+            Contestant.from_dict(_c)
+            for _c in _contestants
+            if _c["ageclass"] in _raceclass["ageclasses"]
+        ]
 
         # We sort the list on bib, ageclass, last- and first-name:
-        _s = sorted(
+        return sorted(
             contestants,
             key=lambda k: (
                 k.bib is not None,
@@ -102,19 +102,19 @@ class ContestantsService:
             ),
             reverse=False,
         )
-        return _s
 
     @classmethod
     async def get_contestants_by_ageclass(
         cls: Any, db: Any, event_id: str, ageclass: str
-    ) -> List[Contestant]:
+    ) -> list[Contestant]:
         """Get all contestants function filter by ageclass."""
-        contestants = []
         _contestants = await ContestantsAdapter.get_all_contestants(db, event_id)
-        for _c in _contestants:
-            if _c["ageclass"] == ageclass:
-                contestants.append(Contestant.from_dict(_c))
-        _s = sorted(
+        contestants = [
+            Contestant.from_dict(_c)
+            for _c in _contestants
+            if _c["ageclass"] == ageclass
+        ]
+        return sorted(
             contestants,
             key=lambda k: (
                 k.bib is not None,
@@ -126,12 +126,11 @@ class ContestantsService:
             ),
             reverse=False,
         )
-        return _s
 
     @classmethod
     async def get_contestant_by_bib(
         cls: Any, db: Any, event_id: str, bib: int
-    ) -> List[Contestant]:
+    ) -> list[Contestant]:
         """Get all contestants by bib function."""
         contestants = []
         _contestant = await ContestantsAdapter.get_contestant_by_bib(db, event_id, bib)
@@ -142,7 +141,7 @@ class ContestantsService:
     @classmethod
     async def create_contestant(
         cls: Any, db: Any, event_id: str, contestant: Contestant
-    ) -> Optional[str]:
+    ) -> str | None:
         """Create contestant function.
 
         Args:
@@ -154,26 +153,24 @@ class ContestantsService:
             Optional[str]: The id of the created contestant. None otherwise.
 
         Raises:
-            EventNotFoundException: event does not exist
-            ContestantAllreadyExistException: contestant allready exists
-            IllegalValueException: input object has illegal values
+            EventNotFoundError: event does not exist
+            ContestantAllreadyExistError: contestant allready exists
+            IllegalValueError: input object has illegal values
         """
         # Validation:
         # First we have to check if the event exist:
         try:
             _ = await EventsService.get_event_by_id(db, event_id)
-        except EventNotFoundException as e:
+        except EventNotFoundError as e:
             raise e from e
         # Check if contestant exist:
         _contestant = await _contestant_exist(db, event_id, contestant)
         if _contestant:
-            raise ContestantAllreadyExistException(
-                f"Contestant with {contestant.to_dict()} allready exist in event {event_id}. "
-            )
+            msg = f"Contestant with {contestant.to_dict()} allready exist in event {event_id}. "
+            raise ContestantAllreadyExistError(msg)
         if contestant.id:
-            raise IllegalValueException(
-                "Cannot create contestant with input id."
-            ) from None
+            msg = f"Contestant with {contestant.to_dict()} allready exist in event {event_id}. "
+            raise IllegalValueError(msg) from None
         # Strip ageclass for whitespace:
         contestant.ageclass = contestant.ageclass.strip()
         # Validate:
@@ -200,7 +197,7 @@ class ContestantsService:
         await ContestantsAdapter.delete_all_contestants(db, event_id)
 
     @classmethod
-    async def create_contestants(  # noqa: C901
+    async def create_contestants(
         cls: Any, db: Any, event_id: str, contestants: str
     ) -> dict:
         """Create contestants function.
@@ -214,51 +211,50 @@ class ContestantsService:
             dict: A short report of created, updated or failed attempts.
 
         Raises:
-            EventNotFoundException: event does not exist
-            IllegalValueException: input object has illegal values
+            EventNotFoundError: event does not exist
+            IllegalValueError: input object has illegal values
         """
         # First we have to check if the event exist:
         try:
             _ = await EventsService.get_event_by_id(db, event_id)
-        except EventNotFoundException as e:
+        except EventNotFoundError as e:
             raise e from e
 
         try:
-            df = await parse_contestants(contestants)
-        except IllegalValueException as e:
+            contestants_frame = await parse_contestants(contestants)
+        except IllegalValueError as e:
             raise e from e
 
         # Need to replace nans with None:
-        df = df.replace({np.nan: None})
+        contestants_frame = contestants_frame.replace({np.nan: None})
 
-        contestants = df.to_dict("records")
+        contestants_dict = contestants_frame.to_dict("records")
         # For every record, create contestant:
-        # TODO: consider parallellizing this
+        # TODO: consider parallellizing this # noqa: FIX002, TD002, TD003
         # create id
-        result: Dict[str, Any] = {
+        result: dict[str, Any] = {
             "total": 0,
             "created": 0,
             "updated": [],
             "failures": [],
         }
-        for _c in contestants:
+        for _c in contestants_dict:
             result["total"] += 1
-            _c["event_id"] = event_id  # type: ignore
+            _c["event_id"] = event_id # type: ignore [reportIndexIssue]
             contestant_id = create_id()
-            _c["id"] = contestant_id  # type: ignore
+            _c["id"] = contestant_id # type: ignore [reportIndexIssue]
             # Validate contestant:
             try:
                 # datetime to string in isoformat:
                 try:
-                    if _c["registration_date_time"]:  # type: ignore
-                        _c["registration_date_time"] = datetime.strptime(  # type: ignore
-                            _c["registration_date_time"],  # type: ignore
-                            "%d.%m.%Y %H:%M:%S",  # type: ignore
+                    if _c["registration_date_time"]: # type: ignore [reportArgumentType]
+                        _c["registration_date_time"] = datetime.strptime(  # noqa: DTZ007  # type: ignore [reportArgumentType]
+                            _c["registration_date_time"],  # type: ignore [reportArgumentType]
+                            "%d.%m.%Y %H:%M:%S",
                         ).isoformat()
                 except ValueError as e:
-                    raise IllegalValueException(
-                        f'registration_date_time in "{_c!r}" has invalid datetime format".'
-                    ) from e
+                    msg = f"Invalid datetime format in '{_c!r}'"
+                    raise IllegalValueError(msg) from e
                 contestant = Contestant.from_dict(_c)
                 # Strip ageclass for whitespace:
                 contestant.ageclass = contestant.ageclass.strip()
@@ -296,8 +292,8 @@ class ContestantsService:
                         result["failures"].append(
                             f"reason: {_result}: {contestant.to_dict()}"
                         )
-            except IllegalValueException as e:
-                logging.error(f"Failed to create contestant with {_c}. {e}")
+            except IllegalValueError as e:
+                logging.exception(f"Failed to create contestant with {_c}.")
                 result["failures"].append(f"reason: {e}: {_c}")
                 continue
 
@@ -312,11 +308,12 @@ class ContestantsService:
             db, event_id, contestant_id
         )
         # return the document if found:
-        if contestant:
-            return Contestant.from_dict(contestant)
-        raise ContestantNotFoundException(
-            f"Contestant with id {contestant_id} not found"
-        ) from None
+        if not contestant:
+            msg = f"Contestant with id {contestant_id} not found"
+            logging.error(msg)
+            raise ContestantNotFoundError(msg) from None
+
+        return Contestant.from_dict(contestant)
 
     @classmethod
     async def update_contestant(
@@ -325,49 +322,44 @@ class ContestantsService:
         event_id: str,
         contestant_id: str,
         contestant: Contestant,
-    ) -> Optional[str]:
+    ) -> str | None:
         """Update contestant function."""
         # get old document
         old_contestant = await ContestantsAdapter.get_contestant_by_id(
             db, event_id, contestant_id
         )
         # update the contestant if found:
-        if old_contestant:
-            # Strip ageclass for whitespace:
-            contestant.ageclass = contestant.ageclass.strip()
-            # Validate:
-            await _validate_contestant(db, event_id, contestant)
-            if contestant.id != old_contestant["id"]:
-                raise IllegalValueException(
-                    "Cannot change id for contestant."
-                ) from None
-            new_contestant = contestant.to_dict()
-            result = await ContestantsAdapter.update_contestant(
-                db, event_id, contestant_id, new_contestant
-            )
-            return result
-        raise ContestantNotFoundException(
-            f"Contestant with id {contestant_id} not found."
-        ) from None
+        if not old_contestant:
+            msg = f"Contestant with id {contestant_id} not found."
+            raise ContestantNotFoundError(msg) from None
+
+        # Strip ageclass for whitespace:
+        contestant.ageclass = contestant.ageclass.strip()
+        # Validate:
+        await _validate_contestant(db, event_id, contestant)
+        if contestant.id != old_contestant["id"]:
+            msg = f"Cannot change id for contestant with id {contestant_id}."
+            raise IllegalValueError(msg) from None
+        new_contestant = contestant.to_dict()
+        return await ContestantsAdapter.update_contestant(
+            db, event_id, contestant_id, new_contestant
+        )
 
     @classmethod
     async def delete_contestant(
         cls: Any, db: Any, event_id: str, contestant_id: str
-    ) -> Optional[str]:
+    ) -> str | None:
         """Get contestant function."""
         # get old document
         contestant = await ContestantsAdapter.get_contestant_by_id(
             db, event_id, contestant_id
         )
         # delete the document if found:
-        if contestant:
-            result = await ContestantsAdapter.delete_contestant(
-                db, event_id, contestant_id
-            )
-            return result
-        raise ContestantNotFoundException(
-            f"Contestant with id {contestant_id} not found"
-        ) from None
+        if not contestant:
+            msg = f"Contestant with id {contestant_id} not found"
+            raise ContestantNotFoundError(msg) from None
+
+        return await ContestantsAdapter.delete_contestant(db, event_id, contestant_id)
 
 
 # -- helper methods
@@ -377,14 +369,12 @@ async def parse_contestants(contestants: str) -> pd.DataFrame:
     """Parse contestants from csv."""
     # We try to parse the contestants as csv, Sportsadmin format:
     try:
-        df = await _parse_contestants_sportsadmin(contestants)
-        return df
-    except IllegalValueException:
+        return await _parse_contestants_sportsadmin(contestants)
+    except IllegalValueError:
         # Try a iSonen format:
         try:
-            df = await _parse_contestants_i_sonen(contestants)
-            return df
-        except IllegalValueException as e:
+            return await _parse_contestants_i_sonen(contestants)
+        except IllegalValueError as e:
             raise e from e
 
 
@@ -405,16 +395,16 @@ async def _parse_contestants_sportsadmin(contestants: str) -> pd.DataFrame:
             "Team",
             "Betalt/påmeldt dato",
         ]
-        df = pd.read_csv(
+        contestants_df = pd.read_csv( # noqa: PGH003 # type: ignore
             StringIO(contestants),
             sep=";",
             encoding="utf-8",
             dtype=str,
             skiprows=2,
             header=0,
-            usecols=cols,
+            usecols=cols, # noqa: PGH003 # type: ignore
         )
-        df.columns = [
+        contestants_df.columns = [
             "ageclass",
             "distance",
             "last_name",
@@ -429,12 +419,11 @@ async def _parse_contestants_sportsadmin(contestants: str) -> pd.DataFrame:
             "registration_date_time",
         ]
 
-        return df
-
     except ValueError as e:
-        raise IllegalValueException(
-            f"Failed to parse contestants. Please check format. Reason: {e}"
-        ) from e
+        msg = f"Failed to parse contestants. Please check format. Reason: {e}"
+        raise IllegalValueError(msg) from e
+
+    return contestants_df
 
 
 async def _parse_contestants_i_sonen(contestants: str) -> pd.DataFrame:
@@ -455,16 +444,16 @@ async def _parse_contestants_i_sonen(contestants: str) -> pd.DataFrame:
             "Klasse",
             "Øvelse",
         ]
-        df = pd.read_csv(
+        contestants_df = pd.read_csv( # noqa: PGH003 # type: ignore
             StringIO(contestants),
             sep=";",
             encoding="utf-8",
             dtype=str,
             header=0,
-            usecols=cols,
+            usecols=cols, # noqa: PGH003 # type: ignore
         )
         # Need to map column names to dataclass:
-        df.rename(
+        contestants_df.rename(
             columns={
                 "Fornavn": "first_name",
                 "Etternavn": "last_name",
@@ -480,23 +469,26 @@ async def _parse_contestants_i_sonen(contestants: str) -> pd.DataFrame:
                 "Klasse": "ageclass",
                 "Øvelse": "distance",
             },
-            inplace=True,
+            inplace=True,  # noqa: PD002
         )
         # We need to combine registration_date and registration_time to one column:
-        df["registration_date_time"] = (
-            df["registration_date"] + " " + df["registration_time"] + ":00"
+        contestants_df["registration_date_time"] = (  # type: ignore [reportArgumentType]
+            contestants_df["registration_date"]  # type: ignore [reportArgumentType]
+            + " "
+            + contestants_df["registration_time"]  # type: ignore [reportArgumentType]
+            + ":00"
         )
-        return df
 
     except ValueError as e:
-        raise IllegalValueException(
-            f"Failed to parse contestants. Please check format. Reason: {e}"
-        ) from e
+        msg = f"Failed to parse contestants. Please check format. Reason: {e}"
+        raise IllegalValueError(msg) from e
+
+    return contestants_df
 
 
 async def _contestant_exist(
     db: Any, event_id: str, contestant: Contestant
-) -> Optional[dict]:
+) -> dict | None:
     """Checks if contestant exist and return id if it does. None otherwise."""
     # if contestant has minidrett_id:
     if contestant.minidrett_id:
@@ -519,9 +511,8 @@ async def _validate_contestant(db: Any, event_id: str, contestant: Contestant) -
 
     # Check that bib is in use by another contestant:
     if await _bib_in_use_by_another_contestant(db, event_id, contestant):
-        raise BibAlreadyInUseException(
-            f"Bib {contestant.bib} allready in use by another contestant."
-        )
+        msg = f"Bib {contestant.bib} allready in use by another contestant."
+        raise BibAlreadyInUseError(msg)
 
 
 async def _bib_in_use_by_another_contestant(
@@ -538,23 +529,20 @@ async def _bib_in_use_by_another_contestant(
 
     if not _contestant:
         return False
-    if _contestant["id"] == contestant.id:
-        return False
-    return True
+    return _contestant["id"] != contestant.id
 
 
 async def validate_ageclass(ageclass: str) -> None:
     """Validator function for raceclasses."""
     # Check that ageclass is valid against following regexes:
-    # regex = r"(?i)([JGMK]\s\d*\/?\d+?\s?(år)?)|((Kvinner|Menn) (junior|senior))|((Felles))|(Para)"  # noqa: B950
     global_flags = r"(?i)"
-    regex_JGMK = r"([JGMK]\s\d*\/?\d+?\s?(år)?)"
-    regex_Gutter = r"(\bGutter\b\s\d*\/?\d+?\s?(år)?)"
-    regex_Jenter = r"(\bJenter\b\s\d*\/?\d+?\s?(år)?)"
+    regex_JGMK = r"([JGMK]\s\d*\/?\d+?\s?(år)?)"  # noqa: N806
+    regex_Gutter = r"(\bGutter\b\s\d*\/?\d+?\s?(år)?)"  # noqa: N806
+    regex_Jenter = r"(\bJenter\b\s\d*\/?\d+?\s?(år)?)"  # noqa: N806
     regex_junior = r"((\bKvinner\b|\bMenn\b)\s\d*\/?\d+?\s?(år)?)"
     regex_senior = r"((\bKvinner\b|\bMenn\b) \bsenior\b)"
-    regex_Felles = r"((\bFelles\b))"
-    regex_Para = r"((\bPara\b))"
+    regex_Felles = r"((\bFelles\b))"  # noqa: N806
+    regex_Para = r"((\bPara\b))"  # noqa: N806
     pattern = re.compile(
         global_flags
         + regex_JGMK
@@ -572,6 +560,5 @@ async def validate_ageclass(ageclass: str) -> None:
         + regex_Para
     )
     if not pattern.match(ageclass):
-        raise IllegalValueException(
-            f"Ageclass {ageclass!r} is not valid. Must be of the form 'Jenter 12 år' 'J 12 år', 'J 12/13 år', 'Kvinner 18-19', 'Kvinner senior', 'Felles' or 'Para'."  # noqa: B950
-        )
+        msg = f"Ageclass {ageclass!r} is not valid. Must be of the form 'Jenter 12 år' 'J 12 år', 'J 12/13 år', 'Kvinner 18-19', 'Kvinner senior', 'Felles' or 'Para'."
+        raise IllegalValueError(msg)

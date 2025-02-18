@@ -5,12 +5,12 @@ from typing import Any
 from event_service.models import Raceclass
 from event_service.services import (
     ContestantsService,
-    EventNotFoundException,
+    EventNotFoundError,
     EventsService,
-    RaceclassCreateException,
+    RaceclassCreateError,
     RaceclassesService,
-    RaceclassNotUniqueNameException,
-    RaceclassUpdateException,
+    RaceclassNotUniqueNameError,
+    RaceclassUpdateError,
 )
 
 
@@ -18,14 +18,12 @@ class EventsCommands:
     """Class representing a commands on events."""
 
     @classmethod
-    async def generate_raceclasses(  # noqa: C901
-        cls: Any, db: Any, event_id: str
-    ) -> None:
+    async def generate_raceclasses(cls: Any, db: Any, event_id: str) -> None:
         """Create raceclasses function."""
         # Check if event exists:
         try:
             await EventsService.get_event_by_id(db, event_id)
-        except EventNotFoundException as e:
+        except EventNotFoundError as e:
             raise e from e
 
         # Get all contestants in event:
@@ -40,21 +38,19 @@ class EventsCommands:
             if len(raceclasses) == 0:
                 raceclass_exist = False
             elif len(raceclasses) > 1:
-                raise RaceclassNotUniqueNameException(
-                    f"Raceclass name {_c.ageclass} not unique."
-                ) from None
+                msg = f"Raceclass name {_c.ageclass} not unique."
+                raise RaceclassNotUniqueNameError(msg) from None
             else:
                 raceclass = raceclasses[0]
             # Update counter if raceclass exist:
-            if raceclass_exist and raceclass.id:
-                raceclass.no_of_contestants += 1
+            if raceclass_exist and raceclass.id: # type: ignore [reportPossibleUnboundVariable]
+                raceclass.no_of_contestants += 1 # type: ignore [reportPossibleUnboundVariable]
                 result = await RaceclassesService.update_raceclass(
-                    db, event_id, raceclass.id, raceclass
+                    db, event_id, raceclass.id, raceclass # type: ignore [reportPossibleUnboundVariable]
                 )
                 if not result:
-                    raise RaceclassUpdateException(
-                        f"Create of raceclass with id {raceclass.id} failed."
-                    ) from None
+                    msg = f"Update of raceclass with id {raceclass.id} failed." # type: ignore [reportPossibleUnboundVariable]
+                    raise RaceclassUpdateError(msg) from None
             # If not found, we create the raceclass:
             else:
                 new_raceclass = Raceclass(
@@ -70,9 +66,8 @@ class EventsCommands:
                     db, event_id, new_raceclass
                 )
                 if not result:
-                    raise RaceclassCreateException(
-                        f"Create of raceclass with name {new_raceclass.name} failed."
-                    ) from None
+                    msg = f"Create of raceclass with name {new_raceclass.name} failed."
+                    raise RaceclassCreateError(msg) from None
 
         # Finally we sort and re-assign default group and order values:
         raceclasses = await RaceclassesService.get_all_raceclasses(
@@ -113,4 +108,4 @@ def _create_raceclass_name(ageclass: str) -> str:
     name = name.replace("Junior", "J")
     name = name.replace("Felles", "F")
     name = name.replace("år", "")
-    return name
+    return name  # noqa: RET504

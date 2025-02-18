@@ -1,15 +1,20 @@
 """Integration test cases for the raceclasses route."""
 
-from copy import deepcopy
 import os
-from typing import Dict
+from copy import deepcopy
 
+import jwt
+import pytest
 from aiohttp import hdrs
 from aiohttp.test_utils import TestClient as _TestClient
 from aioresponses import aioresponses
-import jwt
-import pytest
+from dotenv import load_dotenv
 from pytest_mock import MockFixture
+
+load_dotenv()
+
+USERS_HOST_SERVER = os.getenv("USERS_HOST_SERVER")
+USERS_HOST_PORT = os.getenv("USERS_HOST_PORT")
 
 
 @pytest.fixture
@@ -18,11 +23,11 @@ def token() -> str:
     secret = os.getenv("JWT_SECRET")
     algorithm = "HS256"
     payload = {"identity": os.getenv("ADMIN_USERNAME")}
-    return jwt.encode(payload, secret, algorithm)  # type: ignore
+    return jwt.encode(payload, secret, algorithm)
 
 
 @pytest.fixture
-async def event() -> Dict[str, str]:
+async def event() -> dict[str, str]:
     """An event object for testing."""
     return {
         "id": "event_id_1",
@@ -74,7 +79,7 @@ async def test_create_raceclass(
     EVENT_ID = "event_id_1"
     RACECLASS_ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
     mocker.patch(
-        "event_service.adapters.events_adapter.EventsAdapter.get_event_by_id",  # noqa: B950
+        "event_service.adapters.events_adapter.EventsAdapter.get_event_by_id",
         return_value=event,
     )
     mocker.patch(
@@ -93,7 +98,7 @@ async def test_create_raceclass(
     }
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
-        m.post("http://example.com:8081/authorize", status=204)
+        m.post(f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/authorize", status=204)
         resp = await client.post(
             f"/events/{EVENT_ID}/raceclasses", headers=headers, json=request_body
         )
@@ -117,7 +122,7 @@ async def test_get_raceclass_by_id(
     )
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
-        m.post("http://example.com:8081/authorize", status=204)
+        m.post(f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/authorize", status=204)
         resp = await client.get(f"/events/{EVENT_ID}/raceclasses/{RACECLASS_ID}")
         assert resp.status == 200
         assert "application/json" in resp.headers[hdrs.CONTENT_TYPE]
@@ -138,13 +143,13 @@ async def test_get_raceclass_by_name(
     """Should return 200 OK, and a list containing one raceclass."""
     EVENT_ID = "event_id_1"
     mocker.patch(
-        "event_service.adapters.raceclasses_adapter.RaceclassesAdapter.get_raceclass_by_name",  # noqa: B950
+        "event_service.adapters.raceclasses_adapter.RaceclassesAdapter.get_raceclass_by_name",
         return_value=[raceclass],
     )
 
     name = raceclass["name"]
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
-        m.post("http://example.com:8081/authorize", status=204)
+        m.post(f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/authorize", status=204)
         resp = await client.get(f"/events/{EVENT_ID}/raceclasses?name={name}")
         assert resp.status == 200
         assert "application/json" in resp.headers[hdrs.CONTENT_TYPE]
@@ -171,7 +176,7 @@ async def test_get_raceclass_by_ageclass_name(
 
     ageclass_name = raceclass["ageclasses"][0]
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
-        m.post("http://example.com:8081/authorize", status=204)
+        m.post(f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/authorize", status=204)
         resp = await client.get(
             f"/events/{EVENT_ID}/raceclasses?ageclass-name={ageclass_name}"
         )
@@ -195,7 +200,7 @@ async def test_update_raceclass_by_id(
     EVENT_ID = "event_id_1"
     RACECLASS_ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
     mocker.patch(
-        "event_service.adapters.raceclasses_adapter.RaceclassesAdapter.get_raceclass_by_id",  # noqa: B950
+        "event_service.adapters.raceclasses_adapter.RaceclassesAdapter.get_raceclass_by_id",
         return_value=raceclass,
     )
     mocker.patch(
@@ -211,7 +216,7 @@ async def test_update_raceclass_by_id(
     request_body["distance"] = "New distance"
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
-        m.post("http://example.com:8081/authorize", status=204)
+        m.post(f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/authorize", status=204)
         resp = await client.put(
             f"/events/{EVENT_ID}/raceclasses/{RACECLASS_ID}",
             headers=headers,
@@ -232,7 +237,7 @@ async def test_get_all_raceclasses(
     )
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
-        m.post("http://example.com:8081/authorize", status=204)
+        m.post(f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/authorize", status=204)
         resp = await client.get(f"/events/{EVENT_ID}/raceclasses")
         assert resp.status == 200
         assert "application/json" in resp.headers[hdrs.CONTENT_TYPE]
@@ -250,7 +255,7 @@ async def test_delete_raceclass_by_id(
     EVENT_ID = "event_id_1"
     RACECLASS_ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
     mocker.patch(
-        "event_service.adapters.raceclasses_adapter.RaceclassesAdapter.get_raceclass_by_id",  # noqa: B950
+        "event_service.adapters.raceclasses_adapter.RaceclassesAdapter.get_raceclass_by_id",
         return_value=raceclass,
     )
     mocker.patch(
@@ -262,7 +267,7 @@ async def test_delete_raceclass_by_id(
     }
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
-        m.post("http://example.com:8081/authorize", status=204)
+        m.post(f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/authorize", status=204)
         resp = await client.delete(
             f"/events/{EVENT_ID}/raceclasses/{RACECLASS_ID}", headers=headers
         )
@@ -276,11 +281,11 @@ async def test_delete_all_raceclasses_in_event(
     """Should return 204 No content."""
     EVENT_ID = "event_id_1"
     mocker.patch(
-        "event_service.adapters.raceclasses_adapter.RaceclassesAdapter.delete_all_raceclasses",  # noqa: B950
+        "event_service.adapters.raceclasses_adapter.RaceclassesAdapter.delete_all_raceclasses",
         return_value=None,
     )
     mocker.patch(
-        "event_service.adapters.raceclasses_adapter.RaceclassesAdapter.get_all_raceclasses",  # noqa: B950
+        "event_service.adapters.raceclasses_adapter.RaceclassesAdapter.get_all_raceclasses",
         return_value=[],
     )
 
@@ -289,11 +294,11 @@ async def test_delete_all_raceclasses_in_event(
     }
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
-        m.post("http://example.com:8081/authorize", status=204)
+        m.post(f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/authorize", status=204)
         resp = await client.delete(f"/events/{EVENT_ID}/raceclasses", headers=headers)
         assert resp.status == 204
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
-        m.post("http://example.com:8081/authorize", status=204)
+        m.post(f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/authorize", status=204)
         resp = await client.get(f"/events/{EVENT_ID}/raceclasses")
         assert resp.status == 200
         raceclasses = await resp.json()
@@ -313,7 +318,7 @@ async def test_create_raceclass_event_not_found(
     EVENT_ID = "event_id_1"
     RACECLASS_ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
     mocker.patch(
-        "event_service.adapters.events_adapter.EventsAdapter.get_event_by_id",  # noqa: B950
+        "event_service.adapters.events_adapter.EventsAdapter.get_event_by_id",
         return_value=None,
     )
     mocker.patch(
@@ -332,7 +337,7 @@ async def test_create_raceclass_event_not_found(
     }
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
-        m.post("http://example.com:8081/authorize", status=204)
+        m.post(f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/authorize", status=204)
         resp = await client.post(
             f"/events/{EVENT_ID}/raceclasses", headers=headers, json=request_body
         )
@@ -351,7 +356,7 @@ async def test_create_raceclass_missing_mandatory_property(
     EVENT_ID = "event_id_1"
     RACECLASS_ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
     mocker.patch(
-        "event_service.adapters.events_adapter.EventsAdapter.get_event_by_id",  # noqa: B950
+        "event_service.adapters.events_adapter.EventsAdapter.get_event_by_id",
         return_value=event,
     )
     mocker.patch(
@@ -370,7 +375,7 @@ async def test_create_raceclass_missing_mandatory_property(
     }
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
-        m.post("http://example.com:8081/authorize", status=204)
+        m.post(f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/authorize", status=204)
         resp = await client.post(
             f"/events/{EVENT_ID}/raceclasses", headers=headers, json=request_body
         )
@@ -385,7 +390,7 @@ async def test_update_raceclass_by_id_missing_mandatory_property(
     EVENT_ID = "event_id_1"
     RACECLASS_ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
     mocker.patch(
-        "event_service.adapters.raceclasses_adapter.RaceclassesAdapter.get_raceclass_by_id",  # noqa: B950
+        "event_service.adapters.raceclasses_adapter.RaceclassesAdapter.get_raceclass_by_id",
         return_value={"id": RACECLASS_ID, "name": "missing_the_rest_of_the_properties"},
     )
     mocker.patch(
@@ -401,7 +406,7 @@ async def test_update_raceclass_by_id_missing_mandatory_property(
     request_body = {"id": RACECLASS_ID, "name": "missing_the_rest_of_the_properties"}
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
-        m.post("http://example.com:8081/authorize", status=204)
+        m.post(f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/authorize", status=204)
         resp = await client.put(
             f"/events/{EVENT_ID}/raceclasses/{RACECLASS_ID}",
             headers=headers,
@@ -422,7 +427,7 @@ async def test_create_raceclass_with_input_id(
     EVENT_ID = "event_id_1"
     RACECLASS_ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
     mocker.patch(
-        "event_service.adapters.events_adapter.EventsAdapter.get_event_by_id",  # noqa: B950
+        "event_service.adapters.events_adapter.EventsAdapter.get_event_by_id",
         return_value=event,
     )
     mocker.patch(
@@ -441,7 +446,7 @@ async def test_create_raceclass_with_input_id(
     }
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
-        m.post("http://example.com:8081/authorize", status=204)
+        m.post(f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/authorize", status=204)
         resp = await client.post(
             f"/events/{EVENT_ID}/raceclasses", headers=headers, json=request_body
         )
@@ -460,7 +465,7 @@ async def test_create_raceclass_with_invalid_ageclass_value(
     EVENT_ID = "event_id_1"
     RACECLASS_ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
     mocker.patch(
-        "event_service.adapters.events_adapter.EventsAdapter.get_event_by_id",  # noqa: B950
+        "event_service.adapters.events_adapter.EventsAdapter.get_event_by_id",
         return_value=event,
     )
     mocker.patch(
@@ -481,7 +486,7 @@ async def test_create_raceclass_with_invalid_ageclass_value(
     }
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
-        m.post("http://example.com:8081/authorize", status=204)
+        m.post(f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/authorize", status=204)
         resp = await client.post(
             f"/events/{EVENT_ID}/raceclasses", headers=headers, json=request_body
         )
@@ -496,7 +501,7 @@ async def test_update_raceclass_by_id_different_id_in_body(
     EVENT_ID = "event_id_1"
     RACECLASS_ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
     mocker.patch(
-        "event_service.adapters.raceclasses_adapter.RaceclassesAdapter.get_raceclass_by_id",  # noqa: B950
+        "event_service.adapters.raceclasses_adapter.RaceclassesAdapter.get_raceclass_by_id",
         return_value=raceclass,
     )
     mocker.patch(
@@ -512,7 +517,7 @@ async def test_update_raceclass_by_id_different_id_in_body(
     request_body["id"] = "different_id"
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
-        m.post("http://example.com:8081/authorize", status=204)
+        m.post(f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/authorize", status=204)
         resp = await client.put(
             f"/events/{EVENT_ID}/raceclasses/{RACECLASS_ID}",
             headers=headers,
@@ -529,7 +534,7 @@ async def test_update_raceclass_with_invalid_ageclass_value(
     EVENT_ID = "event_id_1"
     RACECLASS_ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
     mocker.patch(
-        "event_service.adapters.raceclasses_adapter.RaceclassesAdapter.get_raceclass_by_id",  # noqa: B950
+        "event_service.adapters.raceclasses_adapter.RaceclassesAdapter.get_raceclass_by_id",
         return_value=raceclass,
     )
     mocker.patch(
@@ -545,7 +550,7 @@ async def test_update_raceclass_with_invalid_ageclass_value(
     request_body["ageclasses"] = ["invalid_ageclass"]
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
-        m.post("http://example.com:8081/authorize", status=204)
+        m.post(f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/authorize", status=204)
         resp = await client.put(
             f"/events/{EVENT_ID}/raceclasses/{RACECLASS_ID}",
             headers=headers,
@@ -565,7 +570,7 @@ async def test_create_raceclass_adapter_fails(
     """Should return 400 HTTPBadRequest."""
     EVENT_ID = "event_id_1"
     mocker.patch(
-        "event_service.adapters.events_adapter.EventsAdapter.get_event_by_id",  # noqa: B950
+        "event_service.adapters.events_adapter.EventsAdapter.get_event_by_id",
         return_value=event,
     )
     mocker.patch(
@@ -573,7 +578,7 @@ async def test_create_raceclass_adapter_fails(
         return_value=None,
     )
     mocker.patch(
-        "event_service.adapters.raceclasses_adapter.RaceclassesAdapter.create_raceclass",  # noqa: B950
+        "event_service.adapters.raceclasses_adapter.RaceclassesAdapter.create_raceclass",
         return_value=None,
     )
 
@@ -584,7 +589,7 @@ async def test_create_raceclass_adapter_fails(
     }
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
-        m.post("http://example.com:8081/authorize", status=204)
+        m.post(f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/authorize", status=204)
         resp = await client.post(
             f"/events/{EVENT_ID}/raceclasses", headers=headers, json=request_body
         )
@@ -602,7 +607,7 @@ async def test_create_raceclass_no_authorization(
     EVENT_ID = "event_id_1"
     RACECLASS_ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
     mocker.patch(
-        "event_service.adapters.events_adapter.EventsAdapter.get_event_by_id",  # noqa: B950
+        "event_service.adapters.events_adapter.EventsAdapter.get_event_by_id",
         return_value=event,
     )
     mocker.patch(
@@ -618,7 +623,7 @@ async def test_create_raceclass_no_authorization(
     headers = {hdrs.CONTENT_TYPE: "application/json"}
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
-        m.post("http://example.com:8081/authorize", status=401)
+        m.post(f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/authorize", status=401)
 
         resp = await client.post(
             f"/events/{EVENT_ID}/raceclasses", headers=headers, json=request_body
@@ -649,7 +654,7 @@ async def test_put_raceclass_by_id_no_authorization(
     request_body = raceclass
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
-        m.post("http://example.com:8081/authorize", status=401)
+        m.post(f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/authorize", status=401)
         resp = await client.put(
             f"/events/{EVENT_ID}/raceclasses/{RACECLASS_ID}",
             headers=headers,
@@ -675,7 +680,7 @@ async def test_delete_raceclass_by_id_no_authorization(
     )
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
-        m.post("http://example.com:8081/authorize", status=401)
+        m.post(f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/authorize", status=401)
         resp = await client.delete(f"/events/{EVENT_ID}/raceclasses/{RACECLASS_ID}")
         assert resp.status == 401
 
@@ -692,7 +697,7 @@ async def test_delete_all_raceclasses_no_authorization(
     )
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
-        m.post("http://example.com:8081/authorize", status=401)
+        m.post(f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/authorize", status=401)
 
         resp = await client.delete(f"/events/{EVENT_ID}/raceclasses")
         assert resp.status == 401
@@ -714,7 +719,7 @@ async def test_get_raceclass_not_found(
     )
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
-        m.post("http://example.com:8081/authorize", status=204)
+        m.post(f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/authorize", status=204)
         resp = await client.get(f"/events/{EVENT_ID}/raceclasses/{RACECLASS_ID}")
         assert resp.status == 404
 
@@ -743,7 +748,7 @@ async def test_update_raceclass_not_found(
 
     RACECLASS_ID = "does-not-exist"
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
-        m.post("http://example.com:8081/authorize", status=204)
+        m.post(f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/authorize", status=204)
         resp = await client.put(
             f"/events/{EVENT_ID}/raceclasses/{RACECLASS_ID}",
             headers=headers,
@@ -773,7 +778,7 @@ async def test_delete_raceclass_not_found(
     }
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
-        m.post("http://example.com:8081/authorize", status=204)
+        m.post(f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/authorize", status=204)
         resp = await client.delete(
             f"/events/{EVENT_ID}/raceclasses/{RACECLASS_ID}", headers=headers
         )

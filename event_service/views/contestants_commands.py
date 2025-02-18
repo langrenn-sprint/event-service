@@ -15,13 +15,13 @@ from multidict import MultiDict
 from event_service.adapters import UsersAdapter
 from event_service.commands import (
     ContestantsCommands,
-    NoRaceclassInEventException,
-    NoValueForGroupInRaceclassExcpetion,
-    NoValueForOrderInRaceclassExcpetion,
+    NoRaceclassInEventError,
+    NoValueForGroupInRaceclassError,
+    NoValueForOrderInRaceclassError,
 )
 from event_service.services import (
-    EventNotFoundException,
-    IllegalValueException,
+    EventNotFoundError,
+    IllegalValueError,
 )
 from event_service.utils.jwt_utils import extract_token_from_request
 
@@ -48,12 +48,12 @@ class ContestantsAssignBibsView(View):
         event_id = self.request.match_info["eventId"]
         try:
             await ContestantsCommands.assign_bibs(db, event_id)
-        except (EventNotFoundException, NoRaceclassInEventException) as e:
+        except (EventNotFoundError, NoRaceclassInEventError) as e:
             raise HTTPNotFound(reason=str(e)) from e
         except (
-            NoValueForGroupInRaceclassExcpetion,
-            NoValueForOrderInRaceclassExcpetion,
-            IllegalValueException,
+            NoValueForGroupInRaceclassError,
+            NoValueForOrderInRaceclassError,
+            IllegalValueError,
         ) as e:
             raise HTTPBadRequest(reason=str(e)) from e
 

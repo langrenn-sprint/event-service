@@ -2,19 +2,19 @@
 
 import logging
 import os
-from typing import Any, List
+from http import HTTPStatus
+from typing import Any
 from urllib.parse import quote
 
 from aiohttp import ClientSession
 
 from .adapter import Adapter
 
+COMPETITION_FORMAT_HOST_SERVER = os.getenv("COMPETITION_FORMAT_HOST_SERVER", "competition-format.example.com")
+COMPETITION_FORMAT_HOST_PORT = os.getenv("COMPETITION_FORMAT_HOST_PORT", "8080")
 
-COMPETITION_FORMAT_HOST_SERVER = os.getenv("COMPETITION_FORMAT_HOST_SERVER")
-COMPETITION_FORMAT_HOST_PORT = os.getenv("COMPETITION_FORMAT_HOST_PORT")
 
-
-class CompetitionFormatsAdapterException(Exception):
+class CompetitionFormatsAdapterError(Exception):
     """Class representing custom exception for fetch method."""
 
     def __init__(self, message: str) -> None:
@@ -29,22 +29,22 @@ class CompetitionFormatsAdapter(Adapter):
     @classmethod
     async def get_competition_formats_by_name(
         cls: Any, db: Any, competition_format_name: str
-    ) -> List[dict]:  # pragma: no cover
+    ) -> list[dict]:  # pragma: no cover
         """Get competition_format by name function."""
+        _ = db
         logging.debug(f"Got request for name {competition_format_name}.")
-        competition_formats: List = []
+        competition_formats: list = []
 
-        url = f"http://{COMPETITION_FORMAT_HOST_SERVER}:{COMPETITION_FORMAT_HOST_PORT}/competition-formats"  # noqa: B950
+        url = f"http://{COMPETITION_FORMAT_HOST_SERVER}:{COMPETITION_FORMAT_HOST_PORT}/competition-formats"
 
         async with ClientSession() as session:
             query_param = f"name={quote(competition_format_name)}"
             async with session.get(f"{url}?{query_param}") as response:
-                if response.status == 200:
+                if response.status == HTTPStatus.OK:
                     competition_formats_response = await response.json()
                 else:
-                    raise CompetitionFormatsAdapterException(
-                        f"Got unknown status {response.status} from competition_formats service."  # noqa: B950
-                    )  # noqa: B950
+                    msg = f"Got unknown status {response.status} from competition_formats service."
+                    raise CompetitionFormatsAdapterError(msg)
 
         for competition_format in competition_formats_response:
             logging.debug(f"cursor - competition_format: {competition_format}")

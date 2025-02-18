@@ -1,14 +1,20 @@
 """Integration test cases for the events route."""
 
-from datetime import date
 import os
+from datetime import date
 
+import jwt
+import pytest
 from aiohttp import hdrs
 from aiohttp.test_utils import TestClient as _TestClient
 from aioresponses import aioresponses
-import jwt
-import pytest
+from dotenv import load_dotenv
 from pytest_mock import MockFixture
+
+load_dotenv()
+
+USERS_HOST_SERVER = os.getenv("USERS_HOST_SERVER")
+USERS_HOST_PORT = os.getenv("USERS_HOST_PORT")
 
 
 @pytest.fixture
@@ -17,7 +23,7 @@ def token() -> str:
     secret = os.getenv("JWT_SECRET")
     algorithm = "HS256"
     payload = {"identity": os.getenv("ADMIN_USERNAME"), "roles": ["admin"]}
-    return jwt.encode(payload, secret, algorithm)  # type: ignore
+    return jwt.encode(payload, secret, algorithm)
 
 
 @pytest.fixture
@@ -76,7 +82,7 @@ async def test_generate_raceclasses_on_event(
         return_value=event,
     )
     mocker.patch(
-        "event_service.adapters.raceclasses_adapter.RaceclassesAdapter.get_all_raceclasses",  # noqa: B950
+        "event_service.adapters.raceclasses_adapter.RaceclassesAdapter.get_all_raceclasses",
         return_value=[],
     )
     mocker.patch(
@@ -95,7 +101,7 @@ async def test_generate_raceclasses_on_event(
 
     event_id = event["id"]
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
-        m.post("http://example.com:8081/authorize", status=204)
+        m.post(f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/authorize", status=204)
         resp = await client.post(
             f"/events/{event_id}/generate-raceclasses", headers=headers
         )
@@ -141,7 +147,7 @@ async def test_generate_raceclasses_on_event_raceclass_exist(
 
     event_id = event["id"]
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
-        m.post("http://example.com:8081/authorize", status=204)
+        m.post(f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/authorize", status=204)
         resp = await client.post(
             f"/events/{event_id}/generate-raceclasses", headers=headers
         )
@@ -185,7 +191,7 @@ async def test_generate_raceclasses_on_event_duplicate_raceclasses(
 
     event_id = event["id"]
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
-        m.post("http://example.com:8081/authorize", status=204)
+        m.post(f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/authorize", status=204)
         resp = await client.post(
             f"/events/{event_id}/generate-raceclasses", headers=headers
         )
@@ -227,7 +233,7 @@ async def test_generate_raceclasses_on_event_not_found(
 
     event_id = event["id"]
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
-        m.post("http://example.com:8081/authorize", status=204)
+        m.post(f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/authorize", status=204)
         resp = await client.post(
             f"/events/{event_id}/generate-raceclasses", headers=headers
         )
@@ -270,7 +276,7 @@ async def test_generate_raceclasses_on_event_unauthorized(
 
     event_id = event["id"]
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
-        m.post("http://example.com:8081/authorize", status=401)
+        m.post(f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/authorize", status=401)
         resp = await client.post(
             f"/events/{event_id}/generate-raceclasses", headers=headers
         )
@@ -311,7 +317,7 @@ async def test_generate_raceclasses_on_event_create_fails(
 
     event_id = event["id"]
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
-        m.post("http://example.com:8081/authorize", status=204)
+        m.post(f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/authorize", status=204)
         resp = await client.post(
             f"/events/{event_id}/generate-raceclasses", headers=headers
         )
@@ -356,7 +362,7 @@ async def test_generate_raceclasses_on_event_update_fails(
 
     event_id = event["id"]
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
-        m.post("http://example.com:8081/authorize", status=204)
+        m.post(f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/authorize", status=204)
         resp = await client.post(
             f"/events/{event_id}/generate-raceclasses", headers=headers
         )

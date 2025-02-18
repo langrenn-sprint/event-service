@@ -2,8 +2,8 @@
 
 from typing import Any
 
-from aiohttp import ClientSession
 import pytest
+from aiohttp import ClientSession
 
 
 @pytest.mark.contract

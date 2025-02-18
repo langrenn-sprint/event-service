@@ -1,14 +1,15 @@
 """Contract test cases for ping."""
 
-from copy import deepcopy
-from json import load
 import logging
 import os
-from typing import Any, AsyncGenerator
+from collections.abc import AsyncGenerator
+from copy import deepcopy
+from json import load
+from typing import Any
 
-from aiohttp import ClientSession, ContentTypeError, hdrs
 import motor.motor_asyncio
 import pytest
+from aiohttp import ClientSession, ContentTypeError, hdrs
 from pytest_mock import MockFixture
 
 from event_service.utils import db_utils
@@ -45,13 +46,13 @@ async def token(http_service: Any) -> str:
 @pytest.fixture(scope="module", autouse=True)
 async def clear_db() -> AsyncGenerator:
     """Delete all events before we start."""
-    mongo = motor.motor_asyncio.AsyncIOMotorClient(  # type: ignore
+    mongo = motor.motor_asyncio.AsyncIOMotorClient(
         host=DB_HOST, port=DB_PORT, username=DB_USER, password=DB_PASSWORD
     )
     try:
         await db_utils.drop_db_and_recreate_indexes(mongo, DB_NAME)
     except Exception as error:
-        logging.error(f"Failed to drop database {DB_NAME}: {error}")
+        logging.exception(f"Failed to drop database {DB_NAME}: {error}")
         raise error
 
     yield
@@ -59,7 +60,7 @@ async def clear_db() -> AsyncGenerator:
     try:
         await db_utils.drop_db(mongo, DB_NAME)
     except Exception as error:
-        logging.error(f"Failed to drop database {DB_NAME}: {error}")
+        logging.exception(f"Failed to drop database {DB_NAME}: {error}")
         raise error
 
 
@@ -81,7 +82,7 @@ async def event() -> dict:
 @pytest.fixture(scope="module")
 async def competition_format_interval_start() -> dict:
     """An competition_format object for testing."""
-    with open("tests/files/competition_format_interval_start.json", "r") as file:
+    with open("tests/files/competition_format_interval_start.json") as file:
         competition_format = load(file)
     return competition_format
 
@@ -101,14 +102,13 @@ async def test_create_event(
             hdrs.AUTHORIZATION: f"Bearer {token}",
         }
         # We have to create a competition_format:
-        url = f"http://{COMPETITION_FORMAT_HOST_SERVER}:{COMPETITION_FORMAT_HOST_PORT}/competition-formats"  # noqa: B950
+        url = f"http://{COMPETITION_FORMAT_HOST_SERVER}:{COMPETITION_FORMAT_HOST_PORT}/competition-formats"
         request_body = competition_format_interval_start
         async with session.post(url, headers=headers, json=request_body) as response:
             try:
                 body = await response.json()
             except ContentTypeError:
                 body = None
-                pass
 
             status = response.status
             assert status == 201, f"{body}" if body else ""
@@ -122,7 +122,6 @@ async def test_create_event(
                 body = await response.json()
             except ContentTypeError:
                 body = None
-                pass
 
             status = response.status
         assert status == 201, f"{body}" if body else ""

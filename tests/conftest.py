@@ -1,15 +1,15 @@
 """Conftest module."""
 
 import os
-from os import environ as env
 import time
+from os import environ as env
 from typing import Any
 
+import pytest
+import requests
 from aiohttp.test_utils import TestClient as _TestClient
 from dotenv import load_dotenv
-import pytest
-import requests  # type: ignore
-from requests.exceptions import ConnectionError  # type: ignore
+from requests.exceptions import ConnectionError
 
 from event_service import create_app
 
@@ -41,7 +41,7 @@ def http_service(docker_ip: Any, docker_services: Any) -> Any:
     """Ensure that HTTP service is up and responsive."""
     # `port_for` takes a container port and returns the corresponding host port
     port = docker_services.port_for("event-service", HOST_PORT)
-    url = "http://{}:{}".format(docker_ip, port)
+    url = f"http://{docker_ip}:{port}"
     docker_services.wait_until_responsive(
         timeout=30.0, pause=0.1, check=lambda: is_responsive(url)
     )

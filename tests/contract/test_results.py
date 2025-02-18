@@ -2,11 +2,12 @@
 
 import logging
 import os
-from typing import Any, AsyncGenerator, Optional
+from collections.abc import AsyncGenerator
+from typing import Any
 
-from aiohttp import ClientSession, hdrs
 import motor.motor_asyncio
 import pytest
+from aiohttp import ClientSession, hdrs
 from pytest_mock import MockFixture
 
 from event_service.utils import db_utils
@@ -41,13 +42,13 @@ async def token(http_service: Any) -> str:
 @pytest.fixture(scope="module", autouse=True)
 async def clear_db() -> AsyncGenerator:
     """Delete all events before we start."""
-    mongo = motor.motor_asyncio.AsyncIOMotorClient(  # type: ignore
+    mongo = motor.motor_asyncio.AsyncIOMotorClient(
         host=DB_HOST, port=DB_PORT, username=DB_USER, password=DB_PASSWORD
     )
     try:
         await db_utils.drop_db_and_recreate_indexes(mongo, DB_NAME)
     except Exception as error:
-        logging.error(f"Failed to drop database {DB_NAME}: {error}")
+        logging.exception(f"Failed to drop database {DB_NAME}: {error}")
         raise error
 
     yield
@@ -55,14 +56,14 @@ async def clear_db() -> AsyncGenerator:
     try:
         await db_utils.drop_db(mongo, DB_NAME)
     except Exception as error:
-        logging.error(f"Failed to drop database {DB_NAME}: {error}")
+        logging.exception(f"Failed to drop database {DB_NAME}: {error}")
         raise error
 
 
 @pytest.fixture(scope="module")
 async def event_id(
     http_service: Any, token: MockFixture, clear_db: AsyncGenerator
-) -> Optional[str]:
+) -> str | None:
     """Create an event object for testing."""
     url = f"{http_service}/events"
     headers = {
@@ -83,9 +84,8 @@ async def event_id(
     if status == 201:
         # return the event_id, which is the last item of the path
         return response.headers[hdrs.LOCATION].split("/")[-1]
-    else:
-        logging.error(f"Got unsuccesful status when creating event: {status}.")
-        return None
+    logging.error(f"Got unsuccesful status when creating event: {status}.")
+    return None
 
 
 @pytest.fixture(scope="module")

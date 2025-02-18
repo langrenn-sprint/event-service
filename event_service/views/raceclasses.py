@@ -18,13 +18,12 @@ from multidict import MultiDict
 from event_service.adapters import UsersAdapter
 from event_service.models import Raceclass
 from event_service.services import (
-    EventNotFoundException,
-    IllegalValueException,
+    EventNotFoundError,
+    IllegalValueError,
     RaceclassesService,
-    RaceclassNotFoundException,
+    RaceclassNotFoundError,
 )
 from event_service.utils.jwt_utils import extract_token_from_request
-
 
 load_dotenv()
 HOST_SERVER = os.getenv("HOST_SERVER", "localhost")
@@ -53,10 +52,8 @@ class RaceclassesView(View):
         else:
             raceclasses = await RaceclassesService.get_all_raceclasses(db, event_id)
 
-        list = []
-        for race in raceclasses:
-            list.append(race.to_dict())
-        body = json.dumps(list, default=str, ensure_ascii=False)
+        race_list = [race.to_dict() for race in raceclasses]
+        body = json.dumps(race_list, default=str, ensure_ascii=False)
         return Response(status=200, body=body, content_type="application/json")
 
     async def post(self) -> Response:
@@ -84,9 +81,9 @@ class RaceclassesView(View):
             raceclass_id = await RaceclassesService.create_raceclass(
                 db, event_id, raceclass
             )
-        except EventNotFoundException as e:
+        except EventNotFoundError as e:
             raise HTTPNotFound(reason=str(e)) from e
-        except IllegalValueException as e:
+        except IllegalValueError as e:
             raise HTTPUnprocessableEntity(reason=str(e)) from e
         if raceclass_id:
             logging.debug(f"inserted document with id {raceclass_id}")
@@ -100,7 +97,7 @@ class RaceclassesView(View):
             )
 
             return Response(status=201, headers=headers)
-        raise HTTPBadRequest() from None  # pragma: no cover
+        raise HTTPBadRequest from None  # pragma: no cover
 
     async def delete(self) -> Response:
         """Delete route function."""
@@ -132,7 +129,7 @@ class RaceclassView(View):
             raceclass = await RaceclassesService.get_raceclass_by_id(
                 db, event_id, raceclass_id
             )
-        except RaceclassNotFoundException as e:
+        except RaceclassNotFoundError as e:
             raise HTTPNotFound(reason=str(e)) from e
         logging.debug(f"Got raceclass: {raceclass}")
         body = raceclass.to_json()
@@ -165,9 +162,9 @@ class RaceclassView(View):
             await RaceclassesService.update_raceclass(
                 db, event_id, raceclass_id, raceclass
             )
-        except IllegalValueException as e:
+        except IllegalValueError as e:
             raise HTTPUnprocessableEntity(reason=str(e)) from e
-        except RaceclassNotFoundException as e:
+        except RaceclassNotFoundError as e:
             raise HTTPNotFound(reason=str(e)) from e
         return Response(status=204)
 
@@ -186,6 +183,6 @@ class RaceclassView(View):
 
         try:
             await RaceclassesService.delete_raceclass(db, event_id, raceclass_id)
-        except RaceclassNotFoundException as e:
+        except RaceclassNotFoundError as e:
             raise HTTPNotFound(reason=str(e)) from e
         return Response(status=204)

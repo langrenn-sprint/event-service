@@ -17,7 +17,7 @@ from multidict import MultiDict
 
 from event_service.adapters import UsersAdapter
 from event_service.models import RaceclassResult
-from event_service.services import ResultNotFoundException, ResultsService
+from event_service.services import ResultNotFoundError, ResultsService
 from event_service.utils.jwt_utils import extract_token_from_request
 
 load_dotenv()
@@ -37,11 +37,9 @@ class RaceclassResultsView(View):
         logging.debug(f"Got get request for event results {event_id}")
 
         results = await ResultsService.get_all_results(db, event_id)
-        list = []
-        for result in results:
-            list.append(result.to_dict())
+        result_list = [result.to_dict() for result in results]
 
-        body = json.dumps(list, default=str, ensure_ascii=False)
+        body = json.dumps(result_list, default=str, ensure_ascii=False)
         return Response(status=200, body=body, content_type="application/json")
 
     async def post(self) -> Response:
@@ -79,7 +77,7 @@ class RaceclassResultsView(View):
             )
 
             return Response(status=201, headers=headers)
-        raise HTTPBadRequest() from None
+        raise HTTPBadRequest from None
 
 
 class RaceclassResultView(View):
@@ -97,7 +95,7 @@ class RaceclassResultView(View):
             result = await ResultsService.get_result_by_raceclass(
                 db, event_id, raceclass
             )
-        except ResultNotFoundException as e:
+        except ResultNotFoundError as e:
             raise HTTPNotFound(reason=str(e)) from e
 
         body = result.to_json()
@@ -118,6 +116,6 @@ class RaceclassResultView(View):
 
         try:
             await ResultsService.delete_result(db, event_id, raceclass)
-        except ResultNotFoundException as e:
+        except ResultNotFoundError as e:
             raise HTTPNotFound(reason=str(e)) from e
         return Response(status=204)

@@ -2,7 +2,6 @@
 
 import logging
 import os
-from typing import Union
 
 from aiohttp import hdrs
 from aiohttp.web import (
@@ -21,12 +20,11 @@ from event_service.models import (
     IntervalStartFormat,
 )
 from event_service.services import (
-    EventFormatNotFoundException,
+    EventFormatNotFoundError,
     EventFormatService,
-    EventNotFoundException,
+    EventNotFoundError,
 )
 from event_service.utils.jwt_utils import extract_token_from_request
-
 
 load_dotenv()
 HOST_SERVER = os.getenv("HOST_SERVER", "localhost")
@@ -54,7 +52,7 @@ class EventFormatView(View):
         )
 
         try:
-            event_format: Union[IndividualSprintFormat, IntervalStartFormat]
+            event_format: IndividualSprintFormat | IntervalStartFormat
             if body["datatype"] == "interval_start":
                 event_format = IntervalStartFormat.from_dict(body)
             elif body["datatype"] == "individual_sprint":
@@ -66,9 +64,9 @@ class EventFormatView(View):
 
         try:
             event_format_id = await EventFormatService.create_event_format(
-                db, event_id, event_format
+                db, event_id, event_format  # type: ignore [reportAttributeAccessIssue]
             )
-        except EventNotFoundException as e:
+        except EventNotFoundError as e:
             raise HTTPNotFound(reason=str(e)) from e
         if event_format_id:
             logging.debug(f"inserted document with id {event_format_id}")
@@ -77,7 +75,7 @@ class EventFormatView(View):
             )
 
             return Response(status=201, headers=headers)
-        raise HTTPBadRequest() from None  # pragma: no cover
+        raise HTTPBadRequest from None  # pragma: no cover
 
     async def get(self) -> Response:
         """Get route function."""
@@ -88,7 +86,7 @@ class EventFormatView(View):
 
         try:
             event_format = await EventFormatService.get_event_format(db, event_id)
-        except EventFormatNotFoundException as e:
+        except EventFormatNotFoundError as e:
             raise HTTPNotFound(reason=str(e)) from e
         logging.debug(f"Got event_format: {event_format}")
         body = event_format.to_json()
@@ -110,7 +108,7 @@ class EventFormatView(View):
         )
 
         try:
-            event_format: Union[IndividualSprintFormat, IntervalStartFormat]
+            event_format: IndividualSprintFormat | IntervalStartFormat
             if body["datatype"] == "interval_start":
                 event_format = IntervalStartFormat.from_dict(body)
             elif body["datatype"] == "individual_sprint":
@@ -121,8 +119,8 @@ class EventFormatView(View):
             ) from e
 
         try:
-            await EventFormatService.update_event_format(db, event_id, event_format)
-        except EventFormatNotFoundException as e:
+            await EventFormatService.update_event_format(db, event_id, event_format)  # type: ignore [reportAttributeAccessIssue]
+        except EventFormatNotFoundError as e:
             raise HTTPNotFound(reason=str(e)) from e
         return Response(status=204)
 
@@ -140,6 +138,6 @@ class EventFormatView(View):
 
         try:
             await EventFormatService.delete_event_format(db, event_id)
-        except EventFormatNotFoundException as e:
+        except EventFormatNotFoundError as e:
             raise HTTPNotFound(reason=str(e)) from e
         return Response(status=204)

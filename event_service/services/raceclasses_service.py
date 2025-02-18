@@ -1,14 +1,15 @@
 """Module for raceclasses service."""
 
 import logging
-from typing import Any, List, Optional
 import uuid
+from typing import Any
 
 from event_service.adapters import RaceclassesAdapter
 from event_service.models import Raceclass
+
 from .contestants_service import validate_ageclass
-from .events_service import EventNotFoundException, EventsService
-from .exceptions import IllegalValueException, RaceclassNotFoundException
+from .events_service import EventNotFoundError, EventsService
+from .exceptions import IllegalValueError, RaceclassNotFoundError
 
 
 def create_id() -> str:  # pragma: no cover
@@ -16,35 +17,28 @@ def create_id() -> str:  # pragma: no cover
     return str(uuid.uuid4())
 
 
-class RaceclassCreateException(Exception):
+class RaceclassCreateError(Exception):
     """Class representing custom exception for create method."""
 
-    pass
 
-
-class RaceclassUpdateException(Exception):
+class RaceclassUpdateError(Exception):
     """Class representing custom exception for update method."""
 
-    pass
 
-
-class RaceclassNotUniqueNameException(Exception):
+class RaceclassNotUniqueNameError(Exception):
     """Class representing custom exception for find method."""
-
-    pass
 
 
 class RaceclassesService:
     """Class representing a service for raceclasses."""
 
     @classmethod
-    async def get_all_raceclasses(cls: Any, db: Any, event_id: str) -> List[Raceclass]:
+    async def get_all_raceclasses(cls: Any, db: Any, event_id: str) -> list[Raceclass]:
         """Get all raceclasses function."""
-        raceclasses: List[Raceclass] = []
+        raceclasses: list[Raceclass] = []
         _raceclasses = await RaceclassesAdapter.get_all_raceclasses(db, event_id)
-        for a in _raceclasses:
-            raceclasses.append(Raceclass.from_dict(a))
-        _s = sorted(
+        raceclasses = [Raceclass.from_dict(a) for a in _raceclasses]
+        return sorted(
             raceclasses,
             key=lambda k: (
                 k.group is not None,
@@ -55,12 +49,11 @@ class RaceclassesService:
             ),
             reverse=False,
         )
-        return _s
 
     @classmethod
     async def create_raceclass(
         cls: Any, db: Any, event_id: str, raceclass: Raceclass
-    ) -> Optional[str]:
+    ) -> str | None:
         """Create raceclass function.
 
         Args:
@@ -72,28 +65,24 @@ class RaceclassesService:
             Optional[str]: The id of the created raceclass. None otherwise.
 
         Raises:
-            EventNotFoundException: event does not exist
-            IllegalValueException: input object has illegal values
+            EventNotFoundError: event does not exist
+            IllegalValueError: input object has illegal values
         """
         # First we have to check if the event exist:
         try:
             _ = await EventsService.get_event_by_id(db, event_id)
-        except EventNotFoundException as e:
+        except EventNotFoundError as e:
             raise e from e
         # Validation:
         if raceclass.id:
-            raise IllegalValueException(
-                "Cannot create raceclass with input id."
-            ) from None
+            msg = "Cannot create raceclass with input id."
+            raise IllegalValueError(msg) from None
         # Remove spaces from ageclasses:
-        _ageclasses = []
-        for ageclass in raceclass.ageclasses:
-            _ageclasses.append(ageclass.strip())
-        raceclass.ageclasses = _ageclasses
+        raceclass.ageclasses = [ageclass.strip() for ageclass in raceclass.ageclasses]
         # Validate raceclasses:
         try:
             await validate_raceclass(raceclass)
-        except IllegalValueException as e:
+        except IllegalValueError as e:
             raise e from e
         # create id
         raceclass_id = create_id()
@@ -122,41 +111,37 @@ class RaceclassesService:
             db, event_id, raceclass_id
         )
         # return the document if found:
-        if raceclass:
-            return Raceclass.from_dict(raceclass)
-        raise RaceclassNotFoundException(
-            f"Raceclass with id {raceclass_id} not found"
-        ) from None
+        if not raceclass:
+            msg = f"Raceclass with id {raceclass_id} not found"
+            raise RaceclassNotFoundError(msg) from None
+        return Raceclass.from_dict(raceclass)
 
     @classmethod
     async def get_raceclass_by_name(
         cls: Any, db: Any, event_id: str, name: str
-    ) -> List[Raceclass]:
+    ) -> list[Raceclass]:
         """Get raceclass by name function."""
-        raceclasses: List[Raceclass] = []
         _raceclasses = await RaceclassesAdapter.get_raceclass_by_name(
             db, event_id, name
         )
-        for a in _raceclasses:
-            raceclasses.append(Raceclass.from_dict(a))
-        return raceclasses
+        return [Raceclass.from_dict(raceclass) for raceclass in _raceclasses]
 
     @classmethod
     async def get_raceclass_by_ageclass_name(
         cls: Any, db: Any, event_id: str, ageclass_name: str
-    ) -> List[Raceclass]:
+    ) -> list[Raceclass]:
         """Get raceclass by ageclass_name function."""
-        raceclasses: List[Raceclass] = []
         _raceclasses = await RaceclassesAdapter.get_all_raceclasses(db, event_id)
-        for raceclass in _raceclasses:
-            if ageclass_name in raceclass["ageclasses"]:
-                raceclasses.append(Raceclass.from_dict(raceclass))
-        return raceclasses
+        return [
+            Raceclass.from_dict(raceclass)
+            for raceclass in _raceclasses
+            if ageclass_name in raceclass["ageclasses"]
+        ]
 
     @classmethod
     async def update_raceclass(
         cls: Any, db: Any, event_id: str, raceclass_id: str, raceclass: Raceclass
-    ) -> Optional[str]:
+    ) -> str | None:
         """Get raceclass function."""
         # get old document
         old_raceclass = await RaceclassesAdapter.get_raceclass_by_id(
@@ -164,46 +149,39 @@ class RaceclassesService:
         )
         # Check if raceclass if found:
         if not old_raceclass:
-            raise RaceclassNotFoundException(
-                f"Raceclass with id {raceclass_id} not found."
-            ) from None
+            msg = f"Raceclass with id {raceclass_id} not found."
+            raise RaceclassNotFoundError(msg) from None
         if raceclass.id != old_raceclass["id"]:
-            raise IllegalValueException("Cannot change id for raceclass.") from None
+            msg = f"Cannot change id for raceclass from {old_raceclass['id']} to {raceclass.id}."
+            raise IllegalValueError(msg) from None
         # Remove spaces from ageclasses:
-        _ageclasses = []
-        for ageclass in raceclass.ageclasses:
-            _ageclasses.append(ageclass.strip())
-        raceclass.ageclasses = _ageclasses
+        raceclass.ageclasses = [ageclass.strip() for ageclass in raceclass.ageclasses]
         # Validate raceclasses:
         try:
             await validate_raceclass(raceclass)
-        except IllegalValueException as e:
+        except IllegalValueError as e:
             raise e from e
         # Everything ok, update:
         new_raceclass = raceclass.to_dict()
-        result = await RaceclassesAdapter.update_raceclass(
+        return await RaceclassesAdapter.update_raceclass(
             db, event_id, raceclass_id, new_raceclass
         )
-        return result
 
     @classmethod
     async def delete_raceclass(
         cls: Any, db: Any, event_id: str, raceclass_id: str
-    ) -> Optional[str]:
+    ) -> str | None:
         """Get raceclass function."""
         # get old document
         raceclass = await RaceclassesAdapter.get_raceclass_by_id(
             db, event_id, raceclass_id
         )
         # delete the document if found:
-        if raceclass:
-            result = await RaceclassesAdapter.delete_raceclass(
-                db, event_id, raceclass_id
-            )
-            return result
-        raise RaceclassNotFoundException(
-            f"Raceclass with id {raceclass_id} not found"
-        ) from None
+        if not raceclass:
+            msg = f"Raceclass with id {raceclass_id} not found"
+            raise RaceclassNotFoundError(msg) from None
+
+        return await RaceclassesAdapter.delete_raceclass(db, event_id, raceclass_id)
 
     # -- helper methods
 
@@ -215,5 +193,5 @@ async def validate_raceclass(raceclass: Raceclass) -> None:
         for ageclass in raceclass.ageclasses:
             try:
                 await validate_ageclass(ageclass)
-            except IllegalValueException as e:
+            except IllegalValueError as e:
                 raise e from e

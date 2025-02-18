@@ -1,16 +1,21 @@
 """Integration test cases for the contestant route."""
 
+import os
 from copy import deepcopy
 from datetime import date
-import os
-from typing import Dict
 
+import jwt
+import pytest
 from aiohttp import hdrs
 from aiohttp.test_utils import TestClient as _TestClient
 from aioresponses import aioresponses
-import jwt
-import pytest
+from dotenv import load_dotenv
 from pytest_mock import MockFixture
+
+load_dotenv()
+
+USERS_HOST_SERVER = os.getenv("USERS_HOST_SERVER")
+USERS_HOST_PORT = os.getenv("USERS_HOST_PORT")
 
 
 @pytest.fixture
@@ -19,11 +24,11 @@ def token() -> str:
     secret = os.getenv("JWT_SECRET")
     algorithm = "HS256"
     payload = {"identity": os.getenv("ADMIN_USERNAME")}
-    return jwt.encode(payload, secret, algorithm)  # type: ignore
+    return jwt.encode(payload, secret, algorithm)
 
 
 @pytest.fixture
-async def event() -> Dict[str, str]:
+async def event() -> dict[str, str]:
     """An event object for testing."""
     return {
         "id": "ref_to_event",
@@ -80,7 +85,7 @@ def token_unsufficient_role() -> str:
     secret = os.getenv("JWT_SECRET")
     algorithm = "HS256"
     payload = {"identity": "user", "roles": ["user"]}
-    return jwt.encode(payload, secret, algorithm)  # type: ignore
+    return jwt.encode(payload, secret, algorithm)
 
 
 @pytest.mark.integration
@@ -95,15 +100,15 @@ async def test_create_contestant_good_case(
     EVENT_ID = "event_id_1"
     CONTESTANT_ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
     mocker.patch(
-        "event_service.adapters.events_adapter.EventsAdapter.get_event_by_id",  # noqa: B950
+        "event_service.adapters.events_adapter.EventsAdapter.get_event_by_id",
         return_value=event,
     )
     mocker.patch(
-        "event_service.adapters.contestants_adapter.ContestantsAdapter.get_contestant_by_name",  # noqa: B950
+        "event_service.adapters.contestants_adapter.ContestantsAdapter.get_contestant_by_name",
         return_value=None,
     )
     mocker.patch(
-        "event_service.adapters.contestants_adapter.ContestantsAdapter.get_contestant_by_minidrett_id",  # noqa: B950
+        "event_service.adapters.contestants_adapter.ContestantsAdapter.get_contestant_by_minidrett_id",
         return_value=None,
     )
     mocker.patch(
@@ -111,7 +116,7 @@ async def test_create_contestant_good_case(
         return_value=CONTESTANT_ID,
     )
     mocker.patch(
-        "event_service.adapters.contestants_adapter.ContestantsAdapter.create_contestant",  # noqa: B950
+        "event_service.adapters.contestants_adapter.ContestantsAdapter.create_contestant",
         return_value=CONTESTANT_ID,
     )
     mocker.patch(
@@ -127,7 +132,7 @@ async def test_create_contestant_good_case(
     }
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
-        m.post("http://example.com:8081/authorize", status=204)
+        m.post(f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/authorize", status=204)
         resp = await client.post(
             f"/events/{EVENT_ID}/contestants", headers=headers, json=request_body
         )
@@ -150,7 +155,7 @@ async def test_create_contestants_csv_good_case(
     EVENT_ID = "event_id_1"
     CONTESTANT_ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
     mocker.patch(
-        "event_service.adapters.events_adapter.EventsAdapter.get_event_by_id",  # noqa: B950
+        "event_service.adapters.events_adapter.EventsAdapter.get_event_by_id",
         return_value=event,
     )
     mocker.patch(
@@ -158,15 +163,15 @@ async def test_create_contestants_csv_good_case(
         return_value=CONTESTANT_ID,
     )
     mocker.patch(
-        "event_service.adapters.contestants_adapter.ContestantsAdapter.create_contestant",  # noqa: B950
+        "event_service.adapters.contestants_adapter.ContestantsAdapter.create_contestant",
         return_value=CONTESTANT_ID,
     )
     mocker.patch(
-        "event_service.adapters.contestants_adapter.ContestantsAdapter.get_contestant_by_name",  # noqa: B950
+        "event_service.adapters.contestants_adapter.ContestantsAdapter.get_contestant_by_name",
         return_value=None,
     )
     mocker.patch(
-        "event_service.adapters.contestants_adapter.ContestantsAdapter.get_contestant_by_minidrett_id",  # noqa: B950
+        "event_service.adapters.contestants_adapter.ContestantsAdapter.get_contestant_by_minidrett_id",
         return_value=None,
     )
 
@@ -177,7 +182,7 @@ async def test_create_contestants_csv_good_case(
     }
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
-        m.post("http://example.com:8081/authorize", status=204)
+        m.post(f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/authorize", status=204)
         resp = await client.post(
             f"/events/{EVENT_ID}/contestants", headers=headers, data=files
         )
@@ -208,7 +213,7 @@ async def test_create_contestants_csv_iSonen_good_case(
     EVENT_ID = "event_id_1"
     CONTESTANT_ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
     mocker.patch(
-        "event_service.adapters.events_adapter.EventsAdapter.get_event_by_id",  # noqa: B950
+        "event_service.adapters.events_adapter.EventsAdapter.get_event_by_id",
         return_value=event,
     )
     mocker.patch(
@@ -216,15 +221,15 @@ async def test_create_contestants_csv_iSonen_good_case(
         return_value=CONTESTANT_ID,
     )
     mocker.patch(
-        "event_service.adapters.contestants_adapter.ContestantsAdapter.create_contestant",  # noqa: B950
+        "event_service.adapters.contestants_adapter.ContestantsAdapter.create_contestant",
         return_value=CONTESTANT_ID,
     )
     mocker.patch(
-        "event_service.adapters.contestants_adapter.ContestantsAdapter.get_contestant_by_name",  # noqa: B950
+        "event_service.adapters.contestants_adapter.ContestantsAdapter.get_contestant_by_name",
         return_value=None,
     )
     mocker.patch(
-        "event_service.adapters.contestants_adapter.ContestantsAdapter.get_contestant_by_minidrett_id",  # noqa: B950
+        "event_service.adapters.contestants_adapter.ContestantsAdapter.get_contestant_by_minidrett_id",
         return_value=None,
     )
 
@@ -235,7 +240,7 @@ async def test_create_contestants_csv_iSonen_good_case(
     }
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
-        m.post("http://example.com:8081/authorize", status=204)
+        m.post(f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/authorize", status=204)
         resp = await client.post(
             f"/events/{EVENT_ID}/contestants", headers=headers, data=files
         )
@@ -266,7 +271,7 @@ async def test_create_contestants_csv_Sportsadmin_good_case(
     EVENT_ID = "event_id_1"
     CONTESTANT_ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
     mocker.patch(
-        "event_service.adapters.events_adapter.EventsAdapter.get_event_by_id",  # noqa: B950
+        "event_service.adapters.events_adapter.EventsAdapter.get_event_by_id",
         return_value=event,
     )
     mocker.patch(
@@ -274,15 +279,15 @@ async def test_create_contestants_csv_Sportsadmin_good_case(
         return_value=CONTESTANT_ID,
     )
     mocker.patch(
-        "event_service.adapters.contestants_adapter.ContestantsAdapter.create_contestant",  # noqa: B950
+        "event_service.adapters.contestants_adapter.ContestantsAdapter.create_contestant",
         return_value=CONTESTANT_ID,
     )
     mocker.patch(
-        "event_service.adapters.contestants_adapter.ContestantsAdapter.get_contestant_by_name",  # noqa: B950
+        "event_service.adapters.contestants_adapter.ContestantsAdapter.get_contestant_by_name",
         return_value=None,
     )
     mocker.patch(
-        "event_service.adapters.contestants_adapter.ContestantsAdapter.get_contestant_by_minidrett_id",  # noqa: B950
+        "event_service.adapters.contestants_adapter.ContestantsAdapter.get_contestant_by_minidrett_id",
         return_value=None,
     )
 
@@ -293,7 +298,7 @@ async def test_create_contestants_csv_Sportsadmin_good_case(
     }
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
-        m.post("http://example.com:8081/authorize", status=204)
+        m.post(f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/authorize", status=204)
         resp = await client.post(
             f"/events/{EVENT_ID}/contestants", headers=headers, data=files
         )
@@ -324,7 +329,7 @@ async def test_create_contestants_csv_unsupported_format(
     EVENT_ID = "event_id_1"
     CONTESTANT_ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
     mocker.patch(
-        "event_service.adapters.events_adapter.EventsAdapter.get_event_by_id",  # noqa: B950
+        "event_service.adapters.events_adapter.EventsAdapter.get_event_by_id",
         return_value=event,
     )
     mocker.patch(
@@ -332,15 +337,15 @@ async def test_create_contestants_csv_unsupported_format(
         return_value=CONTESTANT_ID,
     )
     mocker.patch(
-        "event_service.adapters.contestants_adapter.ContestantsAdapter.create_contestant",  # noqa: B950
+        "event_service.adapters.contestants_adapter.ContestantsAdapter.create_contestant",
         return_value=CONTESTANT_ID,
     )
     mocker.patch(
-        "event_service.adapters.contestants_adapter.ContestantsAdapter.get_contestant_by_name",  # noqa: B950
+        "event_service.adapters.contestants_adapter.ContestantsAdapter.get_contestant_by_name",
         return_value=None,
     )
     mocker.patch(
-        "event_service.adapters.contestants_adapter.ContestantsAdapter.get_contestant_by_minidrett_id",  # noqa: B950
+        "event_service.adapters.contestants_adapter.ContestantsAdapter.get_contestant_by_minidrett_id",
         return_value=None,
     )
 
@@ -351,7 +356,7 @@ async def test_create_contestants_csv_unsupported_format(
     }
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
-        m.post("http://example.com:8081/authorize", status=204)
+        m.post(f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/authorize", status=204)
         resp = await client.post(
             f"/events/{EVENT_ID}/contestants", headers=headers, data=files
         )
@@ -370,7 +375,7 @@ async def test_create_contestants_csv_no_minidrett_id_existing_good_case(
     EVENT_ID = "event_id_1"
     CONTESTANT_ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
     mocker.patch(
-        "event_service.adapters.events_adapter.EventsAdapter.get_event_by_id",  # noqa: B950
+        "event_service.adapters.events_adapter.EventsAdapter.get_event_by_id",
         return_value=event,
     )
     mocker.patch(
@@ -378,19 +383,19 @@ async def test_create_contestants_csv_no_minidrett_id_existing_good_case(
         return_value=CONTESTANT_ID,
     )
     mocker.patch(
-        "event_service.adapters.contestants_adapter.ContestantsAdapter.create_contestant",  # noqa: B950
+        "event_service.adapters.contestants_adapter.ContestantsAdapter.create_contestant",
         return_value=None,
     )
     mocker.patch(
-        "event_service.adapters.contestants_adapter.ContestantsAdapter.get_contestant_by_minidrett_id",  # noqa: B950
+        "event_service.adapters.contestants_adapter.ContestantsAdapter.get_contestant_by_minidrett_id",
         return_value={"id": CONTESTANT_ID},
     )
     mocker.patch(
-        "event_service.adapters.contestants_adapter.ContestantsAdapter.get_contestant_by_name",  # noqa: B950
+        "event_service.adapters.contestants_adapter.ContestantsAdapter.get_contestant_by_name",
         return_value={"id": CONTESTANT_ID},
     )
     mocker.patch(
-        "event_service.adapters.contestants_adapter.ContestantsAdapter.update_contestant",  # noqa: B950
+        "event_service.adapters.contestants_adapter.ContestantsAdapter.update_contestant",
         return_value=CONTESTANT_ID,
     )
 
@@ -401,7 +406,7 @@ async def test_create_contestants_csv_no_minidrett_id_existing_good_case(
     }
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
-        m.post("http://example.com:8081/authorize", status=204)
+        m.post(f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/authorize", status=204)
         resp = await client.post(
             f"/events/{EVENT_ID}/contestants", headers=headers, data=files
         )
@@ -432,7 +437,7 @@ async def test_create_contestants_csv_minidrett_id_existing_good_case(
     EVENT_ID = "event_id_1"
     CONTESTANT_ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
     mocker.patch(
-        "event_service.adapters.events_adapter.EventsAdapter.get_event_by_id",  # noqa: B950
+        "event_service.adapters.events_adapter.EventsAdapter.get_event_by_id",
         return_value=event,
     )
     mocker.patch(
@@ -440,15 +445,15 @@ async def test_create_contestants_csv_minidrett_id_existing_good_case(
         return_value=CONTESTANT_ID,
     )
     mocker.patch(
-        "event_service.adapters.contestants_adapter.ContestantsAdapter.get_contestant_by_minidrett_id",  # noqa: B950
+        "event_service.adapters.contestants_adapter.ContestantsAdapter.get_contestant_by_minidrett_id",
         return_value={"id": CONTESTANT_ID},
     )
     mocker.patch(
-        "event_service.adapters.contestants_adapter.ContestantsAdapter.get_contestant_by_name",  # noqa: B950
+        "event_service.adapters.contestants_adapter.ContestantsAdapter.get_contestant_by_name",
         return_value={"id": CONTESTANT_ID},
     )
     mocker.patch(
-        "event_service.adapters.contestants_adapter.ContestantsAdapter.update_contestant",  # noqa: B950
+        "event_service.adapters.contestants_adapter.ContestantsAdapter.update_contestant",
         return_value=CONTESTANT_ID,
     )
 
@@ -458,7 +463,7 @@ async def test_create_contestants_csv_minidrett_id_existing_good_case(
         hdrs.AUTHORIZATION: f"Bearer {token}",
     }
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
-        m.post("http://example.com:8081/authorize", status=204)
+        m.post(f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/authorize", status=204)
         resp = await client.post(
             f"/events/{EVENT_ID}/contestants", headers=headers, data=files
         )
@@ -489,7 +494,7 @@ async def test_create_contestants_csv_invalid_registration_date_good_case(
     EVENT_ID = "event_id_1"
     CONTESTANT_ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
     mocker.patch(
-        "event_service.adapters.events_adapter.EventsAdapter.get_event_by_id",  # noqa: B950
+        "event_service.adapters.events_adapter.EventsAdapter.get_event_by_id",
         return_value=event,
     )
     mocker.patch(
@@ -497,15 +502,15 @@ async def test_create_contestants_csv_invalid_registration_date_good_case(
         return_value=CONTESTANT_ID,
     )
     mocker.patch(
-        "event_service.adapters.contestants_adapter.ContestantsAdapter.get_contestant_by_minidrett_id",  # noqa: B950
+        "event_service.adapters.contestants_adapter.ContestantsAdapter.get_contestant_by_minidrett_id",
         return_value={"id": CONTESTANT_ID},
     )
     mocker.patch(
-        "event_service.adapters.contestants_adapter.ContestantsAdapter.get_contestant_by_name",  # noqa: B950
+        "event_service.adapters.contestants_adapter.ContestantsAdapter.get_contestant_by_name",
         return_value={"id": CONTESTANT_ID},
     )
     mocker.patch(
-        "event_service.adapters.contestants_adapter.ContestantsAdapter.update_contestant",  # noqa: B950
+        "event_service.adapters.contestants_adapter.ContestantsAdapter.update_contestant",
         return_value=CONTESTANT_ID,
     )
 
@@ -519,7 +524,7 @@ async def test_create_contestants_csv_invalid_registration_date_good_case(
         hdrs.AUTHORIZATION: f"Bearer {token}",
     }
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
-        m.post("http://example.com:8081/authorize", status=204)
+        m.post(f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/authorize", status=204)
         resp = await client.post(
             f"/events/{EVENT_ID}/contestants", headers=headers, data=files
         )
@@ -550,7 +555,7 @@ async def test_create_contestants_csv_create_failures_good_case(
     EVENT_ID = "event_id_1"
     CONTESTANT_ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
     mocker.patch(
-        "event_service.adapters.events_adapter.EventsAdapter.get_event_by_id",  # noqa: B950
+        "event_service.adapters.events_adapter.EventsAdapter.get_event_by_id",
         return_value=event,
     )
     mocker.patch(
@@ -558,19 +563,19 @@ async def test_create_contestants_csv_create_failures_good_case(
         return_value=CONTESTANT_ID,
     )
     mocker.patch(
-        "event_service.adapters.contestants_adapter.ContestantsAdapter.create_contestant",  # noqa: B950
+        "event_service.adapters.contestants_adapter.ContestantsAdapter.create_contestant",
         return_value=None,
     )
     mocker.patch(
-        "event_service.adapters.contestants_adapter.ContestantsAdapter.get_contestant_by_name",  # noqa: B950
+        "event_service.adapters.contestants_adapter.ContestantsAdapter.get_contestant_by_name",
         return_value=None,
     )
     mocker.patch(
-        "event_service.adapters.contestants_adapter.ContestantsAdapter.get_contestant_by_minidrett_id",  # noqa: B950
+        "event_service.adapters.contestants_adapter.ContestantsAdapter.get_contestant_by_minidrett_id",
         return_value=None,
     )
     mocker.patch(
-        "event_service.adapters.contestants_adapter.ContestantsAdapter.update_contestant",  # noqa: B950
+        "event_service.adapters.contestants_adapter.ContestantsAdapter.update_contestant",
         return_value=None,
     )
 
@@ -581,7 +586,7 @@ async def test_create_contestants_csv_create_failures_good_case(
     }
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
-        m.post("http://example.com:8081/authorize", status=204)
+        m.post(f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/authorize", status=204)
         resp = await client.post(
             f"/events/{EVENT_ID}/contestants", headers=headers, data=files
         )
@@ -612,15 +617,15 @@ async def test_create_contestants_csv_update_failures_good_case(
     EVENT_ID = "event_id_1"
     CONTESTANT_ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
     mocker.patch(
-        "event_service.adapters.events_adapter.EventsAdapter.get_event_by_id",  # noqa: B950
+        "event_service.adapters.events_adapter.EventsAdapter.get_event_by_id",
         return_value=event,
     )
     mocker.patch(
-        "event_service.adapters.contestants_adapter.ContestantsAdapter.get_contestant_by_name",  # noqa: B950
+        "event_service.adapters.contestants_adapter.ContestantsAdapter.get_contestant_by_name",
         return_value={"id": CONTESTANT_ID},
     )
     mocker.patch(
-        "event_service.adapters.contestants_adapter.ContestantsAdapter.get_contestant_by_minidrett_id",  # noqa: B950
+        "event_service.adapters.contestants_adapter.ContestantsAdapter.get_contestant_by_minidrett_id",
         return_value={"id": CONTESTANT_ID},
     )
     mocker.patch(
@@ -628,11 +633,11 @@ async def test_create_contestants_csv_update_failures_good_case(
         return_value=CONTESTANT_ID,
     )
     mocker.patch(
-        "event_service.adapters.contestants_adapter.ContestantsAdapter.create_contestant",  # noqa: B950
+        "event_service.adapters.contestants_adapter.ContestantsAdapter.create_contestant",
         return_value=None,
     )
     mocker.patch(
-        "event_service.adapters.contestants_adapter.ContestantsAdapter.update_contestant",  # noqa: B950
+        "event_service.adapters.contestants_adapter.ContestantsAdapter.update_contestant",
         return_value=None,
     )
 
@@ -642,7 +647,7 @@ async def test_create_contestants_csv_update_failures_good_case(
         hdrs.AUTHORIZATION: f"Bearer {token}",
     }
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
-        m.post("http://example.com:8081/authorize", status=204)
+        m.post(f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/authorize", status=204)
         resp = await client.post(
             f"/events/{EVENT_ID}/contestants", headers=headers, data=files
         )
@@ -673,15 +678,15 @@ async def test_create_contestants_csv_bad_case(
     EVENT_ID = "event_id_1"
     CONTESTANT_ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
     mocker.patch(
-        "event_service.adapters.events_adapter.EventsAdapter.get_event_by_id",  # noqa: B950
+        "event_service.adapters.events_adapter.EventsAdapter.get_event_by_id",
         return_value=event,
     )
     mocker.patch(
-        "event_service.adapters.contestants_adapter.ContestantsAdapter.get_contestant_by_name",  # noqa: B950
+        "event_service.adapters.contestants_adapter.ContestantsAdapter.get_contestant_by_name",
         return_value={"id": CONTESTANT_ID},
     )
     mocker.patch(
-        "event_service.adapters.contestants_adapter.ContestantsAdapter.get_contestant_by_minidrett_id",  # noqa: B950
+        "event_service.adapters.contestants_adapter.ContestantsAdapter.get_contestant_by_minidrett_id",
         return_value={"id": CONTESTANT_ID},
     )
     mocker.patch(
@@ -689,7 +694,7 @@ async def test_create_contestants_csv_bad_case(
         return_value=CONTESTANT_ID,
     )
     mocker.patch(
-        "event_service.adapters.contestants_adapter.ContestantsAdapter.create_contestant",  # noqa: B950
+        "event_service.adapters.contestants_adapter.ContestantsAdapter.create_contestant",
         return_value=CONTESTANT_ID,
     )
 
@@ -699,7 +704,7 @@ async def test_create_contestants_csv_bad_case(
         hdrs.AUTHORIZATION: f"Bearer {token}",
     }
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
-        m.post("http://example.com:8081/authorize", status=204)
+        m.post(f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/authorize", status=204)
         resp = await client.post(
             f"/events/{EVENT_ID}/contestants", headers=headers, data=files
         )
@@ -718,15 +723,15 @@ async def test_create_contestants_csv_not_supported_content_type(
     EVENT_ID = "event_id_1"
     CONTESTANT_ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
     mocker.patch(
-        "event_service.adapters.events_adapter.EventsAdapter.get_event_by_id",  # noqa: B950
+        "event_service.adapters.events_adapter.EventsAdapter.get_event_by_id",
         return_value=event,
     )
     mocker.patch(
-        "event_service.adapters.contestants_adapter.ContestantsAdapter.get_contestant_by_name",  # noqa: B950
+        "event_service.adapters.contestants_adapter.ContestantsAdapter.get_contestant_by_name",
         return_value={"id": CONTESTANT_ID},
     )
     mocker.patch(
-        "event_service.adapters.contestants_adapter.ContestantsAdapter.get_contestant_by_minidrett_id",  # noqa: B950
+        "event_service.adapters.contestants_adapter.ContestantsAdapter.get_contestant_by_minidrett_id",
         return_value={"id": CONTESTANT_ID},
     )
     mocker.patch(
@@ -734,7 +739,7 @@ async def test_create_contestants_csv_not_supported_content_type(
         return_value=CONTESTANT_ID,
     )
     mocker.patch(
-        "event_service.adapters.contestants_adapter.ContestantsAdapter.create_contestant",  # noqa: B950
+        "event_service.adapters.contestants_adapter.ContestantsAdapter.create_contestant",
         return_value=CONTESTANT_ID,
     )
 
@@ -746,7 +751,7 @@ async def test_create_contestants_csv_not_supported_content_type(
     }
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
-        m.post("http://example.com:8081/authorize", status=204)
+        m.post(f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/authorize", status=204)
         resp = await client.post(
             f"/events/{EVENT_ID}/contestants", headers=headers, data=files
         )
@@ -765,7 +770,7 @@ async def test_create_contestants_csv_good_case_octet_stream(
     EVENT_ID = "event_id_1"
     CONTESTANT_ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
     mocker.patch(
-        "event_service.adapters.events_adapter.EventsAdapter.get_event_by_id",  # noqa: B950
+        "event_service.adapters.events_adapter.EventsAdapter.get_event_by_id",
         return_value=event,
     )
     mocker.patch(
@@ -773,15 +778,15 @@ async def test_create_contestants_csv_good_case_octet_stream(
         return_value=CONTESTANT_ID,
     )
     mocker.patch(
-        "event_service.adapters.contestants_adapter.ContestantsAdapter.create_contestant",  # noqa: B950
+        "event_service.adapters.contestants_adapter.ContestantsAdapter.create_contestant",
         return_value=CONTESTANT_ID,
     )
     mocker.patch(
-        "event_service.adapters.contestants_adapter.ContestantsAdapter.get_contestant_by_name",  # noqa: B950
+        "event_service.adapters.contestants_adapter.ContestantsAdapter.get_contestant_by_name",
         return_value=None,
     )
     mocker.patch(
-        "event_service.adapters.contestants_adapter.ContestantsAdapter.get_contestant_by_minidrett_id",  # noqa: B950
+        "event_service.adapters.contestants_adapter.ContestantsAdapter.get_contestant_by_minidrett_id",
         return_value=None,
     )
 
@@ -791,7 +796,7 @@ async def test_create_contestants_csv_good_case_octet_stream(
         }
 
         with aioresponses(passthrough=["http://127.0.0.1"]) as m:
-            m.post("http://example.com:8081/authorize", status=204)
+            m.post(f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/authorize", status=204)
             resp = await client.post(
                 f"/events/{EVENT_ID}/contestants", headers=headers, data=f
             )
@@ -818,12 +823,12 @@ async def test_get_contestant_by_id(
     EVENT_ID = "event_id_1"
     CONTESTANT_ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
     mocker.patch(
-        "event_service.adapters.contestants_adapter.ContestantsAdapter.get_contestant_by_id",  # noqa: B950
+        "event_service.adapters.contestants_adapter.ContestantsAdapter.get_contestant_by_id",
         return_value=contestant,
     )
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
-        m.post("http://example.com:8081/authorize", status=204)
+        m.post(f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/authorize", status=204)
 
         resp = await client.get(f"/events/{EVENT_ID}/contestants/{CONTESTANT_ID}")
         assert resp.status == 200
@@ -852,11 +857,11 @@ async def test_update_contestant_by_id(
     EVENT_ID = "event_id_1"
     CONTESTANT_ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
     mocker.patch(
-        "event_service.adapters.contestants_adapter.ContestantsAdapter.get_contestant_by_id",  # noqa: B950
+        "event_service.adapters.contestants_adapter.ContestantsAdapter.get_contestant_by_id",
         return_value=contestant,
     )
     mocker.patch(
-        "event_service.adapters.contestants_adapter.ContestantsAdapter.update_contestant",  # noqa: B950
+        "event_service.adapters.contestants_adapter.ContestantsAdapter.update_contestant",
         return_value=CONTESTANT_ID,
     )
     mocker.patch(
@@ -872,7 +877,7 @@ async def test_update_contestant_by_id(
     request_body["last_name"] = "New_Last_Name"
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
-        m.post("http://example.com:8081/authorize", status=204)
+        m.post(f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/authorize", status=204)
 
         resp = await client.put(
             f"/events/{EVENT_ID}/contestants/{CONTESTANT_ID}",
@@ -890,11 +895,11 @@ async def test_update_contestant_by_id_existing_bib(
     EVENT_ID = "event_id_1"
     CONTESTANT_ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
     mocker.patch(
-        "event_service.adapters.contestants_adapter.ContestantsAdapter.get_contestant_by_id",  # noqa: B950
+        "event_service.adapters.contestants_adapter.ContestantsAdapter.get_contestant_by_id",
         return_value=contestant,
     )
     mocker.patch(
-        "event_service.adapters.contestants_adapter.ContestantsAdapter.update_contestant",  # noqa: B950
+        "event_service.adapters.contestants_adapter.ContestantsAdapter.update_contestant",
         return_value=CONTESTANT_ID,
     )
     mocker.patch(
@@ -910,7 +915,7 @@ async def test_update_contestant_by_id_existing_bib(
     request_body["last_name"] = "New_Last_Name"
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
-        m.post("http://example.com:8081/authorize", status=204)
+        m.post(f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/authorize", status=204)
 
         resp = await client.put(
             f"/events/{EVENT_ID}/contestants/{CONTESTANT_ID}",
@@ -927,12 +932,12 @@ async def test_get_all_contestants(
     """Should return OK and a valid json body."""
     EVENT_ID = "event_id_1"
     mocker.patch(
-        "event_service.adapters.contestants_adapter.ContestantsAdapter.get_all_contestants",  # noqa: B950
+        "event_service.adapters.contestants_adapter.ContestantsAdapter.get_all_contestants",
         return_value=[contestant],
     )
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
-        m.post("http://example.com:8081/authorize", status=204)
+        m.post(f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/authorize", status=204)
         resp = await client.get(f"/events/{EVENT_ID}/contestants")
         assert resp.status == 200
         assert "application/json" in resp.headers[hdrs.CONTENT_TYPE]
@@ -949,17 +954,17 @@ async def test_get_all_contestants_by_raceclass(
     """Should return OK and a valid json body."""
     EVENT_ID = "event_id_1"
     mocker.patch(
-        "event_service.adapters.contestants_adapter.ContestantsAdapter.get_all_contestants",  # noqa: B950
+        "event_service.adapters.contestants_adapter.ContestantsAdapter.get_all_contestants",
         return_value=[contestant],
     )
     mocker.patch(
-        "event_service.adapters.raceclasses_adapter.RaceclassesAdapter.get_raceclass_by_name",  # noqa: B950
+        "event_service.adapters.raceclasses_adapter.RaceclassesAdapter.get_raceclass_by_name",
         return_value=[{"id": "1", "name": "G12", "ageclasses": ["G 12 år"]}],
     )
 
     raceclass = "G12"
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
-        m.post("http://example.com:8081/authorize", status=204)
+        m.post(f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/authorize", status=204)
         resp = await client.get(f"/events/{EVENT_ID}/contestants?raceclass={raceclass}")
         assert resp.status == 200
         assert "application/json" in resp.headers[hdrs.CONTENT_TYPE]
@@ -977,13 +982,13 @@ async def test_get_all_contestants_by_ageclass(
     """Should return OK and a valid json body."""
     EVENT_ID = "event_id_1"
     mocker.patch(
-        "event_service.adapters.contestants_adapter.ContestantsAdapter.get_all_contestants",  # noqa: B950
+        "event_service.adapters.contestants_adapter.ContestantsAdapter.get_all_contestants",
         return_value=[contestant],
     )
 
     ageclass = "G 12 år"
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
-        m.post("http://example.com:8081/authorize", status=204)
+        m.post(f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/authorize", status=204)
         resp = await client.get(f"/events/{EVENT_ID}/contestants?ageclass={ageclass}")
         assert resp.status == 200
         assert "application/json" in resp.headers[hdrs.CONTENT_TYPE]
@@ -1001,13 +1006,13 @@ async def test_get_all_contestants_by_bib(
     """Should return OK and a valid json body."""
     EVENT_ID = "event_id_1"
     mocker.patch(
-        "event_service.adapters.contestants_adapter.ContestantsAdapter.get_contestant_by_bib",  # noqa: B950
+        "event_service.adapters.contestants_adapter.ContestantsAdapter.get_contestant_by_bib",
         return_value=contestant,
     )
 
     bib = 1
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
-        m.post("http://example.com:8081/authorize", status=204)
+        m.post(f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/authorize", status=204)
         resp = await client.get(f"/events/{EVENT_ID}/contestants?bib={bib}")
         assert resp.status == 200
         assert "application/json" in resp.headers[hdrs.CONTENT_TYPE]
@@ -1026,18 +1031,18 @@ async def test_delete_contestant_by_id(
     EVENT_ID = "event_id_1"
     CONTESTANT_ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
     mocker.patch(
-        "event_service.adapters.contestants_adapter.ContestantsAdapter.get_contestant_by_id",  # noqa: B950
+        "event_service.adapters.contestants_adapter.ContestantsAdapter.get_contestant_by_id",
         return_value=contestant,
     )
     mocker.patch(
-        "event_service.adapters.contestants_adapter.ContestantsAdapter.delete_contestant",  # noqa: B950
+        "event_service.adapters.contestants_adapter.ContestantsAdapter.delete_contestant",
         return_value=CONTESTANT_ID,
     )
     headers = {
         hdrs.AUTHORIZATION: f"Bearer {token}",
     }
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
-        m.post("http://example.com:8081/authorize", status=204)
+        m.post(f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/authorize", status=204)
 
         resp = await client.delete(
             f"/events/{EVENT_ID}/contestants/{CONTESTANT_ID}", headers=headers
@@ -1052,22 +1057,22 @@ async def test_delete_all_contestants_in_event(
     """Should return 204 No content."""
     EVENT_ID = "event_id_1"
     mocker.patch(
-        "event_service.adapters.contestants_adapter.ContestantsAdapter.delete_all_contestants",  # noqa: B950
+        "event_service.adapters.contestants_adapter.ContestantsAdapter.delete_all_contestants",
         return_value=None,
     )
     mocker.patch(
-        "event_service.adapters.contestants_adapter.ContestantsAdapter.get_all_contestants",  # noqa: B950
+        "event_service.adapters.contestants_adapter.ContestantsAdapter.get_all_contestants",
         return_value=[],
     )
     headers = {
         hdrs.AUTHORIZATION: f"Bearer {token}",
     }
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
-        m.post("http://example.com:8081/authorize", status=204)
+        m.post(f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/authorize", status=204)
         resp = await client.delete(f"/events/{EVENT_ID}/contestants", headers=headers)
         assert resp.status == 204
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
-        m.post("http://example.com:8081/authorize", status=204)
+        m.post(f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/authorize", status=204)
         resp = await client.get(f"/events/{EVENT_ID}/contestants")
         assert resp.status == 200
         contestants = await resp.json()
@@ -1085,7 +1090,7 @@ async def test_search_contestant_by_name(
     """Should return 200."""
     EVENT_ID = "event_id_1"
     mocker.patch(
-        "event_service.adapters.contestants_adapter.ContestantsAdapter.search_contestants_in_event_by_name",  # noqa: B950
+        "event_service.adapters.contestants_adapter.ContestantsAdapter.search_contestants_in_event_by_name",
         return_value=[new_contestant],
     )
 
@@ -1118,15 +1123,15 @@ async def test_create_contestant_event_not_found(
     EVENT_ID = "event_id_1"
     CONTESTANT_ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
     mocker.patch(
-        "event_service.adapters.events_adapter.EventsAdapter.get_event_by_id",  # noqa: B950
+        "event_service.adapters.events_adapter.EventsAdapter.get_event_by_id",
         return_value=None,
     )
     mocker.patch(
-        "event_service.adapters.contestants_adapter.ContestantsAdapter.get_contestant_by_name",  # noqa: B950
+        "event_service.adapters.contestants_adapter.ContestantsAdapter.get_contestant_by_name",
         return_value=None,
     )
     mocker.patch(
-        "event_service.adapters.contestants_adapter.ContestantsAdapter.get_contestant_by_minidrett_id",  # noqa: B950
+        "event_service.adapters.contestants_adapter.ContestantsAdapter.get_contestant_by_minidrett_id",
         return_value=None,
     )
     mocker.patch(
@@ -1134,7 +1139,7 @@ async def test_create_contestant_event_not_found(
         return_value=CONTESTANT_ID,
     )
     mocker.patch(
-        "event_service.adapters.contestants_adapter.ContestantsAdapter.create_contestant",  # noqa: B950
+        "event_service.adapters.contestants_adapter.ContestantsAdapter.create_contestant",
         return_value=CONTESTANT_ID,
     )
 
@@ -1146,7 +1151,7 @@ async def test_create_contestant_event_not_found(
     }
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
-        m.post("http://example.com:8081/authorize", status=204)
+        m.post(f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/authorize", status=204)
         resp = await client.post(
             f"/events/{EVENT_ID}/contestants", headers=headers, json=request_body
         )
@@ -1165,7 +1170,7 @@ async def test_create_contestants_csv_event_not_found(
     EVENT_ID = "event_id_1"
     CONTESTANT_ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
     mocker.patch(
-        "event_service.adapters.events_adapter.EventsAdapter.get_event_by_id",  # noqa: B950
+        "event_service.adapters.events_adapter.EventsAdapter.get_event_by_id",
         return_value=None,
     )
     mocker.patch(
@@ -1173,15 +1178,15 @@ async def test_create_contestants_csv_event_not_found(
         return_value=CONTESTANT_ID,
     )
     mocker.patch(
-        "event_service.adapters.contestants_adapter.ContestantsAdapter.create_contestant",  # noqa: B950
+        "event_service.adapters.contestants_adapter.ContestantsAdapter.create_contestant",
         return_value=CONTESTANT_ID,
     )
     mocker.patch(
-        "event_service.adapters.contestants_adapter.ContestantsAdapter.get_contestant_by_name",  # noqa: B950
+        "event_service.adapters.contestants_adapter.ContestantsAdapter.get_contestant_by_name",
         return_value=None,
     )
     mocker.patch(
-        "event_service.adapters.contestants_adapter.ContestantsAdapter.get_contestant_by_minidrett_id",  # noqa: B950
+        "event_service.adapters.contestants_adapter.ContestantsAdapter.get_contestant_by_minidrett_id",
         return_value=None,
     )
 
@@ -1191,7 +1196,7 @@ async def test_create_contestants_csv_event_not_found(
         hdrs.AUTHORIZATION: f"Bearer {token}",
     }
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
-        m.post("http://example.com:8081/authorize", status=204)
+        m.post(f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/authorize", status=204)
         resp = await client.post(
             f"/events/{EVENT_ID}/contestants", headers=headers, data=files
         )
@@ -1210,7 +1215,7 @@ async def test_create_contestants_csv_octet_stream_event_not_found(
     EVENT_ID = "event_id_1"
     CONTESTANT_ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
     mocker.patch(
-        "event_service.adapters.events_adapter.EventsAdapter.get_event_by_id",  # noqa: B950
+        "event_service.adapters.events_adapter.EventsAdapter.get_event_by_id",
         return_value=None,
     )
     mocker.patch(
@@ -1218,15 +1223,15 @@ async def test_create_contestants_csv_octet_stream_event_not_found(
         return_value=CONTESTANT_ID,
     )
     mocker.patch(
-        "event_service.adapters.contestants_adapter.ContestantsAdapter.create_contestant",  # noqa: B950
+        "event_service.adapters.contestants_adapter.ContestantsAdapter.create_contestant",
         return_value=CONTESTANT_ID,
     )
     mocker.patch(
-        "event_service.adapters.contestants_adapter.ContestantsAdapter.get_contestant_by_name",  # noqa: B950
+        "event_service.adapters.contestants_adapter.ContestantsAdapter.get_contestant_by_name",
         return_value=None,
     )
     mocker.patch(
-        "event_service.adapters.contestants_adapter.ContestantsAdapter.get_contestant_by_minidrett_id",  # noqa: B950
+        "event_service.adapters.contestants_adapter.ContestantsAdapter.get_contestant_by_minidrett_id",
         return_value=None,
     )
 
@@ -1236,7 +1241,7 @@ async def test_create_contestants_csv_octet_stream_event_not_found(
         }
 
         with aioresponses(passthrough=["http://127.0.0.1"]) as m:
-            m.post("http://example.com:8081/authorize", status=204)
+            m.post(f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/authorize", status=204)
             resp = await client.post(
                 f"/events/{EVENT_ID}/contestants", headers=headers, data=f
             )
@@ -1256,15 +1261,15 @@ async def test_create_contestant_allready_exist(
     EVENT_ID = "event_id_1"
     CONTESTANT_ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
     mocker.patch(
-        "event_service.adapters.events_adapter.EventsAdapter.get_event_by_id",  # noqa: B950
+        "event_service.adapters.events_adapter.EventsAdapter.get_event_by_id",
         return_value=event,
     )
     mocker.patch(
-        "event_service.adapters.contestants_adapter.ContestantsAdapter.get_contestant_by_name",  # noqa: B950
+        "event_service.adapters.contestants_adapter.ContestantsAdapter.get_contestant_by_name",
         return_value=new_contestant,
     )
     mocker.patch(
-        "event_service.adapters.contestants_adapter.ContestantsAdapter.get_contestant_by_minidrett_id",  # noqa: B950
+        "event_service.adapters.contestants_adapter.ContestantsAdapter.get_contestant_by_minidrett_id",
         return_value=new_contestant,
     )
     mocker.patch(
@@ -1272,7 +1277,7 @@ async def test_create_contestant_allready_exist(
         return_value=CONTESTANT_ID,
     )
     mocker.patch(
-        "event_service.adapters.contestants_adapter.ContestantsAdapter.create_contestant",  # noqa: B950
+        "event_service.adapters.contestants_adapter.ContestantsAdapter.create_contestant",
         return_value=CONTESTANT_ID,
     )
 
@@ -1284,7 +1289,7 @@ async def test_create_contestant_allready_exist(
     }
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
-        m.post("http://example.com:8081/authorize", status=204)
+        m.post(f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/authorize", status=204)
         resp = await client.post(
             f"/events/{EVENT_ID}/contestants", headers=headers, json=request_body
         )
@@ -1304,15 +1309,15 @@ async def test_create_contestant_bib_already_exist(
     CONTESTANT_ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
     new_contestant["bib"] = 1
     mocker.patch(
-        "event_service.adapters.events_adapter.EventsAdapter.get_event_by_id",  # noqa: B950
+        "event_service.adapters.events_adapter.EventsAdapter.get_event_by_id",
         return_value=event,
     )
     mocker.patch(
-        "event_service.adapters.contestants_adapter.ContestantsAdapter.get_contestant_by_name",  # noqa: B950
+        "event_service.adapters.contestants_adapter.ContestantsAdapter.get_contestant_by_name",
         return_value=None,
     )
     mocker.patch(
-        "event_service.adapters.contestants_adapter.ContestantsAdapter.get_contestant_by_minidrett_id",  # noqa: B950
+        "event_service.adapters.contestants_adapter.ContestantsAdapter.get_contestant_by_minidrett_id",
         return_value=None,
     )
     mocker.patch(
@@ -1320,7 +1325,7 @@ async def test_create_contestant_bib_already_exist(
         return_value=CONTESTANT_ID,
     )
     mocker.patch(
-        "event_service.adapters.contestants_adapter.ContestantsAdapter.create_contestant",  # noqa: B950
+        "event_service.adapters.contestants_adapter.ContestantsAdapter.create_contestant",
         return_value=CONTESTANT_ID,
     )
     mocker.patch(
@@ -1336,7 +1341,7 @@ async def test_create_contestant_bib_already_exist(
     }
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
-        m.post("http://example.com:8081/authorize", status=204)
+        m.post(f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/authorize", status=204)
         resp = await client.post(
             f"/events/{EVENT_ID}/contestants", headers=headers, json=request_body
         )
@@ -1355,7 +1360,7 @@ async def test_create_contestant_missing_mandatory_property(
     EVENT_ID = "event_id_1"
     CONTESTANT_ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
     mocker.patch(
-        "event_service.adapters.events_adapter.EventsAdapter.get_event_by_id",  # noqa: B950
+        "event_service.adapters.events_adapter.EventsAdapter.get_event_by_id",
         return_value=event,
     )
     mocker.patch(
@@ -1363,7 +1368,7 @@ async def test_create_contestant_missing_mandatory_property(
         return_value=CONTESTANT_ID,
     )
     mocker.patch(
-        "event_service.adapters.contestants_adapter.ContestantsAdapter.create_contestant",  # noqa: B950
+        "event_service.adapters.contestants_adapter.ContestantsAdapter.create_contestant",
         return_value=CONTESTANT_ID,
     )
     request_body = {"optional_property": "Optional_property"}
@@ -1374,7 +1379,7 @@ async def test_create_contestant_missing_mandatory_property(
     }
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
-        m.post("http://example.com:8081/authorize", status=204)
+        m.post(f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/authorize", status=204)
         resp = await client.post(
             f"/events/{EVENT_ID}/contestants", headers=headers, json=request_body
         )
@@ -1390,12 +1395,12 @@ async def test_get_all_contestants_by_id_when_bib_has_been_set_to_noninteger(
     contestant_2 = deepcopy(contestant)
     contestant_2["bib"] = None
     mocker.patch(
-        "event_service.adapters.contestants_adapter.ContestantsAdapter.get_all_contestants",  # noqa: B950
+        "event_service.adapters.contestants_adapter.ContestantsAdapter.get_all_contestants",
         return_value=[contestant, contestant_2],
     )
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
-        m.post("http://example.com:8081/authorize", status=204)
+        m.post(f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/authorize", status=204)
         resp = await client.get(f"/events/{EVENT_ID}/contestants")
         assert resp.status == 200
         assert "application/json" in resp.headers[hdrs.CONTENT_TYPE]
@@ -1413,17 +1418,17 @@ async def test_get_all_contestants_by_raceclass_raceclass_does_not_exist(
     """Should return 400 Bad request."""
     EVENT_ID = "event_id_1"
     mocker.patch(
-        "event_service.adapters.contestants_adapter.ContestantsAdapter.get_all_contestants",  # noqa: B950
+        "event_service.adapters.contestants_adapter.ContestantsAdapter.get_all_contestants",
         return_value=[contestant],
     )
     mocker.patch(
-        "event_service.adapters.raceclasses_adapter.RaceclassesAdapter.get_raceclass_by_name",  # noqa: B950
+        "event_service.adapters.raceclasses_adapter.RaceclassesAdapter.get_raceclass_by_name",
         return_value=[],
     )
 
     raceclass = "G12"
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
-        m.post("http://example.com:8081/authorize", status=204)
+        m.post(f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/authorize", status=204)
         resp = await client.get(f"/events/{EVENT_ID}/contestants?raceclass={raceclass}")
         assert resp.status == 400
 
@@ -1435,13 +1440,13 @@ async def test_get_all_contestants_by_bib_wrong_paramter_type(
     """Should return 400 Bad request."""
     EVENT_ID = "event_id_1"
     mocker.patch(
-        "event_service.adapters.contestants_adapter.ContestantsAdapter.get_contestant_by_bib",  # noqa: B950
+        "event_service.adapters.contestants_adapter.ContestantsAdapter.get_contestant_by_bib",
         return_value=contestant,
     )
 
     bib = "one"
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
-        m.post("http://example.com:8081/authorize", status=204)
+        m.post(f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/authorize", status=204)
         resp = await client.get(f"/events/{EVENT_ID}/contestants?bib={bib}")
         assert resp.status == 400
 
@@ -1458,7 +1463,7 @@ async def test_create_contestant_with_input_id(
     EVENT_ID = "event_id_1"
     CONTESTANT_ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
     mocker.patch(
-        "event_service.adapters.events_adapter.EventsAdapter.get_event_by_id",  # noqa: B950
+        "event_service.adapters.events_adapter.EventsAdapter.get_event_by_id",
         return_value=event,
     )
     mocker.patch(
@@ -1466,11 +1471,11 @@ async def test_create_contestant_with_input_id(
         return_value=CONTESTANT_ID,
     )
     mocker.patch(
-        "event_service.adapters.contestants_adapter.ContestantsAdapter.create_contestant",  # noqa: B950
+        "event_service.adapters.contestants_adapter.ContestantsAdapter.create_contestant",
         return_value=CONTESTANT_ID,
     )
     mocker.patch(
-        "event_service.adapters.contestants_adapter.ContestantsAdapter.get_contestant_by_name",  # noqa: B950
+        "event_service.adapters.contestants_adapter.ContestantsAdapter.get_contestant_by_name",
         return_value=None,
     )
     request_body = contestant
@@ -1481,7 +1486,7 @@ async def test_create_contestant_with_input_id(
     }
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
-        m.post("http://example.com:8081/authorize", status=204)
+        m.post(f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/authorize", status=204)
         resp = await client.post(
             f"/events/{EVENT_ID}/contestants", headers=headers, json=request_body
         )
@@ -1503,15 +1508,15 @@ async def test_create_contestant_invalid_ageclass(
     new_contestant_with_invalid_ageclass["ageclass"] = "invalid_ageclass"
 
     mocker.patch(
-        "event_service.adapters.events_adapter.EventsAdapter.get_event_by_id",  # noqa: B950
+        "event_service.adapters.events_adapter.EventsAdapter.get_event_by_id",
         return_value=event,
     )
     mocker.patch(
-        "event_service.adapters.contestants_adapter.ContestantsAdapter.get_contestant_by_name",  # noqa: B950
+        "event_service.adapters.contestants_adapter.ContestantsAdapter.get_contestant_by_name",
         return_value=None,
     )
     mocker.patch(
-        "event_service.adapters.contestants_adapter.ContestantsAdapter.get_contestant_by_minidrett_id",  # noqa: B950
+        "event_service.adapters.contestants_adapter.ContestantsAdapter.get_contestant_by_minidrett_id",
         return_value=None,
     )
     mocker.patch(
@@ -1519,7 +1524,7 @@ async def test_create_contestant_invalid_ageclass(
         return_value=CONTESTANT_ID,
     )
     mocker.patch(
-        "event_service.adapters.contestants_adapter.ContestantsAdapter.create_contestant",  # noqa: B950
+        "event_service.adapters.contestants_adapter.ContestantsAdapter.create_contestant",
         return_value=CONTESTANT_ID,
     )
     mocker.patch(
@@ -1535,7 +1540,7 @@ async def test_create_contestant_invalid_ageclass(
     }
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
-        m.post("http://example.com:8081/authorize", status=204)
+        m.post(f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/authorize", status=204)
         resp = await client.post(
             f"/events/{EVENT_ID}/contestants", headers=headers, json=request_body
         )
@@ -1553,11 +1558,11 @@ async def test_create_contestant_adapter_fails(
     """Should return 400 HTTPBadRequest."""
     EVENT_ID = "event_id_1"
     mocker.patch(
-        "event_service.adapters.events_adapter.EventsAdapter.get_event_by_id",  # noqa: B950
+        "event_service.adapters.events_adapter.EventsAdapter.get_event_by_id",
         return_value=event,
     )
     mocker.patch(
-        "event_service.adapters.contestants_adapter.ContestantsAdapter.get_contestant_by_name",  # noqa: B950
+        "event_service.adapters.contestants_adapter.ContestantsAdapter.get_contestant_by_name",
         return_value=None,
     )
     mocker.patch(
@@ -1565,7 +1570,7 @@ async def test_create_contestant_adapter_fails(
         return_value=None,
     )
     mocker.patch(
-        "event_service.adapters.contestants_adapter.ContestantsAdapter.create_contestant",  # noqa: B950
+        "event_service.adapters.contestants_adapter.ContestantsAdapter.create_contestant",
         return_value=None,
     )
     mocker.patch(
@@ -1581,7 +1586,7 @@ async def test_create_contestant_adapter_fails(
     }
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
-        m.post("http://example.com:8081/authorize", status=204)
+        m.post(f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/authorize", status=204)
         resp = await client.post(
             f"/events/{EVENT_ID}/contestants", headers=headers, json=request_body
         )
@@ -1596,7 +1601,7 @@ async def test_update_contestant_by_id_missing_mandatory_property(
     EVENT_ID = "event_id_1"
     CONTESTANT_ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
     mocker.patch(
-        "event_service.adapters.contestants_adapter.ContestantsAdapter.get_contestant_by_id",  # noqa: B950
+        "event_service.adapters.contestants_adapter.ContestantsAdapter.get_contestant_by_id",
         return_value={"id": CONTESTANT_ID, "first_name": "Missing LastName"},
     )
     mocker.patch(
@@ -1615,7 +1620,7 @@ async def test_update_contestant_by_id_missing_mandatory_property(
     request_body = {"id": CONTESTANT_ID, "optional_property": "Optional_property"}
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
-        m.post("http://example.com:8081/authorize", status=204)
+        m.post(f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/authorize", status=204)
 
         resp = await client.put(
             f"/events/{EVENT_ID}/contestants/{CONTESTANT_ID}",
@@ -1633,7 +1638,7 @@ async def test_update_contestant_by_id_different_id_in_body(
     EVENT_ID = "event_id_1"
     CONTESTANT_ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
     mocker.patch(
-        "event_service.adapters.contestants_adapter.ContestantsAdapter.get_contestant_by_id",  # noqa: B950
+        "event_service.adapters.contestants_adapter.ContestantsAdapter.get_contestant_by_id",
         return_value=contestant,
     )
     mocker.patch(
@@ -1653,7 +1658,7 @@ async def test_update_contestant_by_id_different_id_in_body(
     request_body["id"] = "different_id"
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
-        m.post("http://example.com:8081/authorize", status=204)
+        m.post(f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/authorize", status=204)
 
         resp = await client.put(
             f"/events/{EVENT_ID}/contestants/{CONTESTANT_ID}",
@@ -1671,11 +1676,11 @@ async def test_update_contestant_by_id_existing_bib_different_contestant(
     EVENT_ID = "event_id_1"
     CONTESTANT_ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
     mocker.patch(
-        "event_service.adapters.contestants_adapter.ContestantsAdapter.get_contestant_by_id",  # noqa: B950
+        "event_service.adapters.contestants_adapter.ContestantsAdapter.get_contestant_by_id",
         return_value=contestant,
     )
     mocker.patch(
-        "event_service.adapters.contestants_adapter.ContestantsAdapter.update_contestant",  # noqa: B950
+        "event_service.adapters.contestants_adapter.ContestantsAdapter.update_contestant",
         return_value=CONTESTANT_ID,
     )
     mocker.patch(
@@ -1691,7 +1696,7 @@ async def test_update_contestant_by_id_existing_bib_different_contestant(
     request_body["last_name"] = "New_Last_Name"
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
-        m.post("http://example.com:8081/authorize", status=204)
+        m.post(f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/authorize", status=204)
 
         resp = await client.put(
             f"/events/{EVENT_ID}/contestants/{CONTESTANT_ID}",
@@ -1712,7 +1717,7 @@ async def test_create_contestant_no_authorization(
     EVENT_ID = "event_id_1"
     CONTESTANT_ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
     mocker.patch(
-        "event_service.adapters.events_adapter.EventsAdapter.get_event_by_id",  # noqa: B950
+        "event_service.adapters.events_adapter.EventsAdapter.get_event_by_id",
         return_value=event,
     )
     mocker.patch(
@@ -1720,7 +1725,7 @@ async def test_create_contestant_no_authorization(
         return_value=CONTESTANT_ID,
     )
     mocker.patch(
-        "event_service.adapters.contestants_adapter.ContestantsAdapter.create_contestant",  # noqa: B950
+        "event_service.adapters.contestants_adapter.ContestantsAdapter.create_contestant",
         return_value=CONTESTANT_ID,
     )
 
@@ -1729,7 +1734,7 @@ async def test_create_contestant_no_authorization(
     headers = {hdrs.CONTENT_TYPE: "application/json"}
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
-        m.post("http://example.com:8081/authorize", status=401)
+        m.post(f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/authorize", status=401)
 
         resp = await client.post(
             f"/events/{EVENT_ID}/contestants", headers=headers, json=request_body
@@ -1745,7 +1750,7 @@ async def test_update_contestant_by_id_no_authorization(
     EVENT_ID = "event_id_1"
     CONTESTANT_ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
     mocker.patch(
-        "event_service.adapters.contestants_adapter.ContestantsAdapter.get_contestant_by_id",  # noqa: B950
+        "event_service.adapters.contestants_adapter.ContestantsAdapter.get_contestant_by_id",
         return_value=contestant,
     )
     mocker.patch(
@@ -1764,7 +1769,7 @@ async def test_update_contestant_by_id_no_authorization(
     request_body = contestant
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
-        m.post("http://example.com:8081/authorize", status=401)
+        m.post(f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/authorize", status=401)
 
         resp = await client.put(
             f"/events/{EVENT_ID}/contestants/{CONTESTANT_ID}",
@@ -1787,7 +1792,7 @@ async def test_delete_contestant_by_id_no_authorization(
     )
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
-        m.post("http://example.com:8081/authorize", status=401)
+        m.post(f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/authorize", status=401)
 
         resp = await client.delete(f"/events/{EVENT_ID}/contestants/{CONTESTANT_ID}")
         assert resp.status == 401
@@ -1805,7 +1810,7 @@ async def test_delete_all_contestants_no_authorization(
     )
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
-        m.post("http://example.com:8081/authorize", status=401)
+        m.post(f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/authorize", status=401)
 
         resp = await client.delete(f"/events/{EVENT_ID}/contestants")
         assert resp.status == 401
@@ -1824,7 +1829,7 @@ async def test_create_contestant_insufficient_role(
     EVENT_ID = "event_id_1"
     CONTESTANT_ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
     mocker.patch(
-        "event_service.adapters.events_adapter.EventsAdapter.get_event_by_id",  # noqa: B950
+        "event_service.adapters.events_adapter.EventsAdapter.get_event_by_id",
         return_value=event,
     )
     mocker.patch(
@@ -1843,7 +1848,7 @@ async def test_create_contestant_insufficient_role(
     }
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
-        m.post("http://example.com:8081/authorize", status=403)
+        m.post(f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/authorize", status=403)
         resp = await client.post(
             f"/events/{EVENT_ID}/contestants", headers=headers, json=request_body
         )
@@ -1861,11 +1866,11 @@ async def test_get_contestant_not_found(
     EVENT_ID = "event_id_1"
     CONTESTANT_ID = "does-not-exist"
     mocker.patch(
-        "event_service.adapters.contestants_adapter.ContestantsAdapter.get_contestant_by_id",  # noqa: B950
+        "event_service.adapters.contestants_adapter.ContestantsAdapter.get_contestant_by_id",
         return_value=None,
     )
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
-        m.post("http://example.com:8081/authorize", status=204)
+        m.post(f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/authorize", status=204)
 
         resp = await client.get(f"/events/{EVENT_ID}/contestants/{CONTESTANT_ID}")
         assert resp.status == 404
@@ -1879,7 +1884,7 @@ async def test_update_contestant_not_found(
     EVENT_ID = "event_id_1"
     CONTESTANT_ID = "does-not-exist"
     mocker.patch(
-        "event_service.adapters.contestants_adapter.ContestantsAdapter.get_contestant_by_id",  # noqa: B950
+        "event_service.adapters.contestants_adapter.ContestantsAdapter.get_contestant_by_id",
         return_value=None,
     )
     mocker.patch(
@@ -1899,7 +1904,7 @@ async def test_update_contestant_not_found(
 
     CONTESTANT_ID = "does-not-exist"
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
-        m.post("http://example.com:8081/authorize", status=204)
+        m.post(f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/authorize", status=204)
         resp = await client.put(
             f"/events/{EVENT_ID}/contestants/{CONTESTANT_ID}",
             headers=headers,
@@ -1916,7 +1921,7 @@ async def test_delete_contestant_not_found(
     EVENT_ID = "event_id_1"
     CONTESTANT_ID = "does-not-exist"
     mocker.patch(
-        "event_service.adapters.contestants_adapter.ContestantsAdapter.get_contestant_by_id",  # noqa: B950
+        "event_service.adapters.contestants_adapter.ContestantsAdapter.get_contestant_by_id",
         return_value=None,
     )
     mocker.patch(
@@ -1929,7 +1934,7 @@ async def test_delete_contestant_not_found(
     }
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
-        m.post("http://example.com:8081/authorize", status=204)
+        m.post(f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/authorize", status=204)
         resp = await client.delete(
             f"/events/{EVENT_ID}/contestants/{CONTESTANT_ID}", headers=headers
         )

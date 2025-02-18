@@ -1,6 +1,6 @@
 """Module for raceclass adapter."""
 
-from typing import Any, List, Optional
+from typing import Any
 
 from .adapter import Adapter
 
@@ -11,14 +11,14 @@ class RaceclassesAdapter(Adapter):
     @classmethod
     async def get_all_raceclasses(
         cls: Any, db: Any, event_id: str
-    ) -> List[dict]:  # pragma: no cover
+    ) -> list[dict]:  # pragma: no cover
         """Get all raceclasses function."""
-        raceclasses: List = []
+        raceclasses: list = []
         cursor = db.raceclasses_collection.find({"event_id": event_id}).sort(
             [("id", 1)]
         )
         for raceclass in await cursor.to_list(None):
-            raceclasses.append(raceclass)
+            raceclasses.append(raceclass)  # noqa: PERF402
         return raceclasses
 
     @classmethod
@@ -26,25 +26,24 @@ class RaceclassesAdapter(Adapter):
         cls: Any, db: Any, event_id: str, raceclass: dict
     ) -> str:  # pragma: no cover
         """Create raceclass function."""
-        result = await db.raceclasses_collection.insert_one(raceclass)
-        return result
+        _ = event_id
+        return await db.raceclasses_collection.insert_one(raceclass)
 
     @classmethod
     async def get_raceclass_by_id(
         cls: Any, db: Any, event_id: str, raceclass_id: str
     ) -> dict:  # pragma: no cover
         """Get raceclass by id function."""
-        result = await db.raceclasses_collection.find_one(
+        return await db.raceclasses_collection.find_one(
             {"$and": [{"event_id": event_id}, {"id": raceclass_id}]}
         )
-        return result
 
     @classmethod
     async def get_raceclass_by_name(
         cls: Any, db: Any, event_id: str, name: str
-    ) -> List[dict]:  # pragma: no cover
+    ) -> list[dict]:  # pragma: no cover
         """Get raceclass by name function."""
-        raceclasses: List = []
+        raceclasses: list = []
         cursor = db.raceclasses_collection.find(
             {
                 "$and": [
@@ -54,33 +53,30 @@ class RaceclassesAdapter(Adapter):
             }
         ).sort([("name", 1)])
         for raceclass in await cursor.to_list(None):
-            raceclasses.append(raceclass)
+            raceclasses.append(raceclass)  # noqa: PERF402
         return raceclasses
 
     @classmethod
     async def update_raceclass(
         cls: Any, db: Any, event_id: str, raceclass_id: str, raceclass: dict
-    ) -> Optional[str]:  # pragma: no cover
+    ) -> str | None:  # pragma: no cover
         """Update given raceclass function."""
-        result = await db.raceclasses_collection.replace_one(
+        return await db.raceclasses_collection.replace_one(
             {"$and": [{"event_id": event_id}, {"id": raceclass_id}]}, raceclass
         )
-        return result
 
     @classmethod
     async def delete_raceclass(
         cls: Any, db: Any, event_id: str, raceclass_id: str
-    ) -> Optional[str]:  # pragma: no cover
+    ) -> str | None:  # pragma: no cover
         """Delete given raceclass function."""
-        result = await db.raceclasses_collection.delete_one(
+        return await db.raceclasses_collection.delete_one(
             {"$and": [{"event_id": event_id}, {"id": raceclass_id}]}
         )
-        return result
 
     @classmethod
     async def delete_all_raceclasses(
         cls: Any, db: Any, event_id: str
-    ) -> Optional[str]:  # pragma: no cover
+    ) -> str | None:  # pragma: no cover
         """Delete all raceclasses function."""
-        result = await db.raceclasses_collection.delete_many({"event_id": event_id})
-        return result
+        return await db.raceclasses_collection.delete_many({"event_id": event_id})

@@ -2,9 +2,8 @@
 
 from dataclasses import dataclass, field
 from datetime import date, datetime
-from typing import Optional
 
-from dataclasses_json import config, DataClassJsonMixin
+from dataclasses_json import DataClassJsonMixin, config
 from marshmallow.fields import DateTime
 
 
@@ -28,9 +27,9 @@ class Contestant(DataClassJsonMixin):
             mm_field=DateTime(format="iso"),
         )
     )
-    team: Optional[str] = field(default=None)
-    minidrett_id: Optional[str] = field(default=None)
-    id: Optional[str] = field(default=None)
-    bib: Optional[int] = field(default=None)
-    distance: Optional[str] = field(default=None)
-    seeding_points: Optional[int] = field(default=None)
+    team: str | None = field(default=None)
+    minidrett_id: str | None = field(default=None)
+    id: str | None = field(default=None)
+    bib: int | None = field(default=None)
+    distance: str | None = field(default=None)
+    seeding_points: int | None = field(default=None)

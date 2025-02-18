@@ -18,12 +18,12 @@ from multidict import MultiDict
 from event_service.adapters import UsersAdapter
 from event_service.models import Event
 from event_service.services import (
-    CompetitionFormatNotFoundException,
-    EventNotFoundException,
+    CompetitionFormatNotFoundError,
+    EventNotFoundError,
     EventsService,
-    IllegalValueException,
-    InvalidDateFormatException,
-    InvalidTimezoneException,
+    IllegalValueError,
+    InvalidDateFormatError,
+    InvalidTimezoneError,
 )
 from event_service.utils.jwt_utils import extract_token_from_request
 
@@ -41,11 +41,9 @@ class EventsView(View):
         db = self.request.app["db"]
 
         events = await EventsService.get_all_events(db)
-        list = []
-        for _e in events:
-            list.append(_e.to_dict())
+        event_list = [event.to_dict() for event in events]
 
-        body = json.dumps(list, default=str, ensure_ascii=False)
+        body = json.dumps(event_list, default=str, ensure_ascii=False)
         return Response(status=200, body=body, content_type="application/json")
 
     async def post(self) -> Response:
@@ -68,16 +66,16 @@ class EventsView(View):
 
         try:
             event_id = await EventsService.create_event(db, event)
-        except (IllegalValueException, InvalidTimezoneException) as e:
+        except (IllegalValueError, InvalidTimezoneError) as e:
             raise HTTPUnprocessableEntity(reason=str(e)) from e
-        except (CompetitionFormatNotFoundException, InvalidDateFormatException) as e:
+        except (CompetitionFormatNotFoundError, InvalidDateFormatError) as e:
             raise HTTPBadRequest(reason=str(e)) from e
         if event_id:
             logging.debug(f"inserted document with event_id {event_id}")
             headers = MultiDict([(hdrs.LOCATION, f"{BASE_URL}/events/{event_id}")])
 
             return Response(status=201, headers=headers)
-        raise HTTPBadRequest() from None
+        raise HTTPBadRequest from None
 
 
 class EventView(View):
@@ -92,7 +90,7 @@ class EventView(View):
 
         try:
             event = await EventsService.get_event_by_id(db, event_id)
-        except EventNotFoundException as e:
+        except EventNotFoundError as e:
             raise HTTPNotFound(reason=str(e)) from e
         logging.debug(f"Got event: {event}")
         body = event.to_json()
@@ -121,11 +119,11 @@ class EventView(View):
 
         try:
             await EventsService.update_event(db, event_id, event)
-        except IllegalValueException as e:
+        except IllegalValueError as e:
             raise HTTPUnprocessableEntity(reason=str(e)) from e
-        except EventNotFoundException as e:
+        except EventNotFoundError as e:
             raise HTTPNotFound(reason=str(e)) from e
-        except (CompetitionFormatNotFoundException, InvalidDateFormatException) as e:
+        except (CompetitionFormatNotFoundError, InvalidDateFormatError) as e:
             raise HTTPBadRequest(reason=str(e)) from e
         return Response(status=204)
 
@@ -143,6 +141,6 @@ class EventView(View):
 
         try:
             await EventsService.delete_event(db, event_id)
-        except EventNotFoundException as e:
+        except EventNotFoundError as e:
             raise HTTPNotFound(reason=str(e)) from e
         return Response(status=204)
