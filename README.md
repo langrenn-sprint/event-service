@@ -66,8 +66,8 @@ Look to the [openAPI specification](./specification.yaml) for the details.
 ### Install software
 
 ```shell
-% git clone https://github.com/langrenn-sprint/race-service.git
-% cd race-service
+% git clone https://github.com/langrenn-sprint/event-service.git
+% cd event-service
 % uv sync
 ```
 
@@ -93,13 +93,13 @@ LOGGING_LEVEL=DEBUG
 Start the server locally:
 
 ```shell
-% uv run adev runserver -p 8080 --aux-port 8089 race_service
+% uv run adev runserver -p 8080 --aux-port 8089 event_service
 ```
 
 ### Running the API in a wsgi-server (gunicorn)
 
 ```shell
-% uv run gunicorn race_service:create_app --bind localhost:8080 --worker-class aiohttp.GunicornWebWorker
+% uv run gunicorn event_service:create_app --bind localhost:8080 --worker-class aiohttp.GunicornWebWorker
 ```
 
 ### Running the wsgi-server in Docker

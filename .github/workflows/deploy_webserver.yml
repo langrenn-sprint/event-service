@@ -50,6 +50,6 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ github.token }}
         run: |-
-          docker tag ghcr.io/langrenn-sprint/race-service:test ghcr.io/langrenn-sprint/race-service:latest
-          docker rmi ghcr.io/langrenn-sprint/race-service:test
-          docker push ghcr.io/langrenn-sprint/race-service:latest
+          docker tag ghcr.io/langrenn-sprint/event-service:test ghcr.io/langrenn-sprint/event-service:latest
+          docker rmi ghcr.io/langrenn-sprint/event-service:test
+          docker push ghcr.io/langrenn-sprint/event-service:latest
