@@ -197,6 +197,54 @@ async def test_assign_bibs_to_contestants(
         assert resp.status == 201
         assert f"/events/{event_id}/contestants" in resp.headers[hdrs.LOCATION]
 
+@pytest.mark.integration
+async def test_assign_bibs_to_contestants_start_bib_100(
+    client: _TestClient,
+    mocker: MockFixture,
+    token: MockFixture,
+    event: dict,
+    raceclasses: list[dict],
+    contestants: list[dict],
+) -> None:
+    """Should return 201 Created, location header."""
+    mocker.patch(
+        "event_service.adapters.events_adapter.EventsAdapter.get_event_by_id",
+        return_value=event,
+    )
+    mocker.patch(
+        "event_service.adapters.raceclasses_adapter.RaceclassesAdapter.get_all_raceclasses",
+        return_value=raceclasses,
+    )
+    mocker.patch(
+        "event_service.adapters.contestants_adapter.ContestantsAdapter.get_all_contestants",
+        return_value=contestants,
+    )
+    mocker.patch(
+        "event_service.adapters.contestants_adapter.ContestantsAdapter.get_contestant_by_id",
+        side_effect=get_contestant_by_id,
+    )
+    mocker.patch(
+        "event_service.adapters.contestants_adapter.ContestantsAdapter.update_contestant",
+        side_effect=update_contestant,
+    )
+    mocker.patch(
+        "event_service.adapters.contestants_adapter.ContestantsAdapter.get_contestant_by_bib",
+        return_value=None,
+    )
+
+    headers = {
+        hdrs.CONTENT_TYPE: "application/json",
+        hdrs.AUTHORIZATION: f"Bearer {token}",
+    }
+
+    event_id = event["id"]
+    with aioresponses(passthrough=["http://127.0.0.1"]) as m:
+        m.post(f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/authorize", status=204)
+        resp = await client.post(
+            f"/events/{event_id}/contestants/assign-bibs?start-bib=100", headers=headers
+        )
+        assert resp.status == 201
+        assert f"/events/{event_id}/contestants" in resp.headers[hdrs.LOCATION]
 
 # Bad cases
 @pytest.mark.integration
