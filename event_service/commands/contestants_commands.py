@@ -43,7 +43,7 @@ class ContestantsCommands:
     """Class representing a commands on contestants."""
 
     @classmethod
-    async def assign_bibs( # noqa: C901
+    async def assign_bibs(  # noqa: C901
         cls: Any, db: Any, event_id: str, start_bib: int | None = 1
     ) -> None:
         """Assign bibs function.

@@ -64,7 +64,9 @@ class EventFormatView(View):
 
         try:
             event_format_id = await EventFormatService.create_event_format(
-                db, event_id, event_format  # type: ignore [reportAttributeAccessIssue]
+                db,
+                event_id,
+                event_format,  # type: ignore [reportAttributeAccessIssue]
             )
         except EventNotFoundError as e:
             raise HTTPNotFound(reason=str(e)) from e

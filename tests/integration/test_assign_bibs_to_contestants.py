@@ -197,6 +197,7 @@ async def test_assign_bibs_to_contestants(
         assert resp.status == 201
         assert f"/events/{event_id}/contestants" in resp.headers[hdrs.LOCATION]
 
+
 @pytest.mark.integration
 async def test_assign_bibs_to_contestants_start_bib_100(
     client: _TestClient,
@@ -245,6 +246,7 @@ async def test_assign_bibs_to_contestants_start_bib_100(
         )
         assert resp.status == 201
         assert f"/events/{event_id}/contestants" in resp.headers[hdrs.LOCATION]
+
 
 # Bad cases
 @pytest.mark.integration

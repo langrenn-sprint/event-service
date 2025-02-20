@@ -73,7 +73,7 @@ async def create_app() -> web.Application:
         ]
     )
 
-    async def mongo_context(app: Application) ->  AsyncGenerator[None]:
+    async def mongo_context(app: Application) -> AsyncGenerator[None]:
         # Set up database connection:
         logging.debug(f"Connecting to db at {DB_HOST}:{DB_PORT}")
         mongo = motor.motor_asyncio.AsyncIOMotorClient(

@@ -136,7 +136,7 @@ async def validate_event(db: Any, event: Event) -> None:
     # Validate date_of_event if set:
     if event.date_of_event:
         try:
-            date.fromisoformat(event.date_of_event) # type: ignore [reportArgumentType]
+            date.fromisoformat(event.date_of_event)  # type: ignore [reportArgumentType]
         except ValueError as e:
             msg = f'Date "{event.date_of_event}" has invalid format.'
             raise InvalidDateFormatError(msg) from e
@@ -144,7 +144,7 @@ async def validate_event(db: Any, event: Event) -> None:
     # Validate time_of_event if set:
     if event.time_of_event:
         try:
-            time.fromisoformat(event.time_of_event) # type: ignore [reportArgumentType]
+            time.fromisoformat(event.time_of_event)  # type: ignore [reportArgumentType]
         except ValueError as e:
             msg = f'Time "{event.time_of_event}" has invalid format.'
             raise InvalidDateFormatError(msg) from e
