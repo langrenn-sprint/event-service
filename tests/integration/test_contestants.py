@@ -796,7 +796,9 @@ async def test_create_contestants_csv_good_case_octet_stream(
         }
 
         with aioresponses(passthrough=["http://127.0.0.1"]) as m:
-            m.post(f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/authorize", status=204)
+            m.post(
+                f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/authorize", status=204
+            )
             resp = await client.post(
                 f"/events/{EVENT_ID}/contestants", headers=headers, data=f
             )
@@ -1241,7 +1243,9 @@ async def test_create_contestants_csv_octet_stream_event_not_found(
         }
 
         with aioresponses(passthrough=["http://127.0.0.1"]) as m:
-            m.post(f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/authorize", status=204)
+            m.post(
+                f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/authorize", status=204
+            )
             resp = await client.post(
                 f"/events/{EVENT_ID}/contestants", headers=headers, data=f
             )

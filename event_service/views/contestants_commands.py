@@ -44,10 +44,23 @@ class ContestantsAssignBibsView(View):
         except Exception as e:
             raise e from e
 
+        # Check for the start-bib parameter:
+        start_bib = None
+        if "start-bib" in self.request.rel_url.query:
+            start_bib_query = self.request.rel_url.query["start-bib"]
+            try:
+                start_bib = int(start_bib_query)
+            except ValueError:  # pragma: no cover
+                raise HTTPBadRequest(
+                    reason=f"Invalid start-bib value: {start_bib_query}. Should be an integer."
+                ) from None
+
         # Execute command:
         event_id = self.request.match_info["eventId"]
         try:
-            await ContestantsCommands.assign_bibs(db, event_id)
+            await ContestantsCommands.assign_bibs(
+                db, event_id, start_bib if start_bib else None
+            )
         except (EventNotFoundError, NoRaceclassInEventError) as e:
             raise HTTPNotFound(reason=str(e)) from e
         except (

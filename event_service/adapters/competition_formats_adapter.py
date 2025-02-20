@@ -10,7 +10,9 @@ from aiohttp import ClientSession
 
 from .adapter import Adapter
 
-COMPETITION_FORMAT_HOST_SERVER = os.getenv("COMPETITION_FORMAT_HOST_SERVER", "competition-format.example.com")
+COMPETITION_FORMAT_HOST_SERVER = os.getenv(
+    "COMPETITION_FORMAT_HOST_SERVER", "competition-format.example.com"
+)
 COMPETITION_FORMAT_HOST_PORT = os.getenv("COMPETITION_FORMAT_HOST_PORT", "8080")
 
 

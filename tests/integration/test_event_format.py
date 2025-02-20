@@ -17,6 +17,7 @@ load_dotenv()
 USERS_HOST_SERVER = os.getenv("USERS_HOST_SERVER")
 USERS_HOST_PORT = os.getenv("USERS_HOST_PORT")
 
+
 @pytest.fixture
 def token() -> str:
     """Create a valid token."""

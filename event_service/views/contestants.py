@@ -128,13 +128,13 @@ class ContestantsView(View):
 
         if "multipart/form-data" in self.request.headers[hdrs.CONTENT_TYPE]:
             async for part in await self.request.multipart():
-                logging.debug(f"part.name {part.name}.") # type: ignore [reportOptionalMemberAccess]
-                if "text/csv" in part.headers[hdrs.CONTENT_TYPE]: # type: ignore [reportOptionalMemberAccess]
+                logging.debug(f"part.name {part.name}.")  # type: ignore [reportOptionalMemberAccess]
+                if "text/csv" in part.headers[hdrs.CONTENT_TYPE]:  # type: ignore [reportOptionalMemberAccess]
                     # process csv:
-                    contestants = (await part.read()).decode() # type: ignore [reportAttributeAccessIssue]
+                    contestants = (await part.read()).decode()  # type: ignore [reportAttributeAccessIssue]
                 else:
                     raise HTTPBadRequest(
-                        reason=f"File's content-type {part.headers[hdrs.CONTENT_TYPE]} not supported." # type: ignore [reportAttributeAccessIssue]
+                        reason=f"File's content-type {part.headers[hdrs.CONTENT_TYPE]} not supported."  # type: ignore [reportAttributeAccessIssue]
                     ) from None
                 try:
                     result = await ContestantsService.create_contestants(

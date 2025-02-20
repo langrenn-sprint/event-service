@@ -94,8 +94,8 @@ class EventFormatService:
             return IntervalStartFormat.from_dict(event_format)
         if event_format["datatype"] == "individual_sprint":
             return IndividualSprintFormat.from_dict(event_format)
-        msg = f"Unsupported event format type: {event_format['datatype']}" # pragma: no cover
-        raise EventFormatNotSupportedError(msg) # pragma: no cover
+        msg = f"Unsupported event format type: {event_format['datatype']}"  # pragma: no cover
+        raise EventFormatNotSupportedError(msg)  # pragma: no cover
 
     @classmethod
     async def update_event_format(

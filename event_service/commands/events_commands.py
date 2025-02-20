@@ -43,13 +43,16 @@ class EventsCommands:
             else:
                 raceclass = raceclasses[0]
             # Update counter if raceclass exist:
-            if raceclass_exist and raceclass.id: # type: ignore [reportPossibleUnboundVariable]
-                raceclass.no_of_contestants += 1 # type: ignore [reportPossibleUnboundVariable]
+            if raceclass_exist and raceclass.id:  # type: ignore [reportPossibleUnboundVariable]
+                raceclass.no_of_contestants += 1  # type: ignore [reportPossibleUnboundVariable]
                 result = await RaceclassesService.update_raceclass(
-                    db, event_id, raceclass.id, raceclass # type: ignore [reportPossibleUnboundVariable]
+                    db,
+                    event_id,
+                    raceclass.id,  # type: ignore [reportPossibleUnboundVariable]
+                    raceclass,  # type: ignore [reportPossibleUnboundVariable]
                 )
                 if not result:
-                    msg = f"Update of raceclass with id {raceclass.id} failed." # type: ignore [reportPossibleUnboundVariable]
+                    msg = f"Update of raceclass with id {raceclass.id} failed."  # type: ignore [reportPossibleUnboundVariable]
                     raise RaceclassUpdateError(msg) from None
             # If not found, we create the raceclass:
             else:

@@ -43,7 +43,9 @@ class ContestantsCommands:
     """Class representing a commands on contestants."""
 
     @classmethod
-    async def assign_bibs(cls: Any, db: Any, event_id: str) -> None:  # noqa: C901
+    async def assign_bibs(  # noqa: C901
+        cls: Any, db: Any, event_id: str, start_bib: int | None = 1
+    ) -> None:
         """Assign bibs function.
 
         This function will
@@ -54,6 +56,7 @@ class ContestantsCommands:
         Arguments:
             db: the database to use
             event_id: the id of the event
+            start_bib: the bib number to start with
 
         Raises:
             EventNotFoundError: event not found
@@ -115,9 +118,9 @@ class ContestantsCommands:
             _list, key=lambda k: (k["raceclass_group"], k["raceclass_order"])
         )
         # For every contestant, assign unique bib
-        bib_no = 0
+        bib_no = start_bib - 1 if start_bib is not None else 0
         for d in _list_sorted_on_raceclass:
-            bib_no += 1  # noqa: SIM113
+            bib_no += 1
             d["bib"] = bib_no
 
         # finally update contestant record:
@@ -129,4 +132,4 @@ class ContestantsCommands:
             if _c.bib is None:  # pragma: no cover
                 msg = f"Bib number not assigned for contestant with id {_c.id}"
                 raise ValueError(msg)
-            await ContestantsService.update_contestant(db, event_id, _c.id, _c) # type: ignore [reportArgumentType]
+            await ContestantsService.update_contestant(db, event_id, _c.id, _c)  # type: ignore [reportArgumentType]

@@ -240,14 +240,14 @@ class ContestantsService:
         }
         for _c in contestants_dict:
             result["total"] += 1
-            _c["event_id"] = event_id # type: ignore [reportIndexIssue]
+            _c["event_id"] = event_id  # type: ignore [reportIndexIssue]
             contestant_id = create_id()
-            _c["id"] = contestant_id # type: ignore [reportIndexIssue]
+            _c["id"] = contestant_id  # type: ignore [reportIndexIssue]
             # Validate contestant:
             try:
                 # datetime to string in isoformat:
                 try:
-                    if _c["registration_date_time"]: # type: ignore [reportArgumentType]
+                    if _c["registration_date_time"]:  # type: ignore [reportArgumentType]
                         _c["registration_date_time"] = datetime.strptime(  # noqa: DTZ007  # type: ignore [reportArgumentType]
                             _c["registration_date_time"],  # type: ignore [reportArgumentType]
                             "%d.%m.%Y %H:%M:%S",
@@ -395,14 +395,14 @@ async def _parse_contestants_sportsadmin(contestants: str) -> pd.DataFrame:
             "Team",
             "Betalt/påmeldt dato",
         ]
-        contestants_df = pd.read_csv( # noqa: PGH003 # type: ignore
+        contestants_df = pd.read_csv(  # noqa: PGH003 # type: ignore
             StringIO(contestants),
             sep=";",
             encoding="utf-8",
             dtype=str,
             skiprows=2,
             header=0,
-            usecols=cols, # noqa: PGH003 # type: ignore
+            usecols=cols,  # noqa: PGH003 # type: ignore
         )
         contestants_df.columns = [
             "ageclass",
@@ -444,13 +444,13 @@ async def _parse_contestants_i_sonen(contestants: str) -> pd.DataFrame:
             "Klasse",
             "Øvelse",
         ]
-        contestants_df = pd.read_csv( # noqa: PGH003 # type: ignore
+        contestants_df = pd.read_csv(  # noqa: PGH003 # type: ignore
             StringIO(contestants),
             sep=";",
             encoding="utf-8",
             dtype=str,
             header=0,
-            usecols=cols, # noqa: PGH003 # type: ignore
+            usecols=cols,  # noqa: PGH003 # type: ignore
         )
         # Need to map column names to dataclass:
         contestants_df.rename(
