@@ -28,13 +28,15 @@ class CompetitionFormatsAdapterError(Exception):
 class CompetitionFormatsAdapter(Adapter):
     """Class representing an adapter for competition_formats."""
 
+    logger = logging.getLogger("event_service.adapters.competition_formats_adapter")
+
     @classmethod
     async def get_competition_formats_by_name(
         cls: Any, db: Any, competition_format_name: str
     ) -> list[dict]:  # pragma: no cover
         """Get competition_format by name function."""
         _ = db
-        logging.debug(f"Got request for name {competition_format_name}.")
+        cls.logger.debug(f"Got request for name {competition_format_name}.")
         competition_formats: list = []
 
         url = f"http://{COMPETITION_FORMAT_HOST_SERVER}:{COMPETITION_FORMAT_HOST_PORT}/competition-formats"
@@ -49,7 +51,7 @@ class CompetitionFormatsAdapter(Adapter):
                     raise CompetitionFormatsAdapterError(msg)
 
         for competition_format in competition_formats_response:
-            logging.debug(f"cursor - competition_format: {competition_format}")
+            cls.logger.debug(f"cursor - competition_format: {competition_format}")
             competition_formats.append(competition_format)
 
         return competition_formats

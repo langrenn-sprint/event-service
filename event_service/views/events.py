@@ -36,6 +36,8 @@ BASE_URL = f"http://{HOST_SERVER}:{HOST_PORT}"
 class EventsView(View):
     """Class representing events resource."""
 
+    logger = logging.getLogger("event_service.views.events")
+
     async def get(self) -> Response:
         """Get route function."""
         db = self.request.app["db"]
@@ -56,7 +58,7 @@ class EventsView(View):
             raise e from e
 
         body = await self.request.json()
-        logging.debug(f"Got create request for event {body} of type {type(body)}")
+        self.logger.debug(f"Got create request for event {body} of type {type(body)}")
         try:
             event = Event.from_dict(body)
         except KeyError as e:
@@ -71,7 +73,7 @@ class EventsView(View):
         except (CompetitionFormatNotFoundError, InvalidDateFormatError) as e:
             raise HTTPBadRequest(reason=str(e)) from e
         if event_id:
-            logging.debug(f"inserted document with event_id {event_id}")
+            self.logger.debug(f"inserted document with event_id {event_id}")
             headers = MultiDict([(hdrs.LOCATION, f"{BASE_URL}/events/{event_id}")])
 
             return Response(status=201, headers=headers)
@@ -81,18 +83,20 @@ class EventsView(View):
 class EventView(View):
     """Class representing a single event resource."""
 
+    logger = logging.getLogger("event_service.views.event")
+
     async def get(self) -> Response:
         """Get route function."""
         db = self.request.app["db"]
 
         event_id = self.request.match_info["eventId"]
-        logging.debug(f"Got get request for event {event_id}")
+        self.logger.debug(f"Got get request for event {event_id}")
 
         try:
             event = await EventsService.get_event_by_id(db, event_id)
         except EventNotFoundError as e:
             raise HTTPNotFound(reason=str(e)) from e
-        logging.debug(f"Got event: {event}")
+        self.logger.debug(f"Got event: {event}")
         body = event.to_json()
         return Response(status=200, body=body, content_type="application/json")
 
@@ -107,9 +111,11 @@ class EventView(View):
 
         body = await self.request.json()
         event_id = self.request.match_info["eventId"]
-        logging.debug(f"Got request-body {body} for {event_id} of type {type(body)}")
+        self.logger.debug(
+            f"Got request-body {body} for {event_id} of type {type(body)}"
+        )
         body = await self.request.json()
-        logging.debug(f"Got put request for event {body} of type {type(body)}")
+        self.logger.debug(f"Got put request for event {body} of type {type(body)}")
         try:
             event = Event.from_dict(body)
         except KeyError as e:
@@ -137,7 +143,7 @@ class EventView(View):
             raise e from e
 
         event_id = self.request.match_info["eventId"]
-        logging.debug(f"Got delete request for event {event_id}")
+        self.logger.debug(f"Got delete request for event {event_id}")
 
         try:
             await EventsService.delete_event(db, event_id)

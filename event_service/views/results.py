@@ -29,12 +29,14 @@ BASE_URL = f"http://{HOST_SERVER}:{HOST_PORT}"
 class RaceclassResultsView(View):
     """Class representing raceclass results resource."""
 
+    logger = logging.getLogger("event_service.views.raceclass_results")
+
     async def get(self) -> Response:
         """Get route function."""
         db = self.request.app["db"]
 
         event_id = self.request.match_info["eventId"]
-        logging.debug(f"Got get request for event results {event_id}")
+        self.logger.debug(f"Got get request for event results {event_id}")
 
         results = await ResultsService.get_all_results(db, event_id)
         result_list = [result.to_dict() for result in results]
@@ -53,7 +55,7 @@ class RaceclassResultsView(View):
             raise e from e
 
         body = await self.request.json()
-        logging.debug(f"Got create request for result {body} of type {type(body)}")
+        self.logger.debug(f"Got create request for result {body} of type {type(body)}")
         try:
             result = RaceclassResult.from_dict(body)
         except KeyError as e:
@@ -66,7 +68,7 @@ class RaceclassResultsView(View):
         except Exception as e:
             raise HTTPUnprocessableEntity(reason=str(e)) from e
         if result_id:
-            logging.debug(f"inserted document with result_id {result_id}")
+            self.logger.debug(f"inserted document with result_id {result_id}")
             headers = MultiDict(
                 [
                     (
@@ -83,13 +85,15 @@ class RaceclassResultsView(View):
 class RaceclassResultView(View):
     """Class representing raceclass result resource."""
 
+    logger = logging.getLogger("event_service.views.raceclass_result")
+
     async def get(self) -> Response:
         """Get route function."""
         db = self.request.app["db"]
 
         event_id = self.request.match_info["eventId"]
         raceclass = self.request.match_info["raceclass"]
-        logging.debug(f"Got get request for event/raceclass {event_id}/{raceclass}")
+        self.logger.debug(f"Got get request for event/raceclass {event_id}/{raceclass}")
 
         try:
             result = await ResultsService.get_result_by_raceclass(
@@ -112,7 +116,7 @@ class RaceclassResultView(View):
 
         event_id = self.request.match_info["eventId"]
         raceclass = self.request.match_info["raceclass"]
-        logging.debug(f"Got delete request for result {raceclass}")
+        self.logger.debug(f"Got delete request for result {raceclass}")
 
         try:
             await ResultsService.delete_result(db, event_id, raceclass)

@@ -28,6 +28,8 @@ class ResultNotFoundError(Exception):
 class ResultsService:
     """Class representing a service for results."""
 
+    logger = logging.getLogger("event_service.services.results_service")
+
     @classmethod
     async def get_all_results(
         cls: Any, db: Any, event_id: str
@@ -69,7 +71,7 @@ class ResultsService:
         # insert new result
         new_result = result.to_dict()
         res = await ResultsAdapter.create_result(db, new_result)
-        logging.debug(f"inserted result with id: {result_id}")
+        cls.logger.debug(f"inserted result with id: {result_id}")
         if res:
             return result_id
         return None

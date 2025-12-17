@@ -35,6 +35,8 @@ BASE_URL = f"http://{HOST_SERVER}:{HOST_PORT}"
 class EventFormatView(View):
     """Class representing event_format resource."""
 
+    logger = logging.getLogger("event_service.views.event_format")
+
     async def post(self) -> Response:
         """Post route function."""
         db = self.request.app["db"]
@@ -47,7 +49,7 @@ class EventFormatView(View):
         event_id = self.request.match_info["eventId"]
 
         body = await self.request.json()
-        logging.debug(
+        self.logger.debug(
             f"Got create request for event_format {body} of type {type(body)}"
         )
 
@@ -71,7 +73,7 @@ class EventFormatView(View):
         except EventNotFoundError as e:
             raise HTTPNotFound(reason=str(e)) from e
         if event_format_id:
-            logging.debug(f"inserted document with id {event_format_id}")
+            self.logger.debug(f"inserted document with id {event_format_id}")
             headers = MultiDict(
                 [(hdrs.LOCATION, f"{BASE_URL}/events/{event_id}/format")]
             )
@@ -84,13 +86,13 @@ class EventFormatView(View):
         db = self.request.app["db"]
 
         event_id = self.request.match_info["eventId"]
-        logging.debug(f"Got get request for event_format for event {event_id}")
+        self.logger.debug(f"Got get request for event_format for event {event_id}")
 
         try:
             event_format = await EventFormatService.get_event_format(db, event_id)
         except EventFormatNotFoundError as e:
             raise HTTPNotFound(reason=str(e)) from e
-        logging.debug(f"Got event_format: {event_format}")
+        self.logger.debug(f"Got event_format: {event_format}")
         body = event_format.to_json()
         return Response(status=200, body=body, content_type="application/json")
 
@@ -105,7 +107,7 @@ class EventFormatView(View):
 
         body = await self.request.json()
         event_id = self.request.match_info["eventId"]
-        logging.debug(
+        self.logger.debug(
             f"Got request-body {body} for format of {event_id} of type {type(body)}"
         )
 
@@ -136,7 +138,7 @@ class EventFormatView(View):
             raise e from e
 
         event_id = self.request.match_info["eventId"]
-        logging.debug(f"Got delete request for event_format for event {event_id}")
+        self.logger.debug(f"Got delete request for event_format for event {event_id}")
 
         try:
             await EventFormatService.delete_event_format(db, event_id)

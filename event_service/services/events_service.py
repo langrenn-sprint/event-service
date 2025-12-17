@@ -38,6 +38,8 @@ class EventNotFoundError(Exception):
 class EventsService:
     """Class representing a service for events."""
 
+    logger = logging.getLogger("event_service.services.events_service")
+
     @classmethod
     async def get_all_events(cls: Any, db: Any) -> list[Event]:
         """Get all events function."""
@@ -84,7 +86,7 @@ class EventsService:
         # insert new event
         new_event = event.to_dict()
         result = await EventsAdapter.create_event(db, new_event)
-        logging.debug(f"inserted event with id: {event_id}")
+        cls.logger.debug(f"inserted event with id: {event_id}")
         if not result:
             return None
         return event_id

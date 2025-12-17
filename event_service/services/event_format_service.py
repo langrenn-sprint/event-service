@@ -43,6 +43,8 @@ class EventFormatNotSupportedError(Exception):
 class EventFormatService:
     """Class representing a service for event_format."""
 
+    logger = logging.getLogger("event_service.services.event_format_service")
+
     @classmethod
     async def create_event_format(
         cls: Any, db: Any, event_id: str, event_format: CompetitionFormat
@@ -70,7 +72,7 @@ class EventFormatService:
         result = await EventFormatAdapter.create_event_format(
             db, event_id, new_event_format
         )
-        logging.debug(
+        cls.logger.debug(
             f"inserted event_format for event_id/name: {event_id}/{event_format.name}"
         )
         if result:

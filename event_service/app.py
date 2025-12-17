@@ -46,7 +46,8 @@ async def create_app() -> web.Application:
         ]
     )
     # Set up logging
-    logging.basicConfig(level=LOGGING_LEVEL)
+    logger = logging.getLogger("event_service.app")
+    logger.setLevel(LOGGING_LEVEL)
     logging.getLogger("chardet.charsetprober").setLevel(LOGGING_LEVEL)
 
     # Set up routes:
@@ -75,7 +76,7 @@ async def create_app() -> web.Application:
 
     async def mongo_context(app: Application) -> AsyncGenerator[None]:
         # Set up database connection:
-        logging.debug(f"Connecting to db at {DB_HOST}:{DB_PORT}")
+        logger.debug(f"Connecting to db at {DB_HOST}:{DB_PORT}")
         mongo = motor.motor_asyncio.AsyncIOMotorClient(
             host=DB_HOST, port=DB_PORT, username=DB_USER, password=DB_PASSWORD
         )
@@ -87,7 +88,7 @@ async def create_app() -> web.Application:
             try:
                 await db_utils.create_indexes(db)
             except Exception:
-                logging.exception("Could not create index on contestants.")
+                logger.exception("Could not create index on contestants.")
 
         yield
 
