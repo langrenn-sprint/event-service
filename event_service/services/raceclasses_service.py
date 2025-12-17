@@ -32,6 +32,8 @@ class RaceclassNotUniqueNameError(Exception):
 class RaceclassesService:
     """Class representing a service for raceclasses."""
 
+    logger = logging.getLogger("event_service.services.raceclasses_service")
+
     @classmethod
     async def get_all_raceclasses(cls: Any, db: Any, event_id: str) -> list[Raceclass]:
         """Get all raceclasses function."""
@@ -90,7 +92,7 @@ class RaceclassesService:
         # insert new raceclass
         new_raceclass = raceclass.to_dict()
         result = await RaceclassesAdapter.create_raceclass(db, event_id, new_raceclass)
-        logging.debug(
+        cls.logger.debug(
             f"inserted raceclass with event_id/raceclass_id: {event_id}/{raceclass_id}"
         )
         if result:

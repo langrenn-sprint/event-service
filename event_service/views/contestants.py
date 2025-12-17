@@ -38,6 +38,8 @@ BASE_URL = f"http://{HOST_SERVER}:{HOST_PORT}"
 class ContestantsView(View):
     """Class representing contestants resource."""
 
+    logger = logging.getLogger("event_service.views.contestants")
+
     async def get(self) -> Response:
         """Get route function."""
         db = self.request.app["db"]
@@ -86,13 +88,13 @@ class ContestantsView(View):
             raise e from e
 
         # handle application/json and text/csv:
-        logging.debug(
+        self.logger.debug(
             f"Got following content-type-headers: {self.request.headers[hdrs.CONTENT_TYPE]}."
         )
         event_id = self.request.match_info["eventId"]
         if "application/json" in self.request.headers[hdrs.CONTENT_TYPE]:
             body = await self.request.json()
-            logging.debug(
+            self.logger.debug(
                 f"Got create request for contestant {body} of type {type(body)}"
             )
             try:
@@ -114,7 +116,9 @@ class ContestantsView(View):
                 raise HTTPBadRequest(reason=str(e)) from e
 
             if contestant_id:
-                logging.debug(f"inserted document with contestant_id {contestant_id}")
+                self.logger.debug(
+                    f"inserted document with contestant_id {contestant_id}"
+                )
                 headers = MultiDict(
                     [
                         (
@@ -128,7 +132,7 @@ class ContestantsView(View):
 
         if "multipart/form-data" in self.request.headers[hdrs.CONTENT_TYPE]:
             async for part in await self.request.multipart():
-                logging.debug(f"part.name {part.name}.")  # type: ignore [reportOptionalMemberAccess]
+                self.logger.debug(f"part.name {part.name}.")  # type: ignore [reportOptionalMemberAccess]
                 if "text/csv" in part.headers[hdrs.CONTENT_TYPE]:  # type: ignore [reportOptionalMemberAccess]
                     # process csv:
                     contestants = (await part.read()).decode()  # type: ignore [reportAttributeAccessIssue]
@@ -145,7 +149,7 @@ class ContestantsView(View):
                 except IllegalValueError as e:
                     raise HTTPBadRequest(reason=str(e)) from e
 
-                logging.debug(f"result:\n {result}")
+                self.logger.debug(f"result:\n {result}")
                 body = json.dumps(result)
                 return Response(status=200, body=body, content_type="application/json")
 
@@ -158,7 +162,7 @@ class ContestantsView(View):
                 )
             except EventNotFoundError as e:
                 raise HTTPNotFound(reason=str(e)) from e
-            logging.debug(f"result:\n {result}")
+            self.logger.debug(f"result:\n {result}")
             body = json.dumps(result)
             return Response(status=200, body=body, content_type="application/json")
         else:
@@ -188,13 +192,15 @@ class ContestantsView(View):
 class ContestantView(View):
     """Class representing a single contestant resource."""
 
+    logger = logging.getLogger("event_service.views.contestant")
+
     async def get(self) -> Response:
         """Get route function."""
         db = self.request.app["db"]
 
         event_id = self.request.match_info["eventId"]
         contestant_id = self.request.match_info["contestantId"]
-        logging.debug(f"Got get request for contestant {contestant_id}")
+        self.logger.debug(f"Got get request for contestant {contestant_id}")
 
         try:
             contestant = await ContestantsService.get_contestant_by_id(
@@ -202,7 +208,7 @@ class ContestantView(View):
             )
         except ContestantNotFoundError as e:
             raise HTTPNotFound(reason=str(e)) from e
-        logging.debug(f"Got contestant: {contestant}")
+        self.logger.debug(f"Got contestant: {contestant}")
         body = contestant.to_json()
         return Response(status=200, body=body, content_type="application/json")
 
@@ -221,7 +227,7 @@ class ContestantView(View):
         event_id = self.request.match_info["eventId"]
         contestant_id = self.request.match_info["contestantId"]
         body = await self.request.json()
-        logging.debug(
+        self.logger.debug(
             f"Got request-body {body} for {contestant_id} of type {type(body)}"
         )
 
@@ -255,7 +261,7 @@ class ContestantView(View):
 
         event_id = self.request.match_info["eventId"]
         contestant_id = self.request.match_info["contestantId"]
-        logging.debug(
+        self.logger.debug(
             f"Got delete request for contestant {contestant_id} in event {event_id}"
         )
 

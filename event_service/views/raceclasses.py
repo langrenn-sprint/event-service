@@ -34,6 +34,8 @@ BASE_URL = f"http://{HOST_SERVER}:{HOST_PORT}"
 class RaceclassesView(View):
     """Class representing raceclasses resource."""
 
+    logger = logging.getLogger("event_service.views.raceclasses")
+
     async def get(self) -> Response:
         """Get route function."""
         db = self.request.app["db"]
@@ -68,7 +70,9 @@ class RaceclassesView(View):
         event_id = self.request.match_info["eventId"]
 
         body = await self.request.json()
-        logging.debug(f"Got create request for raceclass {body} of type {type(body)}")
+        self.logger.debug(
+            f"Got create request for raceclass {body} of type {type(body)}"
+        )
 
         try:
             raceclass = Raceclass.from_dict(body)
@@ -86,7 +90,7 @@ class RaceclassesView(View):
         except IllegalValueError as e:
             raise HTTPUnprocessableEntity(reason=str(e)) from e
         if raceclass_id:
-            logging.debug(f"inserted document with id {raceclass_id}")
+            self.logger.debug(f"inserted document with id {raceclass_id}")
             headers = MultiDict(
                 [
                     (
@@ -117,13 +121,15 @@ class RaceclassesView(View):
 class RaceclassView(View):
     """Class representing a single raceclass resource."""
 
+    logger = logging.getLogger("event_service.views.raceclass")
+
     async def get(self) -> Response:
         """Get route function."""
         db = self.request.app["db"]
 
         event_id = self.request.match_info["eventId"]
         raceclass_id = self.request.match_info["raceclassId"]
-        logging.debug(f"Got get request for raceclass {raceclass_id}")
+        self.logger.debug(f"Got get request for raceclass {raceclass_id}")
 
         try:
             raceclass = await RaceclassesService.get_raceclass_by_id(
@@ -131,7 +137,7 @@ class RaceclassView(View):
             )
         except RaceclassNotFoundError as e:
             raise HTTPNotFound(reason=str(e)) from e
-        logging.debug(f"Got raceclass: {raceclass}")
+        self.logger.debug(f"Got raceclass: {raceclass}")
         body = raceclass.to_json()
         return Response(status=200, body=body, content_type="application/json")
 
@@ -147,7 +153,7 @@ class RaceclassView(View):
         body = await self.request.json()
         event_id = self.request.match_info["eventId"]
         raceclass_id = self.request.match_info["raceclassId"]
-        logging.debug(
+        self.logger.debug(
             f"Got request-body {body} for {raceclass_id} of type {type(body)}"
         )
 
@@ -179,7 +185,7 @@ class RaceclassView(View):
 
         event_id = self.request.match_info["eventId"]
         raceclass_id = self.request.match_info["raceclassId"]
-        logging.debug(f"Got delete request for raceclass {raceclass_id}")
+        self.logger.debug(f"Got delete request for raceclass {raceclass_id}")
 
         try:
             await RaceclassesService.delete_raceclass(db, event_id, raceclass_id)

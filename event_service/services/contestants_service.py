@@ -47,6 +47,8 @@ class ContestantAllreadyExistError(Exception):
 class ContestantsService:
     """Class representing a service for contestants."""
 
+    logger = logging.getLogger("event_service.services.contestants_service")
+
     @classmethod
     async def get_all_contestants(cls: Any, db: Any, event_id: str) -> list[Contestant]:
         """Get all contestants function."""
@@ -184,7 +186,7 @@ class ContestantsService:
         result = await ContestantsAdapter.create_contestant(
             db, event_id, new_contestant
         )
-        logging.debug(
+        cls.logger.debug(
             f"inserted contestant with event_id/contestant_id: {event_id}/{contestant_id}"
         )
         if result:
@@ -269,7 +271,7 @@ class ContestantsService:
                     _result = await ContestantsAdapter.update_contestant(
                         db, event_id, _existing_contestant["id"], updated_contestant
                     )
-                    logging.debug(
+                    cls.logger.debug(
                         f"updated event_id/contestant_id: {event_id}/{contestant_id}"
                     )
                     if _result:
@@ -283,7 +285,7 @@ class ContestantsService:
                     _result = await ContestantsAdapter.create_contestant(
                         db, event_id, new_contestant
                     )
-                    logging.debug(
+                    cls.logger.debug(
                         f"inserted event_id/contestant_id: {event_id}/{contestant_id}"
                     )
                     if _result:
@@ -293,7 +295,7 @@ class ContestantsService:
                             f"reason: {_result}: {contestant.to_dict()}"
                         )
             except IllegalValueError as e:
-                logging.exception(f"Failed to create contestant with {_c}.")
+                cls.logger.exception(f"Failed to create contestant with {_c}.")
                 result["failures"].append(f"reason: {e}: {_c}")
                 continue
 
@@ -310,7 +312,7 @@ class ContestantsService:
         # return the document if found:
         if not contestant:
             msg = f"Contestant with id {contestant_id} not found"
-            logging.error(msg)
+            cls.logger.error(msg)
             raise ContestantNotFoundError(msg) from None
 
         return Contestant.from_dict(contestant)
