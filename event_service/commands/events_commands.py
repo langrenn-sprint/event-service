@@ -1,8 +1,10 @@
 """Module for contestants service."""
 
+import logging
 from typing import Any
 
-from event_service.models import Raceclass
+from event_service.adapters import RaceclassesConfigAdapter
+from event_service.models import Contestant, Raceclass, RaceclassesConfig
 from event_service.services import (
     ContestantsService,
     EventNotFoundError,
@@ -13,88 +15,102 @@ from event_service.services import (
     RaceclassUpdateError,
 )
 
+logger = logging.getLogger(__name__)
+
 
 class EventsCommands:
     """Class representing a commands on events."""
 
     @classmethod
     async def generate_raceclasses(cls: Any, db: Any, event_id: str) -> None:
-        """Create raceclasses function."""
+        """Generate raceclasses function."""
         # Check if event exists:
         try:
             await EventsService.get_event_by_id(db, event_id)
         except EventNotFoundError as e:
             raise e from e
 
+        # Get raceclasses configuration:
+        raceclasses_config_dict = (
+            await RaceclassesConfigAdapter.get_default_raceclasses_config()
+        )
+        cls.raceclasses_config = RaceclassesConfig(**raceclasses_config_dict)
+
         # Get all contestants in event:
         contestants = await ContestantsService.get_all_contestants(db, event_id)
         # For every contestant, create corresponding raceclass and update counter:
-        for _c in contestants:
+        for contestant in contestants:
             # Check if raceclass exist:
             raceclasses = await RaceclassesService.get_raceclass_by_ageclass_name(
-                db, event_id, _c.ageclass
+                db, event_id, contestant.ageclass
             )
-            raceclass_exist = True
-            if len(raceclasses) == 0:
-                raceclass_exist = False
-            elif len(raceclasses) > 1:
-                msg = f"Raceclass name {_c.ageclass} not unique."
+            if len(raceclasses) > 1:
+                msg = f"Raceclass name {contestant.ageclass} not unique."
                 raise RaceclassNotUniqueNameError(msg) from None
-            else:
+
+            if len(raceclasses) == 1:  # raceclass exists
                 raceclass = raceclasses[0]
-            # Update counter if raceclass exist:
-            if raceclass_exist and raceclass.id:  # type: ignore [reportPossibleUnboundVariable]
-                raceclass.no_of_contestants += 1  # type: ignore [reportPossibleUnboundVariable]
+                raceclass.no_of_contestants += 1
                 result = await RaceclassesService.update_raceclass(
                     db,
                     event_id,
-                    raceclass.id,  # type: ignore [reportPossibleUnboundVariable]
-                    raceclass,  # type: ignore [reportPossibleUnboundVariable]
+                    raceclass.id,  # type: ignore[reportArgumentType]
+                    raceclass,
                 )
                 if not result:
                     msg = f"Update of raceclass with id {raceclass.id} failed."  # type: ignore [reportPossibleUnboundVariable]
                     raise RaceclassUpdateError(msg) from None
-            # If not found, we create the raceclass:
-            else:
-                new_raceclass = Raceclass(
-                    name=_create_raceclass_name(_c.ageclass),
-                    ageclasses=[_c.ageclass],
-                    event_id=event_id,
-                    no_of_contestants=1,
-                    ranking=True,
-                    seeding=False,
-                    distance=_c.distance,
-                )
-                result = await RaceclassesService.create_raceclass(
-                    db, event_id, new_raceclass
-                )
-                if not result:
-                    msg = f"Create of raceclass with name {new_raceclass.name} failed."
-                    raise RaceclassCreateError(msg) from None
 
-        # Finally we sort and re-assign default group and order values:
+            else:
+                await create_raceclass(db, event_id, contestant)
+
+        # Finally we assign default group and order values and sort:
         raceclasses = await RaceclassesService.get_all_raceclasses(
             db, event_id=event_id
         )
-        _raceclasses_sorted = sorted(
-            raceclasses,
-            key=lambda k: (k.name[1:].split("/")[0], k.name[:1]),
-            reverse=True,
+
+        # Assign default values:
+        _raceclasses_with_default_values = _assign_default_values_to_raceclasses(
+            raceclasses_config=cls.raceclasses_config, raceclasses=raceclasses
         )
-        order: int = 1
-        for raceclass in _raceclasses_sorted:
+        # Update the raceclasses:
+        for raceclass in _raceclasses_with_default_values:
             if raceclass.id:
-                raceclass.group = 1
-                raceclass.order = order
-                await RaceclassesService.update_raceclass(
+                result = await RaceclassesService.update_raceclass(
                     db, event_id, raceclass.id, raceclass
                 )
-                order += 1
+                if not result:  # pragma: no cover
+                    msg = f"Update of raceclass with id {raceclass.id} failed."
+                    raise RaceclassUpdateError(msg) from None
+
+
+async def create_raceclass(db: Any, event_id: str, contestant: Contestant) -> None:
+    """Create raceclass function."""
+    new_raceclass = Raceclass(
+        name=_create_raceclass_name(contestant.ageclass),
+        ageclasses=[contestant.ageclass],
+        event_id=event_id,
+        no_of_contestants=1,
+        ranking=True,
+        seeding=False,
+        distance=contestant.distance,
+    )
+    result = await RaceclassesService.create_raceclass(db, event_id, new_raceclass)
+    if not result:
+        msg = f"Create of raceclass with name {new_raceclass.name} failed."
+        raise RaceclassCreateError(msg) from None
 
 
 # helpers
 def _create_raceclass_name(ageclass: str) -> str:
-    """Helper function to create name of raceclass."""
+    """Helper function to create name of raceclass.
+
+    Args:
+        ageclass: Ageclass string from contestant object.
+
+    Returns:
+        raceclass name string.
+    """
     name = ageclass
     # Replace substrings to create raceclass name:
     name = name.replace("Jenter", "J")
@@ -111,4 +127,69 @@ def _create_raceclass_name(ageclass: str) -> str:
     name = name.replace("Junior", "J")
     name = name.replace("Felles", "F")
     name = name.replace("år", "")
+
     return name  # noqa: RET504
+
+
+def _assign_default_values_to_raceclasses(
+    raceclasses_config: RaceclassesConfig, raceclasses: list[Raceclass]
+) -> list[Raceclass]:
+    """Helper function to assign default values for raceclasses.
+
+    If anything goes wrong during sorting, the original list is returned.
+    We only support grouping by same ageclasses for now.
+
+    Args:
+        raceclasses_config: Raceclasses configuration object.
+        raceclasses: List of raceclass objects.
+
+    Returns:
+        List of raceclass objects with default values.
+
+    """
+    raceclasses_sorted: list[Raceclass] = raceclasses.copy()
+    try:
+        # Sort the raceclasses according to ageclass order and gender order:
+        raceclasses_sorted = sorted(
+            raceclasses,
+            key=lambda raceclass: (
+                raceclasses_config.ageclass_order.index(
+                    raceclass.name
+                    if raceclass.name in raceclasses_config.ageclass_order
+                    else raceclass.name[1:]
+                ),
+                (raceclasses_config.gender_order.index(raceclass.name[0])),
+            ),
+        )
+
+        # Group by raceclass.name[1:] (age) and assign order in group:
+        if raceclasses_config.grouping_feature != "same_age":  # pragma: no cover
+            msg = f"Unsupporte grouping feature: {raceclasses_config.grouping_feature}"
+            logger.warning(msg)
+            return raceclasses_sorted
+        current_group = 0
+        current_order = 0
+        previous_ageclass = None
+        for raceclass in raceclasses_sorted:
+            ageclass = raceclass.name[1:]
+            if ageclass != previous_ageclass:
+                current_group += 1
+                current_order = 1
+                raceclass.group = current_group
+                raceclass.order = 1
+                previous_ageclass = ageclass
+            else:  # pragma: no cover
+                raceclass.group = current_group
+                raceclass.order = current_order + 1
+
+        # Assign ranking=False for unranked ageclasses:
+        for raceclass in raceclasses_sorted:
+            ageclass = raceclass.name[1:]
+            if ageclass in raceclasses_config.unranked_ageclasses:  # pragma: no cover
+                raceclass.ranking = False
+    except Exception as e:  # noqa: BLE001 # pragma: no cover
+        # In case of error, return the raceclasses unsorted:
+        msg = f"Error during sorting of raceclasses: {e}"
+        logger.warning(msg)
+
+    return raceclasses_sorted

@@ -1,0 +1,21 @@
+{
+  "gender_order": ["M", "K", "G", "J"],
+  "ageclass_order": [
+    "S",
+    "J",
+    "19-20",
+    "18",
+    "17",
+    "16",
+    "15",
+    "14",
+    "13",
+    "12",
+    "11",
+    "10",
+    "9",
+    "8"
+  ],
+  "grouping_feature": "same_age",
+  "unranked_ageclasses": ["8", "9", "10"]
+}

@@ -17,6 +17,7 @@ authors = [
 dependencies = [
     "PyJWT>=2.1.0",
     "aiodns>=3.0.0",
+    "aiofiles>=25.1.0",
     "aiohttp>=3.7.2",
     "aiohttp-middlewares>=2.1.0",
     "certifi>=2024.12.14",
