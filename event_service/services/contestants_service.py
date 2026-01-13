@@ -1,7 +1,6 @@
 """Module for contestants service."""
 
 import logging
-import re
 import uuid
 from datetime import datetime
 from io import StringIO
@@ -12,6 +11,8 @@ import pandas as pd
 
 from event_service.adapters import ContestantsAdapter, RaceclassesAdapter
 from event_service.models import Contestant
+from event_service.services.raceclasses_service import RaceclassesService
+from event_service.utils.validate_ageclass import validate_ageclass
 
 from .events_service import EventNotFoundError, EventsService
 from .exceptions import (
@@ -190,6 +191,22 @@ class ContestantsService:
             f"inserted contestant with event_id/contestant_id: {event_id}/{contestant_id}"
         )
         if result:
+            # Add contestant to raceclass if it exists:
+            raceclasses = await RaceclassesService.get_raceclass_by_ageclass_name(
+                db, event_id, contestant.ageclass
+            )
+            if len(raceclasses) == 1:  # pragma: no cover
+                raceclass = raceclasses[0]
+                raceclass.no_of_contestants += 1
+                update_result = await RaceclassesService.update_raceclass(
+                    db,
+                    event_id,
+                    raceclass.id,  # type: ignore[reportArgumentType]
+                    raceclass,
+                )
+                if not update_result:
+                    msg = f"Update of raceclass with id {raceclass.id} failed."
+                    raise IllegalValueError(msg) from None
             return contestant_id
         return None
 
@@ -361,7 +378,24 @@ class ContestantsService:
             msg = f"Contestant with id {contestant_id} not found"
             raise ContestantNotFoundError(msg) from None
 
-        return await ContestantsAdapter.delete_contestant(db, event_id, contestant_id)
+        result = await ContestantsAdapter.delete_contestant(db, event_id, contestant_id)
+        # Remove contestant from raceclass if it exists:
+        raceclasses = await RaceclassesService.get_raceclass_by_ageclass_name(
+            db, event_id, contestant["ageclass"]
+        )
+        if len(raceclasses) == 1:  # pragma: no cover
+            raceclass = raceclasses[0]
+            raceclass.no_of_contestants -= 1
+            update_result = await RaceclassesService.update_raceclass(
+                db,
+                event_id,
+                raceclass.id,  # type: ignore[reportArgumentType]
+                raceclass,
+            )
+            if not update_result:
+                msg = f"Update of raceclass with id {raceclass.id} failed."
+                raise IllegalValueError(msg) from None
+        return result
 
 
 # -- helper methods
@@ -532,35 +566,3 @@ async def _bib_in_use_by_another_contestant(
     if not _contestant:
         return False
     return _contestant["id"] != contestant.id
-
-
-async def validate_ageclass(ageclass: str) -> None:
-    """Validator function for raceclasses."""
-    # Check that ageclass is valid against following regexes:
-    global_flags = r"(?i)"
-    regex_JGMK = r"([JGMK]\s\d*\/?\d+?\s?(år)?)"  # noqa: N806
-    regex_Gutter = r"(\bGutter\b\s\d*\/?\d+?\s?(år)?)"  # noqa: N806
-    regex_Jenter = r"(\bJenter\b\s\d*\/?\d+?\s?(år)?)"  # noqa: N806
-    regex_junior = r"((\bKvinner\b|\bMenn\b)\s\d*\/?\d+?\s?(år)?)"
-    regex_senior = r"((\bKvinner\b|\bMenn\b) \bsenior\b)"
-    regex_Felles = r"((\bFelles\b))"  # noqa: N806
-    regex_Para = r"((\bPara\b))"  # noqa: N806
-    pattern = re.compile(
-        global_flags
-        + regex_JGMK
-        + "|"
-        + regex_Gutter
-        + "|"
-        + regex_Jenter
-        + "|"
-        + regex_junior
-        + "|"
-        + regex_senior
-        + "|"
-        + regex_Felles
-        + "|"
-        + regex_Para
-    )
-    if not pattern.match(ageclass):
-        msg = f"Ageclass {ageclass!r} is not valid. Must be of the form 'Jenter 12 år' 'J 12 år', 'J 12/13 år', 'Kvinner 18-19', 'Kvinner senior', 'Felles' or 'Para'."
-        raise IllegalValueError(msg)

@@ -123,6 +123,10 @@ async def test_create_contestant_good_case(
         "event_service.adapters.contestants_adapter.ContestantsAdapter.get_contestant_by_bib",
         return_value=None,
     )
+    mocker.patch(
+        "event_service.adapters.raceclasses_adapter.RaceclassesAdapter.get_all_raceclasses",
+        return_value=[],
+    )
 
     request_body = new_contestant
 
@@ -173,6 +177,10 @@ async def test_create_contestants_csv_good_case(
     mocker.patch(
         "event_service.adapters.contestants_adapter.ContestantsAdapter.get_contestant_by_minidrett_id",
         return_value=None,
+    )
+    mocker.patch(
+        "event_service.adapters.raceclasses_adapter.RaceclassesAdapter.get_all_raceclasses",
+        return_value=[],
     )
 
     files = {"file": open("tests/files/contestants_G11.csv", "rb")}
@@ -640,6 +648,10 @@ async def test_create_contestants_csv_update_failures_good_case(
         "event_service.adapters.contestants_adapter.ContestantsAdapter.update_contestant",
         return_value=None,
     )
+    mocker.patch(
+        "event_service.adapters.raceclasses_adapter.RaceclassesAdapter.get_all_raceclasses",
+        return_value=[],
+    )
 
     files = {"file": open("tests/files/contestants_G11_with_failures.csv", "rb")}
 
@@ -1040,6 +1052,11 @@ async def test_delete_contestant_by_id(
         "event_service.adapters.contestants_adapter.ContestantsAdapter.delete_contestant",
         return_value=CONTESTANT_ID,
     )
+    mocker.patch(
+        "event_service.adapters.raceclasses_adapter.RaceclassesAdapter.get_all_raceclasses",
+        return_value=[],
+    )
+
     headers = {
         hdrs.AUTHORIZATION: f"Bearer {token}",
     }

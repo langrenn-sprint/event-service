@@ -1,5 +1,6 @@
 """Contract test cases for ping."""
 
+from datetime import date
 import logging
 import os
 from collections.abc import AsyncGenerator
@@ -285,3 +286,141 @@ async def test_delete_all_raceclasses(
             assert response.status == 200
             raceclasses = await response.json()
             assert len(raceclasses) == 0
+
+
+@pytest.mark.contract
+async def test_add_contestant_to_raceclass(
+    http_service: Any, token: MockFixture, event_id: str, raceclass: dict
+) -> None:
+    """Should update the number of contestants."""
+    # First we create a raceclass:
+    url = f"{http_service}/events/{event_id}/raceclasses"
+    headers = {
+        hdrs.CONTENT_TYPE: "application/json",
+        hdrs.AUTHORIZATION: f"Bearer {token}",
+    }
+    request_body = raceclass
+    session = ClientSession()
+    async with session.post(url, headers=headers, json=request_body) as response:
+        status = response.status
+    await session.close()
+
+    assert status == 201
+    assert f"/events/{event_id}/raceclasses/" in response.headers[hdrs.LOCATION]
+
+    # Create a contestant:
+    contestant = {
+        "first_name": "Cont E.",
+        "last_name": "Stant",
+        "birth_date": date(1970, 1, 1).isoformat(),
+        "gender": "M",
+        "ageclass": "G 16 år",
+        "region": "Oslo Skikrets",
+        "club": "Lyn Ski",
+        "team": "Team Kollen",
+        "email": "post@example.com",
+        "event_id": event_id,
+        "registration_date_time": "2021-11-08T22:06:30",
+    }
+    url = f"{http_service}/events/{event_id}/contestants"
+    headers = {
+        hdrs.CONTENT_TYPE: "application/json",
+        hdrs.AUTHORIZATION: f"Bearer {token}",
+    }
+    session = ClientSession()
+    async with session.post(url, headers=headers, json=contestant) as response:
+        status = response.status
+    await session.close()
+
+    assert status == 201
+    assert f"/events/{event_id}/contestants/" in response.headers[hdrs.LOCATION]
+    contestant_id = response.headers[hdrs.LOCATION].split("/")[-1]
+
+    # Get the raceclass and check number of contestants:
+    ageclass_name = contestant["ageclass"]
+    ageclass_name_parameter = quote(ageclass_name)
+
+    url = f"{http_service}/events/{event_id}/raceclasses?ageclass-name={ageclass_name_parameter}"
+    async with ClientSession() as session:
+        async with session.get(url) as response:
+            raceclasses = await response.json()
+        await session.close()
+    assert response.status == 200
+    assert type(raceclasses) is list
+    assert len(raceclasses) == 1
+    assert raceclasses[0]["ageclasses"] == [ageclass_name]
+    assert raceclasses[0]["no_of_contestants"] == 1
+
+
+@pytest.mark.contract
+async def test_delete_contestant_to_raceclass(
+    http_service: Any, token: MockFixture, event_id: str, raceclass: dict
+) -> None:
+    """Should update the number of contestants."""
+    # Create another contestant:
+    contestant = {
+        "first_name": "Another Conte.",
+        "last_name": "Stant",
+        "birth_date": date(1970, 1, 1).isoformat(),
+        "gender": "M",
+        "ageclass": "G 16 år",
+        "region": "Oslo Skikrets",
+        "club": "Lyn Ski",
+        "team": "Team Kollen",
+        "email": "post@example.com",
+        "event_id": event_id,
+        "registration_date_time": "2021-11-08T22:06:30",
+    }
+    url = f"{http_service}/events/{event_id}/contestants"
+    headers = {
+        hdrs.CONTENT_TYPE: "application/json",
+        hdrs.AUTHORIZATION: f"Bearer {token}",
+    }
+    session = ClientSession()
+    async with session.post(url, headers=headers, json=contestant) as response:
+        status = response.status
+    await session.close()
+
+    assert status == 201
+    assert f"/events/{event_id}/contestants/" in response.headers[hdrs.LOCATION]
+    contestant_id = response.headers[hdrs.LOCATION].split("/")[-1]
+
+    # Get the raceclass and check number of contestants:
+    ageclass_name = contestant["ageclass"]
+    ageclass_name_parameter = quote(ageclass_name)
+    url = f"{http_service}/events/{event_id}/raceclasses?ageclass-name={ageclass_name_parameter}"
+    async with ClientSession() as session:
+        async with session.get(url) as response:
+            raceclasses = await response.json()
+        await session.close()
+    assert response.status == 200
+
+    assert type(raceclasses) is list
+    assert len(raceclasses) == 1
+    assert raceclasses[0]["ageclasses"] == [ageclass_name]
+    assert raceclasses[0]["no_of_contestants"] == 2
+
+    # Now we delete the contestant:
+    url = f"{http_service}/events/{event_id}/contestants/{contestant_id}"
+    headers = {
+        hdrs.AUTHORIZATION: f"Bearer {token}",
+    }
+    async with ClientSession() as session:
+        async with session.delete(url, headers=headers) as response:
+            pass
+    assert response.status == 204
+
+    # Get the raceclass and check number of contestants:
+    ageclass_name = contestant["ageclass"]
+    ageclass_name_parameter = quote(ageclass_name)
+    url = f"{http_service}/events/{event_id}/raceclasses?ageclass-name={ageclass_name_parameter}"
+    async with ClientSession() as session:
+        async with session.get(url) as response:
+            raceclasses = await response.json()
+        await session.close()
+    assert response.status == 200
+
+    assert type(raceclasses) is list
+    assert len(raceclasses) == 1
+    assert raceclasses[0]["ageclasses"] == [ageclass_name]
+    assert raceclasses[0]["no_of_contestants"] == 1

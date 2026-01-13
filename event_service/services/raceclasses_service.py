@@ -6,8 +6,8 @@ from typing import Any
 
 from event_service.adapters import RaceclassesAdapter
 from event_service.models import Raceclass
+from event_service.utils.validate_ageclass import validate_ageclass
 
-from .contestants_service import validate_ageclass
 from .events_service import EventNotFoundError, EventsService
 from .exceptions import IllegalValueError, RaceclassNotFoundError
 

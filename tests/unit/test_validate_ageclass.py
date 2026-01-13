@@ -2,7 +2,7 @@
 
 import pytest
 
-from event_service.services.contestants_service import (
+from event_service.utils.validate_ageclass import (
     validate_ageclass,
 )
 from event_service.services.exceptions import IllegalValueError
