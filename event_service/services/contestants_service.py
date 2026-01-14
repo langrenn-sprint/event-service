@@ -360,6 +360,40 @@ class ContestantsService:
             msg = f"Cannot change id for contestant with id {contestant_id}."
             raise IllegalValueError(msg) from None
         new_contestant = contestant.to_dict()
+        # If ageclass has changed, need to update raceclass contestant counters:
+        if old_contestant["ageclass"] != new_contestant["ageclass"]:
+            # Decrease counter in old raceclass:
+            old_raceclasses = await RaceclassesService.get_raceclass_by_ageclass_name(
+                db, event_id, old_contestant["ageclass"]
+            )
+            if len(old_raceclasses) == 1:  # pragma: no cover
+                old_raceclass = old_raceclasses[0]
+                old_raceclass.no_of_contestants -= 1
+                update_result = await RaceclassesService.update_raceclass(
+                    db,
+                    event_id,
+                    old_raceclass.id,  # type: ignore[reportArgumentType]
+                    old_raceclass,
+                )
+                if not update_result:
+                    msg = f"Update of raceclass with id {old_raceclass.id} failed."
+                    raise IllegalValueError(msg) from None
+            # Increase counter in new raceclass:
+            new_raceclasses = await RaceclassesService.get_raceclass_by_ageclass_name(
+                db, event_id, contestant.ageclass
+            )
+            if len(new_raceclasses) == 1:  # pragma: no cover
+                new_raceclass = new_raceclasses[0]
+                new_raceclass.no_of_contestants += 1
+                update_result = await RaceclassesService.update_raceclass(
+                    db,
+                    event_id,
+                    new_raceclass.id,  # type: ignore[reportArgumentType]
+                    new_raceclass,
+                )
+                if not update_result:
+                    msg = f"Update of raceclass with id {new_raceclass.id} failed."
+                    raise IllegalValueError(msg) from None
         return await ContestantsAdapter.update_contestant(
             db, event_id, contestant_id, new_contestant
         )

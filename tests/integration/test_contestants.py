@@ -882,6 +882,48 @@ async def test_update_contestant_by_id(
         "event_service.adapters.contestants_adapter.ContestantsAdapter.get_contestant_by_bib",
         return_value=None,
     )
+    mocker.patch(
+        "event_service.adapters.raceclasses_adapter.RaceclassesAdapter.get_all_raceclasses",
+        side_effect=[
+            [
+                {
+                    "id": "1",
+                    "name": "G12",
+                    "ageclasses": ["G 12 år"],
+                    "event_id": EVENT_ID,
+                }
+            ],
+            [
+                {
+                    "id": "2",
+                    "name": "G13",
+                    "ageclasses": ["G 13 år"],
+                    "event_id": EVENT_ID,
+                }
+            ],
+        ],
+    )
+    mocker.patch(
+        "event_service.adapters.raceclasses_adapter.RaceclassesAdapter.get_raceclass_by_id",
+        side_effect=[
+            {
+                "id": "1",
+                "name": "G12",
+                "ageclasses": ["G 12 år"],
+                "event_id": EVENT_ID,
+            },
+            {
+                "id": "2",
+                "name": "G13",
+                "ageclasses": ["G 13 år"],
+                "event_id": EVENT_ID,
+            },
+        ],
+    )
+    mocker.patch(
+        "event_service.adapters.raceclasses_adapter.RaceclassesAdapter.update_raceclass",
+        side_effect=["1", "2"],
+    )
 
     headers = {
         hdrs.CONTENT_TYPE: "application/json",
@@ -889,6 +931,7 @@ async def test_update_contestant_by_id(
     }
     request_body = deepcopy(contestant)
     request_body["last_name"] = "New_Last_Name"
+    request_body["ageclass"] = "Gutter 13 år"
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
         m.post(f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/authorize", status=204)
