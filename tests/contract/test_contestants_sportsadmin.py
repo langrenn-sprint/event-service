@@ -4,7 +4,7 @@ import copy
 import logging
 import os
 from collections.abc import AsyncGenerator
-from datetime import date
+from datetime import date, time
 from typing import Any
 from urllib.parse import quote
 
@@ -75,8 +75,8 @@ async def event_id(
     }
     request_body = {
         "name": "Oslo Skagen sprint",
-        "date_of_event": "2021-08-31",
-        "time_of_event": "09:00:00",
+        "date_of_event": date(2021, 8, 31).isoformat(),
+        "time_of_event": time(9, 0, 0).isoformat(),
         "organiser": "Lyn Ski",
         "webpage": "https://example.com",
         "information": "Testarr for å teste den nye løysinga.",

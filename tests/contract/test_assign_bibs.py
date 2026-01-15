@@ -3,7 +3,7 @@
 import logging
 import os
 from collections.abc import AsyncGenerator
-from datetime import date
+from datetime import date, time
 from typing import Any
 
 import motor.motor_asyncio
@@ -76,6 +76,7 @@ async def event_id(
     request_body = {
         "name": "Oslo Skagen sprint",
         "date_of_event": date(2021, 8, 31).isoformat(),
+        "time_of_event": time(9, 0, 0).isoformat(),
         "organiser": "Lyn Ski",
         "webpage": "https://example.com",
         "information": "Testarr for å teste den nye løysinga.",

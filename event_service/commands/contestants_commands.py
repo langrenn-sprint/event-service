@@ -1,6 +1,7 @@
 """Module for contestants service."""
 
-from random import shuffle
+import random
+from datetime import date, datetime, time
 from typing import Any
 
 from event_service.services import (
@@ -43,7 +44,7 @@ class ContestantsCommands:
     """Class representing a commands on contestants."""
 
     @classmethod
-    async def assign_bibs(  # noqa: C901
+    async def assign_bibs(  # noqa: C901, PLR0912
         cls: Any, db: Any, event_id: str, start_bib: int | None = 1
     ) -> None:
         """Assign bibs function.
@@ -67,7 +68,7 @@ class ContestantsCommands:
         """
         # Check if event exists:
         try:
-            await EventsService.get_event_by_id(db, event_id)
+            event = await EventsService.get_event_by_id(db, event_id)
         except EventNotFoundError as e:
             raise e from e
 
@@ -90,8 +91,15 @@ class ContestantsCommands:
         # Get all contestants in event:
         contestants = await ContestantsService.get_all_contestants(db, event_id)
 
-        # Sort list of contestants in random order:
-        shuffle(contestants)
+        # Sort list of contestants in random order with a fixed seed to ensure reproducibility:
+        if event.date_of_event and event.time_of_event:  # pragma: no cover
+            date_obj = date.fromisoformat(event.date_of_event)  # type: ignore[reportArgumentType]
+            time_obj = time.fromisoformat(event.time_of_event)  # type: ignore[reportArgumentType]
+            seed = datetime.combine(date_obj, time_obj).timestamp()
+        else:
+            seed = datetime.combine(datetime.today(), time(0, 0, 0)).timestamp()  # noqa: DTZ002
+
+        random.Random(seed).shuffle(contestants)  # noqa: S311
 
         # Create temporary list, lookup correct raceclasses, and convert to dict:
         _list: list[dict] = []
