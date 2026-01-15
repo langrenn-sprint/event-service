@@ -39,7 +39,6 @@ class EventFormatView(View):
 
     async def post(self) -> Response:
         """Post route function."""
-        db = self.request.app["db"]
         token = extract_token_from_request(self.request)
         try:
             await UsersAdapter.authorize(token, roles=["admin", "event-admin"])
@@ -66,7 +65,6 @@ class EventFormatView(View):
 
         try:
             event_format_id = await EventFormatService.create_event_format(
-                db,
                 event_id,
                 event_format,  # type: ignore [reportAttributeAccessIssue]
             )
@@ -83,13 +81,11 @@ class EventFormatView(View):
 
     async def get(self) -> Response:
         """Get route function."""
-        db = self.request.app["db"]
-
         event_id = self.request.match_info["eventId"]
         self.logger.debug(f"Got get request for event_format for event {event_id}")
 
         try:
-            event_format = await EventFormatService.get_event_format(db, event_id)
+            event_format = await EventFormatService.get_event_format(event_id)
         except EventFormatNotFoundError as e:
             raise HTTPNotFound(reason=str(e)) from e
         self.logger.debug(f"Got event_format: {event_format}")
@@ -98,7 +94,6 @@ class EventFormatView(View):
 
     async def put(self) -> Response:
         """Put route function."""
-        db = self.request.app["db"]
         token = extract_token_from_request(self.request)
         try:
             await UsersAdapter.authorize(token, roles=["admin", "event-admin"])
@@ -123,14 +118,13 @@ class EventFormatView(View):
             ) from e
 
         try:
-            await EventFormatService.update_event_format(db, event_id, event_format)  # type: ignore [reportAttributeAccessIssue]
+            await EventFormatService.update_event_format(event_id, event_format)  # type: ignore [reportAttributeAccessIssue]
         except EventFormatNotFoundError as e:
             raise HTTPNotFound(reason=str(e)) from e
         return Response(status=204)
 
     async def delete(self) -> Response:
         """Delete route function."""
-        db = self.request.app["db"]
         token = extract_token_from_request(self.request)
         try:
             await UsersAdapter.authorize(token, roles=["admin", "event-admin"])
@@ -141,7 +135,7 @@ class EventFormatView(View):
         self.logger.debug(f"Got delete request for event_format for event {event_id}")
 
         try:
-            await EventFormatService.delete_event_format(db, event_id)
+            await EventFormatService.delete_event_format(event_id)
         except EventFormatNotFoundError as e:
             raise HTTPNotFound(reason=str(e)) from e
         return Response(status=204)

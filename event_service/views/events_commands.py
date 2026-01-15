@@ -35,7 +35,6 @@ class EventGenerateRaceclassesView(View):
     async def post(self) -> Response:
         """Post route function."""
         # Authorize:
-        db = self.request.app["db"]
         token = extract_token_from_request(self.request)
         try:
             await UsersAdapter.authorize(token, roles=["admin", "event-admin"])
@@ -45,7 +44,7 @@ class EventGenerateRaceclassesView(View):
         # Execute command:
         event_id = self.request.match_info["eventId"]
         try:
-            await EventsCommands.generate_raceclasses(db, event_id)
+            await EventsCommands.generate_raceclasses(event_id)
         except EventNotFoundError as e:
             raise HTTPNotFound(reason=str(e)) from e
         except RaceclassNotUniqueNameError as e:

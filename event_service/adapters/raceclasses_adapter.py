@@ -8,13 +8,20 @@ from .adapter import Adapter
 class RaceclassesAdapter(Adapter):
     """Class representing an adapter for raceclasses."""
 
+    database: Any
+
+    @classmethod
+    async def init(cls, database: Any) -> None:  # pragma: no cover
+        """Initialize the class properties."""
+        cls.database = database
+
     @classmethod
     async def get_all_raceclasses(
-        cls: Any, db: Any, event_id: str
+        cls: Any, event_id: str
     ) -> list[dict]:  # pragma: no cover
         """Get all raceclasses function."""
         raceclasses: list = []
-        cursor = db.raceclasses_collection.find({"event_id": event_id}).sort(
+        cursor = cls.database.raceclasses_collection.find({"event_id": event_id}).sort(
             [("id", 1)]
         )
         for raceclass in await cursor.to_list(None):
@@ -23,28 +30,28 @@ class RaceclassesAdapter(Adapter):
 
     @classmethod
     async def create_raceclass(
-        cls: Any, db: Any, event_id: str, raceclass: dict
+        cls: Any, event_id: str, raceclass: dict
     ) -> str:  # pragma: no cover
         """Create raceclass function."""
         _ = event_id
-        return await db.raceclasses_collection.insert_one(raceclass)
+        return await cls.database.raceclasses_collection.insert_one(raceclass)
 
     @classmethod
     async def get_raceclass_by_id(
-        cls: Any, db: Any, event_id: str, raceclass_id: str
+        cls: Any, event_id: str, raceclass_id: str
     ) -> dict:  # pragma: no cover
         """Get raceclass by id function."""
-        return await db.raceclasses_collection.find_one(
+        return await cls.database.raceclasses_collection.find_one(
             {"$and": [{"event_id": event_id}, {"id": raceclass_id}]}
         )
 
     @classmethod
     async def get_raceclass_by_name(
-        cls: Any, db: Any, event_id: str, name: str
+        cls: Any, event_id: str, name: str
     ) -> list[dict]:  # pragma: no cover
         """Get raceclass by name function."""
         raceclasses: list = []
-        cursor = db.raceclasses_collection.find(
+        cursor = cls.database.raceclasses_collection.find(
             {
                 "$and": [
                     {"event_id": event_id},
@@ -58,25 +65,27 @@ class RaceclassesAdapter(Adapter):
 
     @classmethod
     async def update_raceclass(
-        cls: Any, db: Any, event_id: str, raceclass_id: str, raceclass: dict
+        cls: Any, event_id: str, raceclass_id: str, raceclass: dict
     ) -> str | None:  # pragma: no cover
         """Update given raceclass function."""
-        return await db.raceclasses_collection.replace_one(
+        return await cls.database.raceclasses_collection.replace_one(
             {"$and": [{"event_id": event_id}, {"id": raceclass_id}]}, raceclass
         )
 
     @classmethod
     async def delete_raceclass(
-        cls: Any, db: Any, event_id: str, raceclass_id: str
+        cls: Any, event_id: str, raceclass_id: str
     ) -> str | None:  # pragma: no cover
         """Delete given raceclass function."""
-        return await db.raceclasses_collection.delete_one(
+        return await cls.database.raceclasses_collection.delete_one(
             {"$and": [{"event_id": event_id}, {"id": raceclass_id}]}
         )
 
     @classmethod
     async def delete_all_raceclasses(
-        cls: Any, db: Any, event_id: str
+        cls: Any, event_id: str
     ) -> str | None:  # pragma: no cover
         """Delete all raceclasses function."""
-        return await db.raceclasses_collection.delete_many({"event_id": event_id})
+        return await cls.database.raceclasses_collection.delete_many(
+            {"event_id": event_id}
+        )

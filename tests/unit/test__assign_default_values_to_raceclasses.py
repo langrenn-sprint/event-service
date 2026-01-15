@@ -2,6 +2,7 @@
 
 import pytest
 import pytest_asyncio
+from pytest_mock import MockFixture
 
 from event_service.commands.events_commands import (
     _assign_default_values_to_raceclasses,
@@ -25,6 +26,7 @@ async def default_raceclasses_config() -> RaceclassesConfig:
 @pytest.mark.asyncio
 async def test_assign_default_values_to_raceclasses_empty_list(
     default_raceclasses_config,
+    mocker: MockFixture,
 ):
     """Should return empty list when input list is empty."""
     raceclasses = []
@@ -38,8 +40,13 @@ async def test_assign_default_values_to_raceclasses_empty_list(
 @pytest.mark.asyncio
 async def test_assign_default_values_to_raceclasses_two_ageclasses(
     default_raceclasses_config,
+    mocker: MockFixture,
 ):
     """Should return list with reverse order when two raceclasses are given."""
+    mocker.patch(
+        "event_service.adapters.contestants_adapter.ContestantsAdapter.get_all_contestants",
+        return_value=[],
+    )
     raceclasses = [
         Raceclass(name="J15", ageclasses=["15"], event_id="event1"),
         Raceclass(name="G15", ageclasses=["16"], event_id="event1"),
@@ -74,9 +81,13 @@ async def test_assign_default_values_to_raceclasses_two_ageclasses(
 @pytest.mark.unit
 @pytest.mark.asyncio
 async def test_assign_default_values_to_raceclasses_three_ageclasses_and_one_unranked(
-    default_raceclasses_config,
+    default_raceclasses_config, mocker: MockFixture
 ):
     """Should return list with reverse order when three raceclasses are given."""
+    mocker.patch(
+        "event_service.adapters.contestants_adapter.ContestantsAdapter.get_all_contestants",
+        return_value=[],
+    )
     raceclasses = [
         Raceclass(name="J15", ageclasses=["15"], event_id="event1"),
         Raceclass(name="G15", ageclasses=["16"], event_id="event1"),
@@ -121,9 +132,13 @@ async def test_assign_default_values_to_raceclasses_three_ageclasses_and_one_unr
 @pytest.mark.unit
 @pytest.mark.asyncio
 async def test_assign_default_values_to_raceclasses_all(
-    default_raceclasses_config,
+    default_raceclasses_config, mocker: MockFixture
 ):
     """Should return list with correct order when all raceclasses are given."""
+    mocker.patch(
+        "event_service.adapters.contestants_adapter.ContestantsAdapter.get_all_contestants",
+        return_value=[],
+    )
     raceclasses = [
         Raceclass(name="J15", ageclasses=["J 15 år"], event_id="event1"),
         Raceclass(name="G15", ageclasses=["G 16 år"], event_id="event1"),

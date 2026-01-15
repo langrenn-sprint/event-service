@@ -90,6 +90,10 @@ async def test_create_raceclass(
         "event_service.adapters.raceclasses_adapter.RaceclassesAdapter.create_raceclass",
         return_value=RACECLASS_ID,
     )
+    mocker.patch(
+        "event_service.adapters.contestants_adapter.ContestantsAdapter.get_all_contestants",
+        return_value=[],
+    )
 
     request_body = new_raceclass
     headers = {
@@ -120,6 +124,14 @@ async def test_get_raceclass_by_id(
         "event_service.adapters.raceclasses_adapter.RaceclassesAdapter.get_raceclass_by_id",
         return_value=raceclass,
     )
+    mocker.patch(
+        "event_service.adapters.contestants_adapter.ContestantsAdapter.get_all_contestants",
+        return_value=[],
+    )
+    mocker.patch(
+        "event_service.adapters.contestants_adapter.ContestantsAdapter.get_all_contestants",
+        return_value=[],
+    )
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
         m.post(f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/authorize", status=204)
@@ -134,6 +146,7 @@ async def test_get_raceclass_by_id(
         assert body["ageclasses"] == raceclass["ageclasses"]
         assert body["event_id"] == raceclass["event_id"]
         assert body["distance"] == raceclass["distance"]
+        assert body["no_of_contestants"] == 0
 
 
 @pytest.mark.integration
@@ -145,6 +158,10 @@ async def test_get_raceclass_by_name(
     mocker.patch(
         "event_service.adapters.raceclasses_adapter.RaceclassesAdapter.get_raceclass_by_name",
         return_value=[raceclass],
+    )
+    mocker.patch(
+        "event_service.adapters.contestants_adapter.ContestantsAdapter.get_all_contestants",
+        return_value=[],
     )
 
     name = raceclass["name"]
@@ -172,6 +189,10 @@ async def test_get_raceclass_by_ageclass_name(
     mocker.patch(
         "event_service.adapters.raceclasses_adapter.RaceclassesAdapter.get_all_raceclasses",
         return_value=[raceclass],
+    )
+    mocker.patch(
+        "event_service.adapters.contestants_adapter.ContestantsAdapter.get_all_contestants",
+        return_value=[],
     )
 
     ageclass_name = raceclass["ageclasses"][0]
@@ -207,6 +228,10 @@ async def test_update_raceclass_by_id(
         "event_service.adapters.raceclasses_adapter.RaceclassesAdapter.update_raceclass",
         return_value=RACECLASS_ID,
     )
+    mocker.patch(
+        "event_service.adapters.contestants_adapter.ContestantsAdapter.get_all_contestants",
+        return_value=[],
+    )
 
     headers = {
         hdrs.CONTENT_TYPE: "application/json",
@@ -235,6 +260,10 @@ async def test_get_all_raceclasses(
         "event_service.adapters.raceclasses_adapter.RaceclassesAdapter.get_all_raceclasses",
         return_value=[raceclass],
     )
+    mocker.patch(
+        "event_service.adapters.contestants_adapter.ContestantsAdapter.get_all_contestants",
+        return_value=[],
+    )
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
         m.post(f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/authorize", status=204)
@@ -262,6 +291,11 @@ async def test_delete_raceclass_by_id(
         "event_service.adapters.raceclasses_adapter.RaceclassesAdapter.delete_raceclass",
         return_value=RACECLASS_ID,
     )
+    mocker.patch(
+        "event_service.adapters.contestants_adapter.ContestantsAdapter.get_all_contestants",
+        return_value=[],
+    )
+
     headers = {
         hdrs.AUTHORIZATION: f"Bearer {token}",
     }
@@ -286,6 +320,10 @@ async def test_delete_all_raceclasses_in_event(
     )
     mocker.patch(
         "event_service.adapters.raceclasses_adapter.RaceclassesAdapter.get_all_raceclasses",
+        return_value=[],
+    )
+    mocker.patch(
+        "event_service.adapters.contestants_adapter.ContestantsAdapter.get_all_contestants",
         return_value=[],
     )
 
@@ -329,6 +367,10 @@ async def test_create_raceclass_event_not_found(
         "event_service.adapters.raceclasses_adapter.RaceclassesAdapter.create_raceclass",
         return_value=RACECLASS_ID,
     )
+    mocker.patch(
+        "event_service.adapters.contestants_adapter.ContestantsAdapter.get_all_contestants",
+        return_value=[],
+    )
 
     request_body = new_raceclass
     headers = {
@@ -367,6 +409,10 @@ async def test_create_raceclass_missing_mandatory_property(
         "event_service.adapters.raceclasses_adapter.RaceclassesAdapter.create_raceclass",
         return_value=RACECLASS_ID,
     )
+    mocker.patch(
+        "event_service.adapters.contestants_adapter.ContestantsAdapter.get_all_contestants",
+        return_value=[],
+    )
 
     request_body = {"id": RACECLASS_ID, "optional_property": "Optional_property"}
     headers = {
@@ -396,6 +442,10 @@ async def test_update_raceclass_by_id_missing_mandatory_property(
     mocker.patch(
         "event_service.adapters.raceclasses_adapter.RaceclassesAdapter.update_raceclass",
         return_value=RACECLASS_ID,
+    )
+    mocker.patch(
+        "event_service.adapters.contestants_adapter.ContestantsAdapter.get_all_contestants",
+        return_value=[],
     )
 
     headers = {
@@ -438,6 +488,10 @@ async def test_create_raceclass_with_input_id(
         "event_service.adapters.raceclasses_adapter.RaceclassesAdapter.create_raceclass",
         return_value=RACECLASS_ID,
     )
+    mocker.patch(
+        "event_service.adapters.contestants_adapter.ContestantsAdapter.get_all_contestants",
+        return_value=[],
+    )
 
     request_body = raceclass
     headers = {
@@ -476,6 +530,10 @@ async def test_create_raceclass_with_invalid_ageclass_value(
         "event_service.adapters.raceclasses_adapter.RaceclassesAdapter.create_raceclass",
         return_value=RACECLASS_ID,
     )
+    mocker.patch(
+        "event_service.adapters.contestants_adapter.ContestantsAdapter.get_all_contestants",
+        return_value=[],
+    )
 
     request_body = deepcopy(new_raceclass)
     request_body["ageclasses"] = ["invalid_ageclass"]
@@ -507,6 +565,10 @@ async def test_update_raceclass_by_id_different_id_in_body(
     mocker.patch(
         "event_service.adapters.raceclasses_adapter.RaceclassesAdapter.update_raceclass",
         return_value=RACECLASS_ID,
+    )
+    mocker.patch(
+        "event_service.adapters.contestants_adapter.ContestantsAdapter.get_all_contestants",
+        return_value=[],
     )
 
     headers = {
@@ -540,6 +602,10 @@ async def test_update_raceclass_with_invalid_ageclass_value(
     mocker.patch(
         "event_service.adapters.raceclasses_adapter.RaceclassesAdapter.update_raceclass",
         return_value=RACECLASS_ID,
+    )
+    mocker.patch(
+        "event_service.adapters.contestants_adapter.ContestantsAdapter.get_all_contestants",
+        return_value=[],
     )
 
     headers = {
@@ -580,6 +646,10 @@ async def test_create_raceclass_adapter_fails(
     mocker.patch(
         "event_service.adapters.raceclasses_adapter.RaceclassesAdapter.create_raceclass",
         return_value=None,
+    )
+    mocker.patch(
+        "event_service.adapters.contestants_adapter.ContestantsAdapter.get_all_contestants",
+        return_value=[],
     )
 
     request_body = new_raceclass
@@ -738,6 +808,10 @@ async def test_update_raceclass_not_found(
     mocker.patch(
         "event_service.adapters.raceclasses_adapter.RaceclassesAdapter.update_raceclass",
         return_value=None,
+    )
+    mocker.patch(
+        "event_service.adapters.contestants_adapter.ContestantsAdapter.get_all_contestants",
+        return_value=[],
     )
 
     headers = {

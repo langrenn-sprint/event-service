@@ -37,7 +37,6 @@ class ContestantsAssignBibsView(View):
     async def post(self) -> Response:
         """Post route function."""
         # Authorize:
-        db = self.request.app["db"]
         token = extract_token_from_request(self.request)
         try:
             await UsersAdapter.authorize(token, roles=["admin", "event-admin"])
@@ -59,7 +58,7 @@ class ContestantsAssignBibsView(View):
         event_id = self.request.match_info["eventId"]
         try:
             await ContestantsCommands.assign_bibs(
-                db, event_id, start_bib if start_bib else None
+                event_id, start_bib if start_bib else None
             )
         except (EventNotFoundError, NoRaceclassInEventError) as e:
             raise HTTPNotFound(reason=str(e)) from e

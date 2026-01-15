@@ -22,11 +22,11 @@ class EventsCommands:
     """Class representing a commands on events."""
 
     @classmethod
-    async def generate_raceclasses(cls: Any, db: Any, event_id: str) -> None:
+    async def generate_raceclasses(cls: Any, event_id: str) -> None:
         """Generate raceclasses function."""
         # Check if event exists:
         try:
-            await EventsService.get_event_by_id(db, event_id)
+            await EventsService.get_event_by_id(event_id)
         except EventNotFoundError as e:
             raise e from e
 
@@ -37,37 +37,22 @@ class EventsCommands:
         cls.raceclasses_config = RaceclassesConfig(**raceclasses_config_dict)
 
         # Get all contestants in event:
-        contestants = await ContestantsService.get_all_contestants(db, event_id)
-        # For every contestant, create corresponding raceclass and update counter:
+        contestants = await ContestantsService.get_all_contestants(event_id)
+        # For every contestant, create corresponding raceclass:
         for contestant in contestants:
             # Check if raceclass exist:
             raceclasses = await RaceclassesService.get_raceclass_by_ageclass_name(
-                db, event_id, contestant.ageclass
+                event_id, contestant.ageclass
             )
             if len(raceclasses) > 1:
                 msg = f"Raceclass name {contestant.ageclass} not unique."
                 raise RaceclassNotUniqueNameError(msg) from None
 
-            if len(raceclasses) == 1:  # raceclass exists
-                raceclass = raceclasses[0]
-                raceclass.no_of_contestants += 1
-                result = await RaceclassesService.update_raceclass(
-                    db,
-                    event_id,
-                    raceclass.id,  # type: ignore[reportArgumentType]
-                    raceclass,
-                )
-                if not result:
-                    msg = f"Update of raceclass with id {raceclass.id} failed."  # type: ignore [reportPossibleUnboundVariable]
-                    raise RaceclassUpdateError(msg) from None
-
-            else:
-                await create_raceclass(db, event_id, contestant)
+            if len(raceclasses) == 0:  # raceclass does not exist
+                await create_raceclass(event_id, contestant)
 
         # Finally we assign default group and order values and sort:
-        raceclasses = await RaceclassesService.get_all_raceclasses(
-            db, event_id=event_id
-        )
+        raceclasses = await RaceclassesService.get_all_raceclasses(event_id=event_id)
 
         # Assign default values:
         _raceclasses_with_default_values = _assign_default_values_to_raceclasses(
@@ -77,25 +62,24 @@ class EventsCommands:
         for raceclass in _raceclasses_with_default_values:
             if raceclass.id:
                 result = await RaceclassesService.update_raceclass(
-                    db, event_id, raceclass.id, raceclass
+                    event_id, raceclass.id, raceclass
                 )
                 if not result:  # pragma: no cover
                     msg = f"Update of raceclass with id {raceclass.id} failed."
                     raise RaceclassUpdateError(msg) from None
 
 
-async def create_raceclass(db: Any, event_id: str, contestant: Contestant) -> None:
+async def create_raceclass(event_id: str, contestant: Contestant) -> None:
     """Create raceclass function."""
     new_raceclass = Raceclass(
         name=_create_raceclass_name(contestant.ageclass),
         ageclasses=[contestant.ageclass],
         event_id=event_id,
-        no_of_contestants=1,
         ranking=True,
         seeding=False,
         distance=contestant.distance,
     )
-    result = await RaceclassesService.create_raceclass(db, event_id, new_raceclass)
+    result = await RaceclassesService.create_raceclass(event_id, new_raceclass)
     if not result:
         msg = f"Create of raceclass with name {new_raceclass.name} failed."
         raise RaceclassCreateError(msg) from None

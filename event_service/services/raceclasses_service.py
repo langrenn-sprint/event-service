@@ -35,10 +35,10 @@ class RaceclassesService:
     logger = logging.getLogger("event_service.services.raceclasses_service")
 
     @classmethod
-    async def get_all_raceclasses(cls: Any, db: Any, event_id: str) -> list[Raceclass]:
+    async def get_all_raceclasses(cls: Any, event_id: str) -> list[Raceclass]:
         """Get all raceclasses function."""
         raceclasses: list[Raceclass] = []
-        _raceclasses = await RaceclassesAdapter.get_all_raceclasses(db, event_id)
+        _raceclasses = await RaceclassesAdapter.get_all_raceclasses(event_id)
         raceclasses = [Raceclass.from_dict(a) for a in _raceclasses]
         return sorted(
             raceclasses,
@@ -54,7 +54,7 @@ class RaceclassesService:
 
     @classmethod
     async def create_raceclass(
-        cls: Any, db: Any, event_id: str, raceclass: Raceclass
+        cls: Any, event_id: str, raceclass: Raceclass
     ) -> str | None:
         """Create raceclass function.
 
@@ -72,7 +72,7 @@ class RaceclassesService:
         """
         # First we have to check if the event exist:
         try:
-            _ = await EventsService.get_event_by_id(db, event_id)
+            _ = await EventsService.get_event_by_id(event_id)
         except EventNotFoundError as e:
             raise e from e
         # Validation:
@@ -91,7 +91,7 @@ class RaceclassesService:
         raceclass.id = raceclass_id
         # insert new raceclass
         new_raceclass = raceclass.to_dict()
-        result = await RaceclassesAdapter.create_raceclass(db, event_id, new_raceclass)
+        result = await RaceclassesAdapter.create_raceclass(event_id, new_raceclass)
         cls.logger.debug(
             f"inserted raceclass with event_id/raceclass_id: {event_id}/{raceclass_id}"
         )
@@ -100,18 +100,16 @@ class RaceclassesService:
         return None
 
     @classmethod
-    async def delete_all_raceclasses(cls: Any, db: Any, event_id: str) -> None:
+    async def delete_all_raceclasses(cls: Any, event_id: str) -> None:
         """Get all raceclasses function."""
-        await RaceclassesAdapter.delete_all_raceclasses(db, event_id)
+        await RaceclassesAdapter.delete_all_raceclasses(event_id)
 
     @classmethod
     async def get_raceclass_by_id(
-        cls: Any, db: Any, event_id: str, raceclass_id: str
+        cls: Any, event_id: str, raceclass_id: str
     ) -> Raceclass:
         """Get raceclass function."""
-        raceclass = await RaceclassesAdapter.get_raceclass_by_id(
-            db, event_id, raceclass_id
-        )
+        raceclass = await RaceclassesAdapter.get_raceclass_by_id(event_id, raceclass_id)
         # return the document if found:
         if not raceclass:
             msg = f"Raceclass with id {raceclass_id} not found"
@@ -120,20 +118,18 @@ class RaceclassesService:
 
     @classmethod
     async def get_raceclass_by_name(
-        cls: Any, db: Any, event_id: str, name: str
+        cls: Any, event_id: str, name: str
     ) -> list[Raceclass]:
         """Get raceclass by name function."""
-        _raceclasses = await RaceclassesAdapter.get_raceclass_by_name(
-            db, event_id, name
-        )
+        _raceclasses = await RaceclassesAdapter.get_raceclass_by_name(event_id, name)
         return [Raceclass.from_dict(raceclass) for raceclass in _raceclasses]
 
     @classmethod
     async def get_raceclass_by_ageclass_name(
-        cls: Any, db: Any, event_id: str, ageclass_name: str
+        cls: Any, event_id: str, ageclass_name: str
     ) -> list[Raceclass]:
         """Get raceclass by ageclass_name function."""
-        _raceclasses = await RaceclassesAdapter.get_all_raceclasses(db, event_id)
+        _raceclasses = await RaceclassesAdapter.get_all_raceclasses(event_id)
         return [
             Raceclass.from_dict(raceclass)
             for raceclass in _raceclasses
@@ -142,12 +138,12 @@ class RaceclassesService:
 
     @classmethod
     async def update_raceclass(
-        cls: Any, db: Any, event_id: str, raceclass_id: str, raceclass: Raceclass
+        cls: Any, event_id: str, raceclass_id: str, raceclass: Raceclass
     ) -> str | None:
         """Get raceclass function."""
         # get old document
         old_raceclass = await RaceclassesAdapter.get_raceclass_by_id(
-            db, event_id, raceclass_id
+            event_id, raceclass_id
         )
         # Check if raceclass if found:
         if not old_raceclass:
@@ -166,24 +162,22 @@ class RaceclassesService:
         # Everything ok, update:
         new_raceclass = raceclass.to_dict()
         return await RaceclassesAdapter.update_raceclass(
-            db, event_id, raceclass_id, new_raceclass
+            event_id, raceclass_id, new_raceclass
         )
 
     @classmethod
     async def delete_raceclass(
-        cls: Any, db: Any, event_id: str, raceclass_id: str
+        cls: Any, event_id: str, raceclass_id: str
     ) -> str | None:
         """Get raceclass function."""
         # get old document
-        raceclass = await RaceclassesAdapter.get_raceclass_by_id(
-            db, event_id, raceclass_id
-        )
+        raceclass = await RaceclassesAdapter.get_raceclass_by_id(event_id, raceclass_id)
         # delete the document if found:
         if not raceclass:
             msg = f"Raceclass with id {raceclass_id} not found"
             raise RaceclassNotFoundError(msg) from None
 
-        return await RaceclassesAdapter.delete_raceclass(db, event_id, raceclass_id)
+        return await RaceclassesAdapter.delete_raceclass(event_id, raceclass_id)
 
     # -- helper methods
 

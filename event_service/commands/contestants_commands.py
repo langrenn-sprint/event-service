@@ -44,7 +44,7 @@ class ContestantsCommands:
 
     @classmethod
     async def assign_bibs(  # noqa: C901
-        cls: Any, db: Any, event_id: str, start_bib: int | None = 1
+        cls: Any, event_id: str, start_bib: int | None = 1
     ) -> None:
         """Assign bibs function.
 
@@ -67,12 +67,12 @@ class ContestantsCommands:
         """
         # Check if event exists:
         try:
-            await EventsService.get_event_by_id(db, event_id)
+            await EventsService.get_event_by_id(event_id)
         except EventNotFoundError as e:
             raise e from e
 
         # Get the raceclasses:
-        raceclasses = await RaceclassesService.get_all_raceclasses(db, event_id)
+        raceclasses = await RaceclassesService.get_all_raceclasses(event_id)
         if len(raceclasses) == 0:
             msg = f"Event {event_id} has no raceclasses. Not able to assign bibs."
             raise NoRaceclassInEventError(msg) from None
@@ -88,7 +88,7 @@ class ContestantsCommands:
                 msg = f"Raceclass {raceclass.name} does not have value for order."
                 raise NoValueForOrderInRaceclassError(msg)
         # Get all contestants in event:
-        contestants = await ContestantsService.get_all_contestants(db, event_id)
+        contestants = await ContestantsService.get_all_contestants(event_id)
 
         # Sort list of contestants in random order with a fixed seed to ensure reproducibility:
         seed = int.from_bytes(event_id.encode("utf-8"), "little") % (2**32)
@@ -135,4 +135,4 @@ class ContestantsCommands:
             if _c.bib is None:  # pragma: no cover
                 msg = f"Bib number not assigned for contestant with id {_c.id}"
                 raise ValueError(msg)
-            await ContestantsService.update_contestant(db, event_id, _c.id, _c)  # type: ignore [reportArgumentType]
+            await ContestantsService.update_contestant(event_id, _c.id, _c)  # type: ignore [reportArgumentType]
