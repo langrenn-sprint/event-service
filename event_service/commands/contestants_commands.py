@@ -97,7 +97,8 @@ class ContestantsCommands:
                 event.date_of_event, event.time_of_event
             ).timestamp()
         else:
-            seed = datetime.combine(datetime.today(), time(0, 0, 0)).timestamp()  # noqa: DTZ002  # pragma: no cover
+            # Use a deterministic fallback seed based on event_id to maintain reproducibility
+            seed = int.from_bytes(event_id.encode("utf-8"), "little") % (2**32)
 
         random.Random(seed).shuffle(contestants)  # noqa: S311
 
