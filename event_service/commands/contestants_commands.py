@@ -1,7 +1,6 @@
 """Module for contestants service."""
 
 import random
-from datetime import datetime
 from typing import Any
 
 from event_service.services import (
@@ -44,7 +43,7 @@ class ContestantsCommands:
     """Class representing a commands on contestants."""
 
     @classmethod
-    async def assign_bibs(  # noqa: C901, PLR0912
+    async def assign_bibs(  # noqa: C901
         cls: Any, db: Any, event_id: str, start_bib: int | None = 1
     ) -> None:
         """Assign bibs function.
@@ -68,7 +67,7 @@ class ContestantsCommands:
         """
         # Check if event exists:
         try:
-            event = await EventsService.get_event_by_id(db, event_id)
+            await EventsService.get_event_by_id(db, event_id)
         except EventNotFoundError as e:
             raise e from e
 
@@ -92,13 +91,7 @@ class ContestantsCommands:
         contestants = await ContestantsService.get_all_contestants(db, event_id)
 
         # Sort list of contestants in random order with a fixed seed to ensure reproducibility:
-        if event.date_of_event and event.time_of_event:
-            seed = datetime.combine(
-                event.date_of_event, event.time_of_event
-            ).timestamp()
-        else:
-            # Use a deterministic fallback seed based on event_id to maintain reproducibility
-            seed = int.from_bytes(event_id.encode("utf-8"), "little") % (2**32)
+        seed = int.from_bytes(event_id.encode("utf-8"), "little") % (2**32)
 
         rand = random.Random(seed)  # noqa: S311
         rand.shuffle(contestants)
