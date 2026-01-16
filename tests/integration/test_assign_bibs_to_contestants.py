@@ -30,7 +30,12 @@ def token() -> str:
 @pytest.fixture
 async def event() -> dict:
     """Create a mock event object."""
-    return {"id": "290e70d5-0933-4af0-bb53-1d705ba7eb95", "name": "A test event"}
+    return {
+        "id": "290e70d5-0933-4af0-bb53-1d705ba7eb95",
+        "name": "A test event",
+        "date_of_event": "2024-06-01",
+        "time_of_event": "12:00:00",
+    }
 
 
 @pytest.fixture
@@ -189,6 +194,58 @@ async def test_assign_bibs_to_contestants(
     }
 
     event_id = event["id"]
+    with aioresponses(passthrough=["http://127.0.0.1"]) as m:
+        m.post(f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/authorize", status=204)
+        resp = await client.post(
+            f"/events/{event_id}/contestants/assign-bibs", headers=headers
+        )
+        assert resp.status == 201
+        assert f"/events/{event_id}/contestants" in resp.headers[hdrs.LOCATION]
+
+
+@pytest.mark.integration
+async def test_assign_bibs_to_contestants_when_event_has_no_date_time(
+    client: _TestClient,
+    mocker: MockFixture,
+    token: MockFixture,
+    raceclasses: list[dict],
+    contestants: list[dict],
+) -> None:
+    """Should return 201 Created, location header."""
+    event_id = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
+    mocker.patch(
+        "event_service.adapters.events_adapter.EventsAdapter.get_event_by_id",
+        return_value={
+            "id": event_id,
+            "name": "A test event",
+        },
+    )
+    mocker.patch(
+        "event_service.adapters.raceclasses_adapter.RaceclassesAdapter.get_all_raceclasses",
+        return_value=raceclasses,
+    )
+    mocker.patch(
+        "event_service.adapters.contestants_adapter.ContestantsAdapter.get_all_contestants",
+        return_value=contestants,
+    )
+    mocker.patch(
+        "event_service.adapters.contestants_adapter.ContestantsAdapter.get_contestant_by_id",
+        side_effect=get_contestant_by_id,
+    )
+    mocker.patch(
+        "event_service.adapters.contestants_adapter.ContestantsAdapter.update_contestant",
+        side_effect=update_contestant,
+    )
+    mocker.patch(
+        "event_service.adapters.contestants_adapter.ContestantsAdapter.get_contestant_by_bib",
+        return_value=None,
+    )
+
+    headers = {
+        hdrs.CONTENT_TYPE: "application/json",
+        hdrs.AUTHORIZATION: f"Bearer {token}",
+    }
+
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
         m.post(f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/authorize", status=204)
         resp = await client.post(

@@ -1,6 +1,6 @@
 """Module for contestants service."""
 
-from random import shuffle
+import random
 from typing import Any
 
 from event_service.services import (
@@ -90,8 +90,11 @@ class ContestantsCommands:
         # Get all contestants in event:
         contestants = await ContestantsService.get_all_contestants(db, event_id)
 
-        # Sort list of contestants in random order:
-        shuffle(contestants)
+        # Sort list of contestants in random order with a fixed seed to ensure reproducibility:
+        seed = int.from_bytes(event_id.encode("utf-8"), "little") % (2**32)
+
+        rand = random.Random(seed)  # noqa: S311
+        rand.shuffle(contestants)
 
         # Create temporary list, lookup correct raceclasses, and convert to dict:
         _list: list[dict] = []

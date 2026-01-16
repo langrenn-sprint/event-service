@@ -15,7 +15,6 @@ from .exceptions import (
     BibAlreadyInUseError,
     CompetitionFormatNotFoundError,
     IllegalValueError,
-    InvalidDateFormatError,
     InvalidTimezoneError,
     RaceclassNotFoundError,
 )
@@ -39,7 +38,6 @@ __all__ = [
     "EventNotFoundError",
     "EventsService",
     "IllegalValueError",
-    "InvalidDateFormatError",
     "InvalidTimezoneError",
     "RaceclassCreateError",
     "RaceclassNotFoundError",
