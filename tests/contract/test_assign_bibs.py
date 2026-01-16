@@ -143,8 +143,6 @@ async def test_assign_bibs(
             "event_id": event_id,
             "name": "G15-16",
             "ageclasses": raceclass_G15["ageclasses"] + raceclass_G16["ageclasses"],
-            "no_of_contestants": raceclass_G15["no_of_contestants"]
-            + raceclass_G16["no_of_contestants"],
             "ranking": True,
             "seeding": False,
         }

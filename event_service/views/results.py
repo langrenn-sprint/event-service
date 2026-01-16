@@ -33,12 +33,10 @@ class RaceclassResultsView(View):
 
     async def get(self) -> Response:
         """Get route function."""
-        db = self.request.app["db"]
-
         event_id = self.request.match_info["eventId"]
         self.logger.debug(f"Got get request for event results {event_id}")
 
-        results = await ResultsService.get_all_results(db, event_id)
+        results = await ResultsService.get_all_results(event_id)
         result_list = [result.to_dict() for result in results]
 
         body = json.dumps(result_list, default=str, ensure_ascii=False)
@@ -46,7 +44,6 @@ class RaceclassResultsView(View):
 
     async def post(self) -> Response:
         """Post route function."""
-        db = self.request.app["db"]
         token = extract_token_from_request(self.request)
         event_id = self.request.match_info["eventId"]
         try:
@@ -64,7 +61,7 @@ class RaceclassResultsView(View):
             ) from e
 
         try:
-            result_id = await ResultsService.create_result(db, event_id, result)
+            result_id = await ResultsService.create_result(event_id, result)
         except Exception as e:
             raise HTTPUnprocessableEntity(reason=str(e)) from e
         if result_id:
@@ -89,16 +86,12 @@ class RaceclassResultView(View):
 
     async def get(self) -> Response:
         """Get route function."""
-        db = self.request.app["db"]
-
         event_id = self.request.match_info["eventId"]
         raceclass = self.request.match_info["raceclass"]
         self.logger.debug(f"Got get request for event/raceclass {event_id}/{raceclass}")
 
         try:
-            result = await ResultsService.get_result_by_raceclass(
-                db, event_id, raceclass
-            )
+            result = await ResultsService.get_result_by_raceclass(event_id, raceclass)
         except ResultNotFoundError as e:
             raise HTTPNotFound(reason=str(e)) from e
 
@@ -107,7 +100,6 @@ class RaceclassResultView(View):
 
     async def delete(self) -> Response:
         """Delete route function."""
-        db = self.request.app["db"]
         token = extract_token_from_request(self.request)
         try:
             await UsersAdapter.authorize(token, roles=["admin", "event-admin"])
@@ -119,7 +111,7 @@ class RaceclassResultView(View):
         self.logger.debug(f"Got delete request for result {raceclass}")
 
         try:
-            await ResultsService.delete_result(db, event_id, raceclass)
+            await ResultsService.delete_result(event_id, raceclass)
         except ResultNotFoundError as e:
             raise HTTPNotFound(reason=str(e)) from e
         return Response(status=204)

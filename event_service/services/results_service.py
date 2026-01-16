@@ -31,16 +31,14 @@ class ResultsService:
     logger = logging.getLogger("event_service.services.results_service")
 
     @classmethod
-    async def get_all_results(
-        cls: Any, db: Any, event_id: str
-    ) -> list[RaceclassResult]:
+    async def get_all_results(cls: Any, event_id: str) -> list[RaceclassResult]:
         """Get all results function."""
-        _results = await ResultsAdapter.get_all_results(db, event_id)
+        _results = await ResultsAdapter.get_all_results(event_id)
         return [RaceclassResult.from_dict(e) for e in _results]
 
     @classmethod
     async def create_result(
-        cls: Any, db: Any, event_id: str, result: RaceclassResult
+        cls: Any, event_id: str, result: RaceclassResult
     ) -> str | None:
         """Create result function.
 
@@ -58,7 +56,7 @@ class ResultsService:
         """
         # First we have to check if the event exist:
         try:
-            _ = await EventsService.get_event_by_id(db, event_id)
+            _ = await EventsService.get_event_by_id(event_id)
         except EventNotFoundError as e:
             raise e from e
         # Validation:
@@ -70,7 +68,7 @@ class ResultsService:
         result.id = result_id
         # insert new result
         new_result = result.to_dict()
-        res = await ResultsAdapter.create_result(db, new_result)
+        res = await ResultsAdapter.create_result(new_result)
         cls.logger.debug(f"inserted result with id: {result_id}")
         if res:
             return result_id
@@ -78,10 +76,10 @@ class ResultsService:
 
     @classmethod
     async def get_result_by_raceclass(
-        cls: Any, db: Any, event_id: str, raceclass: str
+        cls: Any, event_id: str, raceclass: str
     ) -> RaceclassResult:
         """Get result function."""
-        result = await ResultsAdapter.get_result_by_raceclass(db, event_id, raceclass)
+        result = await ResultsAdapter.get_result_by_raceclass(event_id, raceclass)
         # return the document if found:
         if not result:
             msg = f"Result not found for event/raceclass {event_id}/{raceclass}"
@@ -90,15 +88,13 @@ class ResultsService:
         return RaceclassResult.from_dict(result)
 
     @classmethod
-    async def delete_result(
-        cls: Any, db: Any, event_id: str, raceclass: str
-    ) -> str | None:
+    async def delete_result(cls: Any, event_id: str, raceclass: str) -> str | None:
         """Get result function."""
         # get old document
-        result = await ResultsAdapter.get_result_by_raceclass(db, event_id, raceclass)
+        result = await ResultsAdapter.get_result_by_raceclass(event_id, raceclass)
         # delete the document if found:
         if not result:
             msg = f"Result not found for event/raceclass {event_id}/{raceclass}"
             raise ResultNotFoundError(msg) from None
 
-        return await ResultsAdapter.delete_result(db, result["id"])
+        return await ResultsAdapter.delete_result(result["id"])

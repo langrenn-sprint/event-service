@@ -17,6 +17,10 @@ class RaceclassesConfigAdapter(Adapter):
     )
 
     @classmethod
+    async def init(cls) -> None:  # pragma: no cover
+        """Initialize the class properties."""
+
+    @classmethod
     async def get_default_raceclasses_config(cls: Any) -> dict:  # pragma: no cover
         """Get default raceclasses config."""
         async with aiofiles.open(cls.config_file_name) as file:

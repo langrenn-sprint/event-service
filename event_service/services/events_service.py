@@ -39,9 +39,9 @@ class EventsService:
     logger = logging.getLogger("event_service.services.events_service")
 
     @classmethod
-    async def get_all_events(cls: Any, db: Any) -> list[Event]:
+    async def get_all_events(cls: Any) -> list[Event]:
         """Get all events function."""
-        _events = await EventsAdapter.get_all_events(db)
+        _events = await EventsAdapter.get_all_events()
         events = [Event.from_dict(e) for e in _events]
         return sorted(
             events,
@@ -55,7 +55,7 @@ class EventsService:
         )
 
     @classmethod
-    async def create_event(cls: Any, db: Any, event: Event) -> str | None:
+    async def create_event(cls: Any, event: Event) -> str | None:
         """Create event function.
 
         Args:
@@ -70,7 +70,7 @@ class EventsService:
         """
         if event.id:
             # Validate for duplicates
-            existing_event = await EventsAdapter.get_event_by_id(db, str(event.id))
+            existing_event = await EventsAdapter.get_event_by_id(str(event.id))
             if existing_event:
                 msg = f"Event id {event.id} exists."
                 raise IllegalValueError(msg) from None
@@ -80,19 +80,19 @@ class EventsService:
             event_id = create_id()
             event.id = event_id
         # Validate new event:
-        await validate_event(db, event)
+        await validate_event(event)
         # insert new event
         new_event = event.to_dict()
-        result = await EventsAdapter.create_event(db, new_event)
+        result = await EventsAdapter.create_event(new_event)
         cls.logger.debug(f"inserted event with id: {event_id}")
         if not result:
             return None
         return event_id
 
     @classmethod
-    async def get_event_by_id(cls: Any, db: Any, event_id: str) -> Event:
+    async def get_event_by_id(cls: Any, event_id: str) -> Event:
         """Get event function."""
-        event = await EventsAdapter.get_event_by_id(db, event_id)
+        event = await EventsAdapter.get_event_by_id(event_id)
         # return the document if found:
         if not event:
             msg = f"Event with id {event_id} not found"
@@ -100,14 +100,12 @@ class EventsService:
         return Event.from_dict(event)
 
     @classmethod
-    async def update_event(
-        cls: Any, db: Any, event_id: str, event: Event
-    ) -> str | None:
+    async def update_event(cls: Any, event_id: str, event: Event) -> str | None:
         """Get event function."""
         # validate:
-        await validate_event(db, event)
+        await validate_event(event)
         # get old document
-        old_event = await EventsAdapter.get_event_by_id(db, event_id)
+        old_event = await EventsAdapter.get_event_by_id(event_id)
         # update the event if found:
         if not old_event:
             msg = f"Event with id {event_id} not found"
@@ -116,22 +114,22 @@ class EventsService:
             msg = f"Cannot change id for event with id {event_id}"
             raise IllegalValueError(msg) from None
         new_event = event.to_dict()
-        return await EventsAdapter.update_event(db, event_id, new_event)
+        return await EventsAdapter.update_event(event_id, new_event)
 
     @classmethod
-    async def delete_event(cls: Any, db: Any, event_id: str) -> str | None:
+    async def delete_event(cls: Any, event_id: str) -> str | None:
         """Get event function."""
         # get old document
-        event = await EventsAdapter.get_event_by_id(db, event_id)
+        event = await EventsAdapter.get_event_by_id(event_id)
         # delete the document if found:
         if not event:
             msg = f"Event with id {event_id} not found"
             raise EventNotFoundError(msg) from None
-        return await EventsAdapter.delete_event(db, event_id)
+        return await EventsAdapter.delete_event(event_id)
 
 
 #   Validation:
-async def validate_event(db: Any, event: Event) -> None:
+async def validate_event(event: Event) -> None:
     """Validate the event."""
     # Validate timezone:
     if event.timezone and event.timezone not in zoneinfo.available_timezones():
@@ -143,7 +141,7 @@ async def validate_event(db: Any, event: Event) -> None:
         try:
             competition_formats = (
                 await CompetitionFormatsAdapter.get_competition_formats_by_name(
-                    db, event.competition_format
+                    event.competition_format
                 )
             )
         except CompetitionFormatsAdapterError as e:

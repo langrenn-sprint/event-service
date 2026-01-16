@@ -42,21 +42,19 @@ class ContestantsView(View):
 
     async def get(self) -> Response:
         """Get route function."""
-        db = self.request.app["db"]
-
         event_id = self.request.match_info["eventId"]
         if "raceclass" in self.request.rel_url.query:
             raceclass = self.request.rel_url.query["raceclass"]
             try:
                 contestants = await ContestantsService.get_contestants_by_raceclass(
-                    db, event_id, raceclass
+                    event_id, raceclass
                 )
             except RaceclassNotFoundError as e:
                 raise HTTPBadRequest(reason=str(e)) from e
         elif "ageclass" in self.request.rel_url.query:
             ageclass = self.request.rel_url.query["ageclass"]
             contestants = await ContestantsService.get_contestants_by_ageclass(
-                db, event_id, ageclass
+                event_id, ageclass
             )
         elif "bib" in self.request.rel_url.query:
             bib_param = self.request.rel_url.query["bib"]
@@ -66,11 +64,9 @@ class ContestantsView(View):
                 raise HTTPBadRequest(
                     reason=f"Query-param bib {bib_param} must be a valid int."
                 ) from e
-            contestants = await ContestantsService.get_contestant_by_bib(
-                db, event_id, bib
-            )
+            contestants = await ContestantsService.get_contestant_by_bib(event_id, bib)
         else:
-            contestants = await ContestantsService.get_all_contestants(db, event_id)
+            contestants = await ContestantsService.get_all_contestants(event_id)
 
         contestant_list = [contestant.to_dict() for contestant in contestants]
         body = json.dumps(contestant_list, default=str, ensure_ascii=False)
@@ -78,7 +74,6 @@ class ContestantsView(View):
 
     async def post(self) -> Response:  # noqa: PLR0915, PLR0912, C901
         """Post route function."""
-        db = self.request.app["db"]
         token = extract_token_from_request(self.request)
         try:
             await UsersAdapter.authorize(
@@ -106,7 +101,7 @@ class ContestantsView(View):
 
             try:
                 contestant_id = await ContestantsService.create_contestant(
-                    db, event_id, contestant
+                    event_id, contestant
                 )
             except EventNotFoundError as e:
                 raise HTTPNotFound(reason=str(e)) from e
@@ -142,7 +137,7 @@ class ContestantsView(View):
                     ) from None
                 try:
                     result = await ContestantsService.create_contestants(
-                        db, event_id, contestants
+                        event_id, contestants
                     )
                 except EventNotFoundError as e:
                     raise HTTPNotFound(reason=str(e)) from e
@@ -158,7 +153,7 @@ class ContestantsView(View):
             contestants = content.decode()
             try:
                 result = await ContestantsService.create_contestants(
-                    db, event_id, contestants
+                    event_id, contestants
                 )
             except EventNotFoundError as e:
                 raise HTTPNotFound(reason=str(e)) from e
@@ -174,7 +169,6 @@ class ContestantsView(View):
 
     async def delete(self) -> Response:
         """Delete route function."""
-        db = self.request.app["db"]
         token = extract_token_from_request(self.request)
         try:
             await UsersAdapter.authorize(
@@ -184,7 +178,7 @@ class ContestantsView(View):
             raise e from e
 
         event_id = self.request.match_info["eventId"]
-        await ContestantsService.delete_all_contestants(db, event_id)
+        await ContestantsService.delete_all_contestants(event_id)
 
         return Response(status=204)
 
@@ -196,15 +190,13 @@ class ContestantView(View):
 
     async def get(self) -> Response:
         """Get route function."""
-        db = self.request.app["db"]
-
         event_id = self.request.match_info["eventId"]
         contestant_id = self.request.match_info["contestantId"]
         self.logger.debug(f"Got get request for contestant {contestant_id}")
 
         try:
             contestant = await ContestantsService.get_contestant_by_id(
-                db, event_id, contestant_id
+                event_id, contestant_id
             )
         except ContestantNotFoundError as e:
             raise HTTPNotFound(reason=str(e)) from e
@@ -214,7 +206,6 @@ class ContestantView(View):
 
     async def put(self) -> Response:
         """Put route function."""
-        db = self.request.app["db"]
         token = extract_token_from_request(self.request)
         try:
             await UsersAdapter.authorize(
@@ -240,7 +231,7 @@ class ContestantView(View):
 
         try:
             await ContestantsService.update_contestant(
-                db, event_id, contestant_id, contestant
+                event_id, contestant_id, contestant
             )
         except IllegalValueError as e:
             raise HTTPUnprocessableEntity(reason=str(e)) from e
@@ -252,7 +243,6 @@ class ContestantView(View):
 
     async def delete(self) -> Response:
         """Delete route function."""
-        db = self.request.app["db"]
         token = extract_token_from_request(self.request)
         try:
             await UsersAdapter.authorize(token, roles=["admin", "event-admin"])
@@ -266,7 +256,7 @@ class ContestantView(View):
         )
 
         try:
-            await ContestantsService.delete_contestant(db, event_id, contestant_id)
+            await ContestantsService.delete_contestant(event_id, contestant_id)
         except ContestantNotFoundError as e:
             raise HTTPNotFound(reason=str(e)) from e
         return Response(status=204)

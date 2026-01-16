@@ -39,9 +39,7 @@ class EventsView(View):
 
     async def get(self) -> Response:
         """Get route function."""
-        db = self.request.app["db"]
-
-        events = await EventsService.get_all_events(db)
+        events = await EventsService.get_all_events()
         event_list = [event.to_dict() for event in events]
 
         body = json.dumps(event_list, default=str, ensure_ascii=False)
@@ -49,7 +47,6 @@ class EventsView(View):
 
     async def post(self) -> Response:
         """Post route function."""
-        db = self.request.app["db"]
         token = extract_token_from_request(self.request)
         try:
             await UsersAdapter.authorize(token, roles=["admin", "event-admin"])
@@ -66,7 +63,7 @@ class EventsView(View):
             ) from e
 
         try:
-            event_id = await EventsService.create_event(db, event)
+            event_id = await EventsService.create_event(event)
         except (IllegalValueError, InvalidTimezoneError) as e:
             raise HTTPUnprocessableEntity(reason=str(e)) from e
         except CompetitionFormatNotFoundError as e:
@@ -86,13 +83,11 @@ class EventView(View):
 
     async def get(self) -> Response:
         """Get route function."""
-        db = self.request.app["db"]
-
         event_id = self.request.match_info["eventId"]
         self.logger.debug(f"Got get request for event {event_id}")
 
         try:
-            event = await EventsService.get_event_by_id(db, event_id)
+            event = await EventsService.get_event_by_id(event_id)
         except EventNotFoundError as e:
             raise HTTPNotFound(reason=str(e)) from e
         self.logger.debug(f"Got event: {event}")
@@ -101,7 +96,6 @@ class EventView(View):
 
     async def put(self) -> Response:
         """Put route function."""
-        db = self.request.app["db"]
         token = extract_token_from_request(self.request)
         try:
             await UsersAdapter.authorize(token, roles=["admin", "event-admin"])
@@ -123,7 +117,7 @@ class EventView(View):
             ) from e
 
         try:
-            await EventsService.update_event(db, event_id, event)
+            await EventsService.update_event(event_id, event)
         except IllegalValueError as e:
             raise HTTPUnprocessableEntity(reason=str(e)) from e
         except EventNotFoundError as e:
@@ -134,7 +128,6 @@ class EventView(View):
 
     async def delete(self) -> Response:
         """Delete route function."""
-        db = self.request.app["db"]
         token = extract_token_from_request(self.request)
         try:
             await UsersAdapter.authorize(token, roles=["admin", "event-admin"])
@@ -145,7 +138,7 @@ class EventView(View):
         self.logger.debug(f"Got delete request for event {event_id}")
 
         try:
-            await EventsService.delete_event(db, event_id)
+            await EventsService.delete_event(event_id)
         except EventNotFoundError as e:
             raise HTTPNotFound(reason=str(e)) from e
         return Response(status=204)

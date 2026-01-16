@@ -19,6 +19,10 @@ class UsersAdapter:
     """Class representing an adapter for events."""
 
     @classmethod
+    async def init(cls, database: Any) -> None:  # pragma: no cover
+        """Initialize the class properties."""
+
+    @classmethod
     async def authorize(cls: Any, token: str | None, roles: list) -> None:
         """Try to authorize."""
         url = f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/authorize"

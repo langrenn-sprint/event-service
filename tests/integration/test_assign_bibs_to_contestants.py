@@ -141,14 +141,12 @@ async def contestants() -> list[dict]:
     return CONTESTANT_LIST
 
 
-def get_contestant_by_id(arg1: Any, event_id: str, contestant_id: str) -> dict:
+def get_contestant_by_id(event_id: str, contestant_id: str) -> dict:
     """Look up correct contestant in list."""
     return next(item for item in CONTESTANT_LIST if item["id"] == contestant_id)
 
 
-def update_contestant(
-    arg1: Any, event_id: str, contestant_id: str, contestant: dict
-) -> dict:
+def update_contestant(event_id: str, contestant_id: str, contestant: dict) -> dict:
     """Return the update contestant."""
     return contestant
 

@@ -28,14 +28,20 @@ class CompetitionFormatsAdapterError(Exception):
 class CompetitionFormatsAdapter(Adapter):
     """Class representing an adapter for competition_formats."""
 
-    logger = logging.getLogger("event_service.adapters.competition_formats_adapter")
+    logger: logging.Logger
+
+    @classmethod
+    async def init(cls) -> None:  # pragma: no cover
+        """Initialize the class properties."""
+        cls.logger = logging.getLogger(
+            "event_service.adapters.competition_formats_adapter"
+        )
 
     @classmethod
     async def get_competition_formats_by_name(
-        cls: Any, db: Any, competition_format_name: str
+        cls: Any, competition_format_name: str
     ) -> list[dict]:  # pragma: no cover
         """Get competition_format by name function."""
-        _ = db
         cls.logger.debug(f"Got request for name {competition_format_name}.")
         competition_formats: list = []
 

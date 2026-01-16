@@ -47,7 +47,7 @@ class EventFormatService:
 
     @classmethod
     async def create_event_format(
-        cls: Any, db: Any, event_id: str, event_format: CompetitionFormat
+        cls: Any, event_id: str, event_format: CompetitionFormat
     ) -> str | None:
         """Create event_format function.
 
@@ -64,13 +64,13 @@ class EventFormatService:
         """
         # First we have to check if the event exist:
         try:
-            _ = await EventsService.get_event_by_id(db, event_id)
+            _ = await EventsService.get_event_by_id(event_id)
         except EventNotFoundError as e:
             raise e from e
         # insert new event_format
         new_event_format = event_format.to_dict()
         result = await EventFormatAdapter.create_event_format(
-            db, event_id, new_event_format
+            event_id, new_event_format
         )
         cls.logger.debug(
             f"inserted event_format for event_id/name: {event_id}/{event_format.name}"
@@ -82,11 +82,10 @@ class EventFormatService:
     @classmethod
     async def get_event_format(
         cls: Any,
-        db: Any,
         event_id: str,
     ) -> CompetitionFormat:
         """Get event_format function."""
-        event_format = await EventFormatAdapter.get_event_format(db, event_id)
+        event_format = await EventFormatAdapter.get_event_format(event_id)
         # return the document if found:
         if not event_format:
             msg = f"EventFormat with for event id {event_id} not found"
@@ -102,30 +101,27 @@ class EventFormatService:
     @classmethod
     async def update_event_format(
         cls: Any,
-        db: Any,
         event_id: str,
         event_format: CompetitionFormat,
     ) -> str | None:
         """Get event_format function."""
         # get old document
-        old_event_format = await EventFormatAdapter.get_event_format(db, event_id)
+        old_event_format = await EventFormatAdapter.get_event_format(event_id)
         # update the event_format if found:
         if not old_event_format:
             msg = f"EventFormat for event with id {event_id} not found."
             raise EventFormatNotFoundError(msg) from None
         new_event_format = event_format.to_dict()
-        return await EventFormatAdapter.update_event_format(
-            db, event_id, new_event_format
-        )
+        return await EventFormatAdapter.update_event_format(event_id, new_event_format)
 
     @classmethod
-    async def delete_event_format(cls: Any, db: Any, event_id: str) -> str | None:
+    async def delete_event_format(cls: Any, event_id: str) -> str | None:
         """Get event_format function."""
         # get old document
-        event_format = await EventFormatAdapter.get_event_format(db, event_id)
+        event_format = await EventFormatAdapter.get_event_format(event_id)
         # delete the document if found:
         if not event_format:
             msg = f"EventFormat for event id {event_id} not found"
             raise EventFormatNotFoundError(msg) from None
 
-        return await EventFormatAdapter.delete_event_format(db, event_id)
+        return await EventFormatAdapter.delete_event_format(event_id)

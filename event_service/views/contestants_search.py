@@ -23,8 +23,6 @@ class ContestantsSearchView(View):
 
     async def post(self) -> Response:
         """Post search function."""
-        db = self.request.app["db"]
-
         query = None
         try:
             event_id = self.request.match_info["eventId"]
@@ -32,7 +30,7 @@ class ContestantsSearchView(View):
 
             name = query["name"]
             _result = await ContestantsAdapter.search_contestants_in_event_by_name(
-                db, event_id, name
+                event_id, name
             )
         except json.JSONDecodeError as e:  # pragma: no cover
             raise HTTPBadRequest(reason="Query is invalid json.") from e

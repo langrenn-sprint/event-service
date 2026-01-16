@@ -10,6 +10,17 @@ from aiohttp.web_app import Application
 from aiohttp_middlewares.cors import cors_middleware
 from aiohttp_middlewares.error import error_middleware
 
+from event_service.adapters.raceclasses_config_adapter import RaceclassesConfigAdapter
+
+from .adapters import (
+    CompetitionFormatsAdapter,
+    ContestantsAdapter,
+    EventFormatAdapter,
+    EventsAdapter,
+    RaceclassesAdapter,
+    ResultsAdapter,
+    UsersAdapter,
+)
 from .utils import db_utils
 from .views import (
     ContestantsAssignBibsView,
@@ -89,6 +100,15 @@ async def create_app() -> web.Application:
                 await db_utils.create_indexes(db)
             except Exception:
                 logger.exception("Could not create index on contestants.")
+
+            await CompetitionFormatsAdapter.init()
+            await ContestantsAdapter.init(db)
+            await EventFormatAdapter.init(db)
+            await EventsAdapter.init(db)
+            await RaceclassesAdapter.init(db)
+            await RaceclassesConfigAdapter.init()
+            await ResultsAdapter.init(db)
+            await UsersAdapter.init(db)
 
         yield
 
