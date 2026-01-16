@@ -1,7 +1,7 @@
 """Module for contestants service."""
 
 import random
-from datetime import datetime, time
+from datetime import datetime
 from typing import Any
 
 from event_service.services import (
