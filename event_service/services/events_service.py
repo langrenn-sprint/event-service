@@ -3,7 +3,6 @@
 import logging
 import uuid
 import zoneinfo
-from datetime import date, time
 from typing import Any
 
 from event_service.adapters import (
@@ -16,7 +15,6 @@ from event_service.models import Event
 from .exceptions import (
     CompetitionFormatNotFoundError,
     IllegalValueError,
-    InvalidDateFormatError,
     InvalidTimezoneError,
 )
 
@@ -135,22 +133,6 @@ class EventsService:
 #   Validation:
 async def validate_event(db: Any, event: Event) -> None:
     """Validate the event."""
-    # Validate date_of_event if set:
-    if event.date_of_event:
-        try:
-            date.fromisoformat(event.date_of_event)  # type: ignore [reportArgumentType]
-        except ValueError as e:
-            msg = f'Date "{event.date_of_event}" has invalid format.'
-            raise InvalidDateFormatError(msg) from e
-
-    # Validate time_of_event if set:
-    if event.time_of_event:
-        try:
-            time.fromisoformat(event.time_of_event)  # type: ignore [reportArgumentType]
-        except ValueError as e:
-            msg = f'Time "{event.time_of_event}" has invalid format.'
-            raise InvalidDateFormatError(msg) from e
-
     # Validate timezone:
     if event.timezone and event.timezone not in zoneinfo.available_timezones():
         msg = f"Invalid timezone: {event.timezone}."

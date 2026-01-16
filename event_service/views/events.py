@@ -22,7 +22,6 @@ from event_service.services import (
     EventNotFoundError,
     EventsService,
     IllegalValueError,
-    InvalidDateFormatError,
     InvalidTimezoneError,
 )
 from event_service.utils.jwt_utils import extract_token_from_request
@@ -61,7 +60,7 @@ class EventsView(View):
         self.logger.debug(f"Got create request for event {body} of type {type(body)}")
         try:
             event = Event.from_dict(body)
-        except KeyError as e:
+        except (ValueError, KeyError) as e:
             raise HTTPUnprocessableEntity(
                 reason=f"Mandatory property {e.args[0]} is missing."
             ) from e
@@ -70,7 +69,7 @@ class EventsView(View):
             event_id = await EventsService.create_event(db, event)
         except (IllegalValueError, InvalidTimezoneError) as e:
             raise HTTPUnprocessableEntity(reason=str(e)) from e
-        except (CompetitionFormatNotFoundError, InvalidDateFormatError) as e:
+        except CompetitionFormatNotFoundError as e:
             raise HTTPBadRequest(reason=str(e)) from e
         if event_id:
             self.logger.debug(f"inserted document with event_id {event_id}")
@@ -118,7 +117,7 @@ class EventView(View):
         self.logger.debug(f"Got put request for event {body} of type {type(body)}")
         try:
             event = Event.from_dict(body)
-        except KeyError as e:
+        except (ValueError, KeyError) as e:
             raise HTTPUnprocessableEntity(
                 reason=f"Mandatory property {e.args[0]} is missing."
             ) from e
@@ -129,7 +128,7 @@ class EventView(View):
             raise HTTPUnprocessableEntity(reason=str(e)) from e
         except EventNotFoundError as e:
             raise HTTPNotFound(reason=str(e)) from e
-        except (CompetitionFormatNotFoundError, InvalidDateFormatError) as e:
+        except CompetitionFormatNotFoundError as e:
             raise HTTPBadRequest(reason=str(e)) from e
         return Response(status=204)
 

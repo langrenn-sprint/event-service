@@ -1,7 +1,7 @@
 """Module for contestants service."""
 
 import random
-from datetime import date, datetime, time
+from datetime import datetime, time
 from typing import Any
 
 from event_service.services import (
@@ -92,12 +92,12 @@ class ContestantsCommands:
         contestants = await ContestantsService.get_all_contestants(db, event_id)
 
         # Sort list of contestants in random order with a fixed seed to ensure reproducibility:
-        if event.date_of_event and event.time_of_event:  # pragma: no cover
-            date_obj = date.fromisoformat(event.date_of_event)  # type: ignore[reportArgumentType]
-            time_obj = time.fromisoformat(event.time_of_event)  # type: ignore[reportArgumentType]
-            seed = datetime.combine(date_obj, time_obj).timestamp()
+        if event.date_of_event and event.time_of_event:
+            seed = datetime.combine(
+                event.date_of_event, event.time_of_event
+            ).timestamp()
         else:
-            seed = datetime.combine(datetime.today(), time(0, 0, 0)).timestamp()  # noqa: DTZ002
+            seed = datetime.combine(datetime.today(), time(0, 0, 0)).timestamp()  # noqa: DTZ002  # pragma: no cover
 
         random.Random(seed).shuffle(contestants)  # noqa: S311
 

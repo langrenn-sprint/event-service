@@ -30,7 +30,12 @@ def token() -> str:
 @pytest.fixture
 async def event() -> dict:
     """Create a mock event object."""
-    return {"id": "290e70d5-0933-4af0-bb53-1d705ba7eb95", "name": "A test event"}
+    return {
+        "id": "290e70d5-0933-4af0-bb53-1d705ba7eb95",
+        "name": "A test event",
+        "date_of_event": "2024-06-01",
+        "time_of_event": "12:00:00",
+    }
 
 
 @pytest.fixture

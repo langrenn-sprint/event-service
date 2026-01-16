@@ -77,6 +77,7 @@ async def competition_format() -> dict[str, int | str]:
         "starting_order": "Draw",
         "start_procedure": "Interval Start",
         "time_between_groups": "00:10:00",
+        "timezone": "Europe/Oslo",
         "intervals": "00:00:30",
         "max_no_of_contestants_in_raceclass": 9999,
         "max_no_of_contestants_in_race": 9999,
@@ -516,7 +517,7 @@ async def test_create_event_invalid_date(
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
         m.post(f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/authorize", status=204)
         resp = await client.post("/events", headers=headers, json=event_invalid_date)
-        assert resp.status == 400
+        assert resp.status == 422
 
 
 @pytest.mark.integration
@@ -545,7 +546,7 @@ async def test_create_event_invalid_time(
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
         m.post(f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/authorize", status=204)
         resp = await client.post("/events", headers=headers, json=event_invalid_time)
-        assert resp.status == 400
+        assert resp.status == 422
 
 
 @pytest.mark.integration
@@ -575,7 +576,7 @@ async def test_update_event_invalid_date(
         m.post(f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/authorize", status=204)
 
         resp = await client.put(f"/events/{ID}", headers=headers, json=request_body)
-        assert resp.status == 400
+        assert resp.status == 422
 
 
 @pytest.mark.integration
@@ -605,7 +606,7 @@ async def test_update_event_invalid_time(
         m.post(f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/authorize", status=204)
 
         resp = await client.put(f"/events/{ID}", headers=headers, json=request_body)
-        assert resp.status == 400
+        assert resp.status == 422
 
 
 @pytest.mark.integration
