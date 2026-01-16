@@ -100,7 +100,8 @@ class ContestantsCommands:
             # Use a deterministic fallback seed based on event_id to maintain reproducibility
             seed = int.from_bytes(event_id.encode("utf-8"), "little") % (2**32)
 
-        random.Random(seed).shuffle(contestants)  # noqa: S311
+        rand = random.Random(seed)  # noqa: S311
+        rand.shuffle(contestants)
 
         # Create temporary list, lookup correct raceclasses, and convert to dict:
         _list: list[dict] = []
