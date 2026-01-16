@@ -11,7 +11,6 @@ import pandas as pd
 
 from event_service.adapters import ContestantsAdapter, RaceclassesAdapter
 from event_service.models import Contestant
-from event_service.utils.validate_ageclass import validate_ageclass
 
 from .events_service import EventNotFoundError, EventsService
 from .exceptions import (
@@ -501,9 +500,6 @@ async def _contestant_exist(event_id: str, contestant: Contestant) -> dict | Non
 
 async def _validate_contestant(event_id: str, contestant: Contestant) -> None:
     """Validate contestant."""
-    # Check that ageclass is valid:
-    await validate_ageclass(contestant.ageclass)
-
     # Check that bib is in use by another contestant:
     if await _bib_in_use_by_another_contestant(event_id, contestant):
         msg = f"Bib {contestant.bib} allready in use by another contestant."

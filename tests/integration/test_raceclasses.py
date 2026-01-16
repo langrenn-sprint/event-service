@@ -46,6 +46,7 @@ async def new_raceclass() -> dict:
     return {
         "name": "G16",
         "ageclasses": ["G 16 år"],
+        "gender": "M",
         "event_id": "event_id_1",
         "group": 1,
         "order": 1,
@@ -60,6 +61,7 @@ async def raceclass() -> dict:
         "id": "290e70d5-0933-4af0-bb53-1d705ba7eb95",
         "name": "G16",
         "ageclasses": ["G 16 år"],
+        "gender": "M",
         "event_id": "event_id_1",
         "group": 1,
         "order": 1,
@@ -508,50 +510,6 @@ async def test_create_raceclass_with_input_id(
 
 
 @pytest.mark.integration
-async def test_create_raceclass_with_invalid_ageclass_value(
-    client: _TestClient,
-    mocker: MockFixture,
-    token: MockFixture,
-    event: dict,
-    new_raceclass: dict,
-) -> None:
-    """Should return 422 HTTPUnprocessableEntity."""
-    EVENT_ID = "event_id_1"
-    RACECLASS_ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
-    mocker.patch(
-        "event_service.adapters.events_adapter.EventsAdapter.get_event_by_id",
-        return_value=event,
-    )
-    mocker.patch(
-        "event_service.services.raceclasses_service.create_id",
-        return_value=RACECLASS_ID,
-    )
-    mocker.patch(
-        "event_service.adapters.raceclasses_adapter.RaceclassesAdapter.create_raceclass",
-        return_value=RACECLASS_ID,
-    )
-    mocker.patch(
-        "event_service.adapters.contestants_adapter.ContestantsAdapter.get_all_contestants",
-        return_value=[],
-    )
-
-    request_body = deepcopy(new_raceclass)
-    request_body["ageclasses"] = ["invalid_ageclass"]
-
-    headers = {
-        hdrs.CONTENT_TYPE: "application/json",
-        hdrs.AUTHORIZATION: f"Bearer {token}",
-    }
-
-    with aioresponses(passthrough=["http://127.0.0.1"]) as m:
-        m.post(f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/authorize", status=204)
-        resp = await client.post(
-            f"/events/{EVENT_ID}/raceclasses", headers=headers, json=request_body
-        )
-        assert resp.status == 422
-
-
-@pytest.mark.integration
 async def test_update_raceclass_by_id_different_id_in_body(
     client: _TestClient, mocker: MockFixture, token: MockFixture, raceclass: dict
 ) -> None:
@@ -577,43 +535,6 @@ async def test_update_raceclass_by_id_different_id_in_body(
     }
     request_body = deepcopy(raceclass)
     request_body["id"] = "different_id"
-
-    with aioresponses(passthrough=["http://127.0.0.1"]) as m:
-        m.post(f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/authorize", status=204)
-        resp = await client.put(
-            f"/events/{EVENT_ID}/raceclasses/{RACECLASS_ID}",
-            headers=headers,
-            json=request_body,
-        )
-        assert resp.status == 422
-
-
-@pytest.mark.integration
-async def test_update_raceclass_with_invalid_ageclass_value(
-    client: _TestClient, mocker: MockFixture, token: MockFixture, raceclass: dict
-) -> None:
-    """Should return 422 HTTPUnprocessableEntity."""
-    EVENT_ID = "event_id_1"
-    RACECLASS_ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
-    mocker.patch(
-        "event_service.adapters.raceclasses_adapter.RaceclassesAdapter.get_raceclass_by_id",
-        return_value=raceclass,
-    )
-    mocker.patch(
-        "event_service.adapters.raceclasses_adapter.RaceclassesAdapter.update_raceclass",
-        return_value=RACECLASS_ID,
-    )
-    mocker.patch(
-        "event_service.adapters.contestants_adapter.ContestantsAdapter.get_all_contestants",
-        return_value=[],
-    )
-
-    headers = {
-        hdrs.CONTENT_TYPE: "application/json",
-        hdrs.AUTHORIZATION: f"Bearer {token}",
-    }
-    request_body = deepcopy(raceclass)
-    request_body["ageclasses"] = ["invalid_ageclass"]
 
     with aioresponses(passthrough=["http://127.0.0.1"]) as m:
         m.post(f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/authorize", status=204)

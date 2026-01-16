@@ -56,8 +56,9 @@ async def raceclass() -> dict:
     """Create a mock raceclass object."""
     return {
         "id": "290e70d5-0933-4af0-bb53-1d705ba7eb95",
-        "name": "G16",
+        "name": "G 16 år",
         "ageclasses": ["G 16 år"],
+        "gender": "M",
         "event_id": "ref_to_event",
         "group": 1,
         "order": 1,

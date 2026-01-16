@@ -316,8 +316,8 @@ async def test_get_all_contestants_in_given_event_by_raceclass(
         async with session.post(url, headers=headers) as response:
             assert response.status == 201
 
-        raceclass_parameter = "J15"
-        url = f"{http_service}/events/{event_id}/contestants?raceclass={raceclass_parameter}"
+        query_parameter = f"ageclass={quote('J 15 år')}"
+        url = f"{http_service}/events/{event_id}/contestants?{query_parameter}"
 
         async with session.get(url) as response:
             contestants = await response.json()
@@ -364,6 +364,26 @@ async def test_get_all_contestants_in_given_event_by_bib(
     }
 
     async with ClientSession() as session:
+        # First we add contestants to event:
+        url = f"{http_service}/events/{event_id}/contestants"
+        files = {"file": open("tests/files/contestants_Sportsadmin.csv", "rb")}
+        async with session.post(url, headers=headers, data=files) as response:
+            assert response.status == 200
+
+        # We need to generate raceclasses for the event:
+        url = f"{http_service}/events/{event_id}/generate-raceclasses"
+        async with session.post(url, headers=headers) as response:
+            if response.status != 201:
+                body = await response.json()
+            assert response.status == 201, body["detail"]  # type: ignore [reportAttributeAccessIssue]
+            assert f"/events/{event_id}/raceclasses" in response.headers[hdrs.LOCATION]
+
+        # Check that we got the raceclasses:
+        url = f"{http_service}/events/{event_id}/raceclasses"
+        async with session.get(url) as response:
+            assert response.status == 200
+            raceclasses = await response.json()
+            assert len(raceclasses) > 0, "No raceclasses found"
         # Also we need to set order for all raceclasses:
         url = f"{http_service}/events/{event_id}/raceclasses"
         async with session.get(url) as response:
@@ -451,52 +471,52 @@ async def test_delete_all_contestant(
 async def _decide_group_order_and_ranking(  # noqa: C901
     raceclass: dict,
 ) -> tuple[int, int, bool]:
-    if raceclass["name"] == "MS":
+    if raceclass["name"] == "Menn senior":
         return (1, 1, True)
-    if raceclass["name"] == "KS":
+    if raceclass["name"] == "Kvinner senior":
         return (1, 2, True)
-    if raceclass["name"] == "M19/20":
+    if raceclass["name"] == "M 19/20 år":
         return (1, 3, True)
-    if raceclass["name"] == "K19/20":
+    if raceclass["name"] == "K 19/20 år":
         return (1, 4, True)
-    if raceclass["name"] == "M18":
+    if raceclass["name"] == "M 18 år":
         return (2, 1, True)
-    if raceclass["name"] == "K18":
+    if raceclass["name"] == "K 18 år":
         return (2, 2, True)
-    if raceclass["name"] == "M17":
+    if raceclass["name"] == "M 17 år":
         return (3, 1, True)
-    if raceclass["name"] == "K17":
+    if raceclass["name"] == "K 17 år":
         return (3, 2, True)
-    if raceclass["name"] == "G16":
+    if raceclass["name"] == "G 16 år":
         return (4, 1, True)
-    if raceclass["name"] == "J16":
+    if raceclass["name"] == "J 16 år":
         return (4, 2, True)
-    if raceclass["name"] == "G15":
+    if raceclass["name"] == "G 15 år":
         return (4, 3, True)
-    if raceclass["name"] == "J15":
+    if raceclass["name"] == "J 15 år":
         return (4, 4, True)
-    if raceclass["name"] == "G14":
+    if raceclass["name"] == "G 14 år":
         return (5, 1, True)
-    if raceclass["name"] == "J14":
+    if raceclass["name"] == "J 14 år":
         return (5, 2, True)
-    if raceclass["name"] == "G13":
+    if raceclass["name"] == "G 13 år":
         return (5, 3, True)
-    if raceclass["name"] == "J13":
+    if raceclass["name"] == "J 13 år":
         return (5, 4, True)
-    if raceclass["name"] == "G12":
+    if raceclass["name"] == "G 12 år":
         return (6, 1, True)
-    if raceclass["name"] == "J12":
+    if raceclass["name"] == "J 12 år":
         return (6, 2, True)
-    if raceclass["name"] == "G11":
+    if raceclass["name"] == "G 11 år":
         return (6, 3, True)
-    if raceclass["name"] == "J11":
+    if raceclass["name"] == "J 11 år":
         return (6, 4, True)
-    if raceclass["name"] == "G10":
+    if raceclass["name"] == "G 10 år":
         return (7, 1, False)
-    if raceclass["name"] == "J10":
+    if raceclass["name"] == "J 10 år":
         return (7, 2, False)
-    if raceclass["name"] == "G9":
+    if raceclass["name"] == "G 9 år":
         return (8, 1, False)
-    if raceclass["name"] == "J9":
+    if raceclass["name"] == "J 9 år":
         return (8, 2, False)
     return (0, 0, True)  # should not reach this point

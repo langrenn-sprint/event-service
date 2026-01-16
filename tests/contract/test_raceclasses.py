@@ -96,6 +96,7 @@ async def raceclass(event_id: str) -> dict:
     return {
         "name": "G16",
         "ageclasses": ["G 16 år"],
+        "gender": "M",
         "event_id": event_id,
         "group": 1,
         "order": 1,
@@ -210,6 +211,7 @@ async def test_get_raceclass_by_id(
     assert body["name"] == raceclass["name"]
     assert body["order"] == raceclass["order"]
     assert body["ageclasses"] == raceclass["ageclasses"]
+    assert body["gender"] == raceclass["gender"]
     assert body["distance"] == raceclass["distance"]
     assert body["event_id"] == raceclass["event_id"]
 
@@ -476,8 +478,9 @@ async def test_change_contestants_ageclass(
 
     # Create a new raceclass for the new ageclass:
     new_raceclass = {
-        "name": "G15",
+        "name": "G 15 år",
         "ageclasses": ["G 15 år"],
+        "gender": "M",
         "event_id": event_id,
         "group": 1,
         "order": 2,

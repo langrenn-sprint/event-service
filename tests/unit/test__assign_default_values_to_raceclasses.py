@@ -48,19 +48,27 @@ async def test_assign_default_values_to_raceclasses_two_ageclasses(
         return_value=[],
     )
     raceclasses = [
-        Raceclass(name="J15", ageclasses=["15"], event_id="event1"),
-        Raceclass(name="G15", ageclasses=["16"], event_id="event1"),
-        Raceclass(name="J16", ageclasses=["16"], event_id="event1"),
-        Raceclass(name="G16", ageclasses=["16"], event_id="event1"),
+        Raceclass(
+            name="J 15 år", ageclasses=["J 15 år"], gender="K", event_id="event1"
+        ),
+        Raceclass(
+            name="G 15 år", ageclasses=["G 15 år"], gender="M", event_id="event1"
+        ),
+        Raceclass(
+            name="J 16 år", ageclasses=["J 16 år"], gender="K", event_id="event1"
+        ),
+        Raceclass(
+            name="G 16 år", ageclasses=["G 16 år"], gender="M", event_id="event1"
+        ),
     ]
     result = _assign_default_values_to_raceclasses(
         default_raceclasses_config, raceclasses
     )
     # Check order:
-    assert result[0].name == "G16"
-    assert result[1].name == "J16"
-    assert result[2].name == "G15"
-    assert result[3].name == "J15"
+    assert result[0].name == "G 16 år"
+    assert result[1].name == "J 16 år"
+    assert result[2].name == "G 15 år"
+    assert result[3].name == "J 15 år"
     # Check groups:
     assert result[0].group == 1
     assert result[1].group == 1
@@ -89,43 +97,53 @@ async def test_assign_default_values_to_raceclasses_three_ageclasses_and_one_unr
         return_value=[],
     )
     raceclasses = [
-        Raceclass(name="J15", ageclasses=["15"], event_id="event1"),
-        Raceclass(name="G15", ageclasses=["16"], event_id="event1"),
-        Raceclass(name="J16", ageclasses=["16"], event_id="event1"),
-        Raceclass(name="G16", ageclasses=["16"], event_id="event1"),
-        Raceclass(name="J8", ageclasses=["8"], event_id="event1"),
-        Raceclass(name="G8", ageclasses=["8"], event_id="event1"),
+        Raceclass(
+            name="J 15 år", ageclasses=["J 15 år"], gender="K", event_id="event1"
+        ),
+        Raceclass(
+            name="G 15 år", ageclasses=["G 15 år"], gender="M", event_id="event1"
+        ),
+        Raceclass(
+            name="J 16 år", ageclasses=["J 16 år"], gender="K", event_id="event1"
+        ),
+        Raceclass(
+            name="G 16 år", ageclasses=["G 16 år"], gender="M", event_id="event1"
+        ),
+        Raceclass(name="J 8 år", ageclasses=["J 8 år"], gender="K", event_id="event1"),
+        Raceclass(name="G 8 år", ageclasses=["G 8 år"], gender="M", event_id="event1"),
     ]
     result = _assign_default_values_to_raceclasses(
         default_raceclasses_config, raceclasses
     )
     # Check order:
-    assert result[0].name == "G16"
-    assert result[1].name == "J16"
-    assert result[2].name == "G15"
-    assert result[3].name == "J15"
-    assert result[4].name == "G8"
-    assert result[5].name == "J8"
-    # Check groups:
+    assert result[0].name == "G 16 år"
     assert result[0].group == 1
-    assert result[1].group == 1
-    assert result[2].group == 2
-    assert result[3].group == 2
-    assert result[4].group == 3
-    assert result[5].group == 3
-    # Check order:
     assert result[0].order == 1
-    assert result[1].order == 2
-    assert result[2].order == 1
-    assert result[3].order == 2
-    assert result[4].order == 1
-    assert result[5].order == 2
-    # Check ranking:
     assert result[0].ranking is True
+
+    assert result[1].name == "J 16 år"
+    assert result[1].group == 1
+    assert result[1].order == 2
     assert result[1].ranking is True
+
+    assert result[2].name == "G 15 år"
+    assert result[2].group == 2
+    assert result[2].order == 1
     assert result[2].ranking is True
+
+    assert result[3].name == "J 15 år"
+    assert result[3].group == 2
+    assert result[3].order == 2
     assert result[3].ranking is True
+
+    assert result[4].name == "G 8 år"
+    assert result[4].group == 3
+    assert result[4].order == 1
     assert result[4].ranking is False
+
+    assert result[5].name == "J 8 år"
+    assert result[5].group == 3
+    assert result[5].order == 2
     assert result[5].ranking is False
 
 
@@ -140,63 +158,125 @@ async def test_assign_default_values_to_raceclasses_all(
         return_value=[],
     )
     raceclasses = [
-        Raceclass(name="J15", ageclasses=["J 15 år"], event_id="event1"),
-        Raceclass(name="G15", ageclasses=["G 16 år"], event_id="event1"),
-        Raceclass(name="J16", ageclasses=["J 16 år"], event_id="event1"),
-        Raceclass(name="G16", ageclasses=["G 16 år"], event_id="event1"),
-        Raceclass(name="J8", ageclasses=["J 8 år"], event_id="event1"),
-        Raceclass(name="G8", ageclasses=["G 8 år"], event_id="event1"),
-        Raceclass(name="J9", ageclasses=["J 9 år"], event_id="event1"),
-        Raceclass(name="G9", ageclasses=["G 9 år"], event_id="event1"),
-        Raceclass(name="J10", ageclasses=["J 10 år"], event_id="event1"),
-        Raceclass(name="G10", ageclasses=["G 10 år"], event_id="event1"),
-        Raceclass(name="J11", ageclasses=["J 11 år"], event_id="event1"),
-        Raceclass(name="G11", ageclasses=["G 11 år"], event_id="event1"),
-        Raceclass(name="J12", ageclasses=["J 12 år"], event_id="event1"),
-        Raceclass(name="G12", ageclasses=["G 12 år"], event_id="event1"),
-        Raceclass(name="J13", ageclasses=["J 13 år"], event_id="event1"),
-        Raceclass(name="G13", ageclasses=["G 13 år"], event_id="event1"),
-        Raceclass(name="J14", ageclasses=["J 14 år"], event_id="event1"),
-        Raceclass(name="G14", ageclasses=["G 14 år"], event_id="event1"),
-        Raceclass(name="KS", ageclasses=["Kvinner senior"], event_id="event1"),
-        Raceclass(name="MS", ageclasses=["Menn senior"], event_id="event_id"),
-        Raceclass(name="K19-20", ageclasses=["Kvinner 19-20"], event_id="event1"),
-        Raceclass(name="M19-20", ageclasses=["Menn 19-20"], event_id="event1"),
-        Raceclass(name="K18", ageclasses=["Kvinner 18"], event_id="event1"),
-        Raceclass(name="M18", ageclasses=["Menn 18"], event_id="event1"),
-        Raceclass(name="K17", ageclasses=["Kvinner 17"], event_id="event1"),
-        Raceclass(name="M17", ageclasses=["Menn 17"], event_id="event1"),
+        Raceclass(
+            name="J 15 år", ageclasses=["J 15 år"], gender="K", event_id="event1"
+        ),
+        Raceclass(
+            name="G 15 år", ageclasses=["G 15 år"], gender="M", event_id="event1"
+        ),
+        Raceclass(
+            name="J 16 år", ageclasses=["J 16 år"], gender="K", event_id="event1"
+        ),
+        Raceclass(
+            name="G 16 år", ageclasses=["G 16 år"], gender="M", event_id="event1"
+        ),
+        Raceclass(name="J 8 år", ageclasses=["J 8 år"], gender="K", event_id="event1"),
+        Raceclass(name="G 8 år", ageclasses=["G 8 år"], gender="M", event_id="event1"),
+        Raceclass(name="J 9 år", ageclasses=["J 9 år"], gender="K", event_id="event1"),
+        Raceclass(name="G 9 år", ageclasses=["G 9 år"], gender="M", event_id="event1"),
+        Raceclass(
+            name="J 10 år", ageclasses=["J 10 år"], gender="K", event_id="event1"
+        ),
+        Raceclass(
+            name="G 10 år", ageclasses=["G 10 år"], gender="M", event_id="event1"
+        ),
+        Raceclass(
+            name="J 11 år", ageclasses=["J 11 år"], gender="K", event_id="event1"
+        ),
+        Raceclass(
+            name="G 11 år", ageclasses=["G 11 år"], gender="M", event_id="event1"
+        ),
+        Raceclass(
+            name="J 12 år", ageclasses=["J 12 år"], gender="K", event_id="event1"
+        ),
+        Raceclass(
+            name="G 12 år", ageclasses=["G 12 år"], gender="M", event_id="event1"
+        ),
+        Raceclass(
+            name="J 13 år", ageclasses=["J 13 år"], gender="K", event_id="event1"
+        ),
+        Raceclass(
+            name="G 13 år", ageclasses=["G 13 år"], gender="M", event_id="event1"
+        ),
+        Raceclass(
+            name="J 14 år", ageclasses=["J 14 år"], gender="K", event_id="event1"
+        ),
+        Raceclass(
+            name="G 14 år", ageclasses=["G 14 år"], gender="M", event_id="event1"
+        ),
+        Raceclass(
+            name="Kvinner senior",
+            ageclasses=["Kvinner senior"],
+            gender="K",
+            event_id="event1",
+        ),
+        Raceclass(
+            name="Menn senior",
+            ageclasses=["Menn senior"],
+            gender="M",
+            event_id="event_id",
+        ),
+        Raceclass(
+            name="Kvinner 19-20",
+            ageclasses=["Kvinner 19-20"],
+            gender="K",
+            event_id="event1",
+        ),
+        Raceclass(
+            name="Menn 19-20",
+            ageclasses=["Menn 19-20"],
+            gender="M",
+            event_id="event1",
+        ),
+        Raceclass(
+            name="Kvinner 18",
+            ageclasses=["Kvinner 18"],
+            gender="K",
+            event_id="event1",
+        ),
+        Raceclass(
+            name="Menn 18", ageclasses=["Menn 18"], gender="M", event_id="event1"
+        ),
+        Raceclass(
+            name="Kvinner 17",
+            ageclasses=["Kvinner 17"],
+            gender="K",
+            event_id="event1",
+        ),
+        Raceclass(
+            name="Menn 17", ageclasses=["Menn 17"], gender="M", event_id="event1"
+        ),
     ]
     result = _assign_default_values_to_raceclasses(
         default_raceclasses_config, raceclasses
     )
     # Check order:
-    assert result[0].name == "MS"
-    assert result[1].name == "KS"
-    assert result[2].name == "M19-20"
-    assert result[3].name == "K19-20"
-    assert result[4].name == "M18"
-    assert result[5].name == "K18"
-    assert result[6].name == "M17"
-    assert result[7].name == "K17"
-    assert result[8].name == "G16"
-    assert result[9].name == "J16"
-    assert result[10].name == "G15"
-    assert result[11].name == "J15"
-    assert result[12].name == "G14"
-    assert result[13].name == "J14"
-    assert result[14].name == "G13"
-    assert result[15].name == "J13"
-    assert result[16].name == "G12"
-    assert result[17].name == "J12"
-    assert result[18].name == "G11"
-    assert result[19].name == "J11"
-    assert result[20].name == "G10"
-    assert result[21].name == "J10"
-    assert result[22].name == "G9"
-    assert result[23].name == "J9"
-    assert result[24].name == "G8"
-    assert result[25].name == "J8"
+    assert result[0].name == "Menn senior"
+    assert result[1].name == "Kvinner senior"
+    assert result[2].name == "Menn 19-20"
+    assert result[3].name == "Kvinner 19-20"
+    assert result[4].name == "Menn 18"
+    assert result[5].name == "Kvinner 18"
+    assert result[6].name == "Menn 17"
+    assert result[7].name == "Kvinner 17"
+    assert result[8].name == "G 16 år"
+    assert result[9].name == "J 16 år"
+    assert result[10].name == "G 15 år"
+    assert result[11].name == "J 15 år"
+    assert result[12].name == "G 14 år"
+    assert result[13].name == "J 14 år"
+    assert result[14].name == "G 13 år"
+    assert result[15].name == "J 13 år"
+    assert result[16].name == "G 12 år"
+    assert result[17].name == "J 12 år"
+    assert result[18].name == "G 11 år"
+    assert result[19].name == "J 11 år"
+    assert result[20].name == "G 10 år"
+    assert result[21].name == "J 10 år"
+    assert result[22].name == "G 9 år"
+    assert result[23].name == "J 9 år"
+    assert result[24].name == "G 8 år"
+    assert result[25].name == "J 8 år"
     # Check groups, orders and rankings::
     # MS
     assert result[0].group == 1

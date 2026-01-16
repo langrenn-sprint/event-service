@@ -6,7 +6,6 @@ from typing import Any
 
 from event_service.adapters import RaceclassesAdapter
 from event_service.models import Raceclass
-from event_service.utils.validate_ageclass import validate_ageclass
 
 from .events_service import EventNotFoundError, EventsService
 from .exceptions import IllegalValueError, RaceclassNotFoundError
@@ -81,11 +80,6 @@ class RaceclassesService:
             raise IllegalValueError(msg) from None
         # Remove spaces from ageclasses:
         raceclass.ageclasses = [ageclass.strip() for ageclass in raceclass.ageclasses]
-        # Validate raceclasses:
-        try:
-            await validate_raceclass(raceclass)
-        except IllegalValueError as e:
-            raise e from e
         # create id
         raceclass_id = create_id()
         raceclass.id = raceclass_id
@@ -154,11 +148,6 @@ class RaceclassesService:
             raise IllegalValueError(msg) from None
         # Remove spaces from ageclasses:
         raceclass.ageclasses = [ageclass.strip() for ageclass in raceclass.ageclasses]
-        # Validate raceclasses:
-        try:
-            await validate_raceclass(raceclass)
-        except IllegalValueError as e:
-            raise e from e
         # Everything ok, update:
         new_raceclass = raceclass.to_dict()
         return await RaceclassesAdapter.update_raceclass(
@@ -180,14 +169,3 @@ class RaceclassesService:
         return await RaceclassesAdapter.delete_raceclass(event_id, raceclass_id)
 
     # -- helper methods
-
-
-async def validate_raceclass(raceclass: Raceclass) -> None:
-    """Validator function for raceclasses."""
-    # Check that ageclass is valid:
-    if hasattr(raceclass, "ageclasses"):
-        for ageclass in raceclass.ageclasses:
-            try:
-                await validate_ageclass(ageclass)
-            except IllegalValueError as e:
-                raise e from e
