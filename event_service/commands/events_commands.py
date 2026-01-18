@@ -72,7 +72,7 @@ class EventsCommands:
 async def create_raceclass(event_id: str, contestant: Contestant) -> None:
     """Create raceclass function."""
     new_raceclass = Raceclass(
-        name=contestant.ageclass,
+        name=contestant.ageclass.replace(" ", ""),  # name is ageclass without spaces
         gender=contestant.gender,
         ageclasses=[contestant.ageclass],
         event_id=event_id,
@@ -108,12 +108,12 @@ def _assign_default_values_to_raceclasses(
         raceclasses_sorted = sorted(
             raceclasses,
             key=lambda raceclass: (
-                raceclasses_config.ageclass_order.index(raceclass.name),
+                raceclasses_config.ageclass_order.index(raceclass.ageclasses[0]),
                 (raceclasses_config.gender_order.index(raceclass.gender)),
             ),
         )
 
-        # Group by raceclass.name[1:] (age) and assign order in group:
+        # Group by age and assign order in group:
         if raceclasses_config.grouping_feature != "same_age":  # pragma: no cover
             msg = f"Unsupporte grouping feature: {raceclasses_config.grouping_feature}"
             logger.warning(msg)
@@ -122,8 +122,8 @@ def _assign_default_values_to_raceclasses(
         current_order = 0
         previous_ageclass = None
         for raceclass in raceclasses_sorted:
-            # We assume that first part is gender, the rest is age:
-            ageclass = raceclass.name.split()[1:]
+            # We assume that first part of ageclasse is gender, the rest is age:
+            ageclass = raceclass.ageclasses[0].split()[1:]
             if ageclass != previous_ageclass:
                 current_group += 1
                 current_order = 1
@@ -137,7 +137,7 @@ def _assign_default_values_to_raceclasses(
         # Assign ranking=False for unranked ageclasses:
         for raceclass in raceclasses_sorted:
             if (
-                raceclass.name in raceclasses_config.unranked_ageclasses
+                raceclass.ageclasses[0] in raceclasses_config.unranked_ageclasses
             ):  # pragma: no cover
                 raceclass.ranking = False
     except Exception as e:  # noqa: BLE001 # pragma: no cover
