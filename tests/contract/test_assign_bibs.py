@@ -141,8 +141,9 @@ async def test_assign_bibs(
         raceclass_G15 = await _get_raceclass_by_ageclass(raceclasses, "G 15 år")
         raceclass_G15_16: dict = {
             "event_id": event_id,
-            "name": "G15-16",
+            "name": "G 15-16 år".replace(" ", ""),
             "ageclasses": raceclass_G15["ageclasses"] + raceclass_G16["ageclasses"],
+            "gender": "M",
             "ranking": True,
             "seeding": False,
         }
@@ -238,51 +239,51 @@ async def _get_raceclass_by_ageclass(raceclasses: list[dict], ageclass: str) -> 
 async def _decide_group_order_and_ranking(  # noqa: C901
     raceclass: dict,
 ) -> tuple[int, int, bool]:
-    if raceclass["name"] == "KS":
+    if raceclass["name"] == "Kvinner senior".replace(" ", ""):
         return (1, 1, True)
-    if raceclass["name"] == "MS":
+    if raceclass["name"] == "Menn senior".replace(" ", ""):
         return (1, 2, True)
-    if raceclass["name"] == "M19-20":
+    if raceclass["name"] == "Menn 19-20".replace(" ", ""):
         return (1, 3, True)
-    if raceclass["name"] == "K19-20":
+    if raceclass["name"] == "Kvinner 19-20".replace(" ", ""):
         return (1, 4, True)
-    if raceclass["name"] == "M18":
+    if raceclass["name"] == "Menn 18".replace(" ", ""):
         return (2, 1, True)
-    if raceclass["name"] == "K18":
+    if raceclass["name"] == "Kvinner 18".replace(" ", ""):
         return (2, 2, True)
-    if raceclass["name"] == "M17":
+    if raceclass["name"] == "Menn 17".replace(" ", ""):
         return (3, 1, True)
-    if raceclass["name"] == "K17":
+    if raceclass["name"] == "Kvinner 17".replace(" ", ""):
         return (3, 2, True)
-    if raceclass["name"] == "G15-16":
+    if raceclass["name"] == "G 15-16 år".replace(" ", ""):
         return (4, 1, True)
-    if raceclass["name"] == "J16":
+    if raceclass["name"] == "J 16 år".replace(" ", ""):
         return (4, 2, True)
-    if raceclass["name"] == "J15":
+    if raceclass["name"] == "J 15 år".replace(" ", ""):
         return (4, 3, True)
-    if raceclass["name"] == "G14":
+    if raceclass["name"] == "G 14 år".replace(" ", ""):
         return (5, 1, True)
-    if raceclass["name"] == "J14":
+    if raceclass["name"] == "J 14 år".replace(" ", ""):
         return (5, 2, True)
-    if raceclass["name"] == "G13":
+    if raceclass["name"] == "G 13 år".replace(" ", ""):
         return (5, 3, True)
-    if raceclass["name"] == "J13":
+    if raceclass["name"] == "J 13 år".replace(" ", ""):
         return (5, 4, True)
-    if raceclass["name"] == "G12":
+    if raceclass["name"] == "G 12 år".replace(" ", ""):
         return (6, 1, True)
-    if raceclass["name"] == "J12":
+    if raceclass["name"] == "J 12 år".replace(" ", ""):
         return (6, 2, True)
-    if raceclass["name"] == "G11":
+    if raceclass["name"] == "G 11 år".replace(" ", ""):
         return (6, 3, True)
-    if raceclass["name"] == "J11":
+    if raceclass["name"] == "J 11 år".replace(" ", ""):
         return (6, 4, True)
-    if raceclass["name"] == "G10":
+    if raceclass["name"] == "G 10 år".replace(" ", ""):
         return (7, 1, False)
-    if raceclass["name"] == "J10":
+    if raceclass["name"] == "J 10 år".replace(" ", ""):
         return (7, 2, False)
-    if raceclass["name"] == "G9":
+    if raceclass["name"] == "G 9 år".replace(" ", ""):
         return (8, 1, False)
-    if raceclass["name"] == "J9":
+    if raceclass["name"] == "J 9 år".replace(" ", ""):
         return (8, 2, False)
     return (0, 0, True)  # should not reach this point
 

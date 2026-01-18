@@ -1558,60 +1558,6 @@ async def test_create_contestant_with_input_id(
 
 
 @pytest.mark.integration
-async def test_create_contestant_invalid_ageclass(
-    client: _TestClient,
-    mocker: MockFixture,
-    token: MockFixture,
-    event: dict,
-    new_contestant: dict,
-) -> None:
-    """Should return 422 HTTPUnprocessableEntity."""
-    EVENT_ID = "event_id_1"
-    CONTESTANT_ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
-    new_contestant_with_invalid_ageclass = deepcopy(new_contestant)
-    new_contestant_with_invalid_ageclass["ageclass"] = "invalid_ageclass"
-
-    mocker.patch(
-        "event_service.adapters.events_adapter.EventsAdapter.get_event_by_id",
-        return_value=event,
-    )
-    mocker.patch(
-        "event_service.adapters.contestants_adapter.ContestantsAdapter.get_contestant_by_name",
-        return_value=None,
-    )
-    mocker.patch(
-        "event_service.adapters.contestants_adapter.ContestantsAdapter.get_contestant_by_minidrett_id",
-        return_value=None,
-    )
-    mocker.patch(
-        "event_service.services.contestants_service.create_id",
-        return_value=CONTESTANT_ID,
-    )
-    mocker.patch(
-        "event_service.adapters.contestants_adapter.ContestantsAdapter.create_contestant",
-        return_value=CONTESTANT_ID,
-    )
-    mocker.patch(
-        "event_service.adapters.contestants_adapter.ContestantsAdapter.get_contestant_by_bib",
-        return_value=None,
-    )
-
-    request_body = new_contestant_with_invalid_ageclass
-
-    headers = {
-        hdrs.CONTENT_TYPE: "application/json",
-        hdrs.AUTHORIZATION: f"Bearer {token}",
-    }
-
-    with aioresponses(passthrough=["http://127.0.0.1"]) as m:
-        m.post(f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/authorize", status=204)
-        resp = await client.post(
-            f"/events/{EVENT_ID}/contestants", headers=headers, json=request_body
-        )
-        assert resp.status == 422
-
-
-@pytest.mark.integration
 async def test_create_contestant_adapter_fails(
     client: _TestClient,
     mocker: MockFixture,

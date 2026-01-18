@@ -72,7 +72,8 @@ class EventsCommands:
 async def create_raceclass(event_id: str, contestant: Contestant) -> None:
     """Create raceclass function."""
     new_raceclass = Raceclass(
-        name=_create_raceclass_name(contestant.ageclass),
+        name=contestant.ageclass.replace(" ", ""),  # name is ageclass without spaces
+        gender=contestant.gender,
         ageclasses=[contestant.ageclass],
         event_id=event_id,
         ranking=True,
@@ -83,36 +84,6 @@ async def create_raceclass(event_id: str, contestant: Contestant) -> None:
     if not result:
         msg = f"Create of raceclass with name {new_raceclass.name} failed."
         raise RaceclassCreateError(msg) from None
-
-
-# helpers
-def _create_raceclass_name(ageclass: str) -> str:
-    """Helper function to create name of raceclass.
-
-    Args:
-        ageclass: Ageclass string from contestant object.
-
-    Returns:
-        raceclass name string.
-    """
-    name = ageclass
-    # Replace substrings to create raceclass name:
-    name = name.replace("Jenter", "J")
-    name = name.replace("Gutter", "G")
-    name = name.replace(" ", "")
-    name = name.replace("Menn", "M")
-    name = name.replace("Herrer", "M")
-    name = name.replace("Kvinner", "K")
-    name = name.replace("Damer", "K")
-    name = name.replace("Para", "P")
-    name = name.replace("senior", "S")
-    name = name.replace("Senior", "S")
-    name = name.replace("junior", "J")
-    name = name.replace("Junior", "J")
-    name = name.replace("Felles", "F")
-    name = name.replace("år", "")
-
-    return name  # noqa: RET504
 
 
 def _assign_default_values_to_raceclasses(
@@ -137,16 +108,12 @@ def _assign_default_values_to_raceclasses(
         raceclasses_sorted = sorted(
             raceclasses,
             key=lambda raceclass: (
-                raceclasses_config.ageclass_order.index(
-                    raceclass.name
-                    if raceclass.name in raceclasses_config.ageclass_order
-                    else raceclass.name[1:]
-                ),
-                (raceclasses_config.gender_order.index(raceclass.name[0])),
+                raceclasses_config.ageclass_order.index(raceclass.ageclasses[0]),
+                (raceclasses_config.gender_order.index(raceclass.gender)),
             ),
         )
 
-        # Group by raceclass.name[1:] (age) and assign order in group:
+        # Group by age and assign order in group:
         if raceclasses_config.grouping_feature != "same_age":  # pragma: no cover
             msg = f"Unsupporte grouping feature: {raceclasses_config.grouping_feature}"
             logger.warning(msg)
@@ -155,7 +122,8 @@ def _assign_default_values_to_raceclasses(
         current_order = 0
         previous_ageclass = None
         for raceclass in raceclasses_sorted:
-            ageclass = raceclass.name[1:]
+            # We assume that first part of ageclasse is gender, the rest is age:
+            ageclass = raceclass.ageclasses[0].split()[1:]
             if ageclass != previous_ageclass:
                 current_group += 1
                 current_order = 1
@@ -168,8 +136,9 @@ def _assign_default_values_to_raceclasses(
 
         # Assign ranking=False for unranked ageclasses:
         for raceclass in raceclasses_sorted:
-            ageclass = raceclass.name[1:]
-            if ageclass in raceclasses_config.unranked_ageclasses:  # pragma: no cover
+            if (
+                raceclass.ageclasses[0] in raceclasses_config.unranked_ageclasses
+            ):  # pragma: no cover
                 raceclass.ranking = False
     except Exception as e:  # noqa: BLE001 # pragma: no cover
         # In case of error, return the raceclasses unsorted:

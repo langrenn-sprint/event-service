@@ -17,6 +17,7 @@ class Raceclass(DataClassJsonMixin):
 
     name: str
     ageclasses: list[str]
+    gender: str
     event_id: str
     group: int = 0
     order: int = 0
