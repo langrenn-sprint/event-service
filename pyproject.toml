@@ -97,10 +97,6 @@ known-first-party = ["event_service"]
 # Use Google-style docstrings.
 convention = "google"
 
-[tool.pyright]
-venvPath = "." # rye installs the venv in the current dir
-venv = ".venv" # in a folder called `.venv`
-
 [tool.deptry]
 ignore_notebooks = true
 known_first_party = ["event_service"]
