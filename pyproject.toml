@@ -57,8 +57,8 @@ dev = [
     "ruff>=0.8.4",
     "poethepoet>=0.32.0",
     "deptry>=0.21.2",
-    "pyright>=1.1.391",
     "pytest-env>=1.1.5",
+    "ty>=0.0.12",
 ]
 
 [tool.ruff.lint]
@@ -150,18 +150,18 @@ markers = [
 [tool.poe.tasks]
 format = { cmd = "uv run ruff format" }
 lint = { cmd = "uv run ruff check --fix" }
-pyright = { cmd = "uv run pyright" }
-check_deps = { cmd = "uv run deptry ." }
+check-types = "uv run ty check ."
+check-deps = { cmd = "uv run deptry ." }
 audit = { cmd = "uv run pip-audit" }
-unit_test = { cmd = "uv run pytest -m unit", env = { "CONFIG" = "test" } }
-integration_test = { cmd = "uv run pytest -m integration -s --cov --cov-report=term-missing --cov-report=html:.htmlcov", env = { "CONFIG" = "test" } }
-contract_test = { cmd = "uv run pytest -m contract -s" }
+unit-test = { cmd = "uv run pytest -m unit", env = { "CONFIG" = "test" } }
+integration-test = { cmd = "uv run pytest -m integration -s --cov --cov-report=term-missing --cov-report=html:.htmlcov", env = { "CONFIG" = "test" } }
+contract-test = { cmd = "uv run pytest -m contract -s" }
 release = { sequence = [
     "lint",
-    "pyright",
-    "check_deps",
+    "check-types",
+    "check-deps",
     "audit",
-    "unit_test",
-    "integration_test",
-    "contract_test",
+    "unit-test",
+    "integration-test",
+    "contract-test",
 ] }

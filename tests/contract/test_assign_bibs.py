@@ -125,7 +125,7 @@ async def test_assign_bibs(
         async with session.post(url, headers=headers) as response:
             if response.status != 201:
                 body = await response.json()
-            assert response.status == 201, body["detail"]  # type: ignore [reportAttributeAccessIssue]
+            assert response.status == 201, body["detail"]
             assert f"/events/{event_id}/raceclasses" in response.headers[hdrs.LOCATION]
 
         # We need to work on the raceclasses:
@@ -191,7 +191,7 @@ async def test_assign_bibs(
         async with session.post(url, headers=headers) as response:
             if response.status != 201:
                 body = await response.json()
-            assert response.status == 201, body  # type: ignore [reportAttributeAccessIssue]
+            assert response.status == 201, body
             assert f"/events/{event_id}/contestants" in response.headers[hdrs.LOCATION]
 
         # ASSERT #

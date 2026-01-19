@@ -124,7 +124,7 @@ async def test_assign_bibs_start_on_100(
         async with session.post(url, headers=headers) as response:
             if response.status != 201:
                 body = await response.json()
-            assert response.status == 201, body["detail"]  # type: ignore [reportAttributeAccessIssue]
+            assert response.status == 201, body["detail"]
             assert f"/events/{event_id}/raceclasses" in response.headers[hdrs.LOCATION]
 
         start_bib = 100
@@ -135,7 +135,9 @@ async def test_assign_bibs_start_on_100(
         async with session.post(url, headers=headers) as response:
             if response.status != 201:
                 body = await response.json()
-            assert response.status == 201, body  # type: ignore [reportAttributeAccessIssue]
+            assert response.status == 201, (
+                body if body else "Response status was not 201"
+            )
             assert f"/events/{event_id}/contestants" in response.headers[hdrs.LOCATION]
 
         # ASSERT #

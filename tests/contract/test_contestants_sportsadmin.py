@@ -375,7 +375,7 @@ async def test_get_all_contestants_in_given_event_by_bib(
         async with session.post(url, headers=headers) as response:
             if response.status != 201:
                 body = await response.json()
-            assert response.status == 201, body["detail"]  # type: ignore [reportAttributeAccessIssue]
+            assert response.status == 201, body["detail"]
             assert f"/events/{event_id}/raceclasses" in response.headers[hdrs.LOCATION]
 
         # Check that we got the raceclasses:

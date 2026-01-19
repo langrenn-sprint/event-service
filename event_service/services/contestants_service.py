@@ -237,16 +237,16 @@ class ContestantsService:
         }
         for _c in contestants_dict:
             result["total"] += 1
-            _c["event_id"] = event_id  # type: ignore [reportIndexIssue]
+            _c["event_id"] = event_id
             contestant_id = create_id()
-            _c["id"] = contestant_id  # type: ignore [reportIndexIssue]
+            _c["id"] = contestant_id
             # Validate contestant:
             try:
                 # datetime to string in isoformat:
                 try:
-                    if _c["registration_date_time"]:  # type: ignore [reportArgumentType]
-                        _c["registration_date_time"] = datetime.strptime(  # noqa: DTZ007  # type: ignore [reportArgumentType]
-                            _c["registration_date_time"],  # type: ignore [reportArgumentType]
+                    if _c["registration_date_time"]:
+                        _c["registration_date_time"] = datetime.strptime(  # noqa: DTZ007
+                            _c["registration_date_time"],
                             "%d.%m.%Y %H:%M:%S",
                         ).isoformat()
                 except ValueError as e:
@@ -398,7 +398,7 @@ async def _parse_contestants_sportsadmin(contestants: str) -> pd.DataFrame:
             dtype=str,
             skiprows=2,
             header=0,
-            usecols=cols,  # noqa: PGH003 # type: ignore
+            usecols=cols,
         )
         contestants_df.columns = [
             "ageclass",
@@ -446,7 +446,7 @@ async def _parse_contestants_i_sonen(contestants: str) -> pd.DataFrame:
             encoding="utf-8",
             dtype=str,
             header=0,
-            usecols=cols,  # noqa: PGH003 # type: ignore
+            usecols=cols,
         )
         # Need to map column names to dataclass:
         contestants_df.rename(
@@ -468,10 +468,10 @@ async def _parse_contestants_i_sonen(contestants: str) -> pd.DataFrame:
             inplace=True,  # noqa: PD002
         )
         # We need to combine registration_date and registration_time to one column:
-        contestants_df["registration_date_time"] = (  # type: ignore [reportArgumentType]
-            contestants_df["registration_date"]  # type: ignore [reportArgumentType]
+        contestants_df["registration_date_time"] = (
+            contestants_df["registration_date"]
             + " "
-            + contestants_df["registration_time"]  # type: ignore [reportArgumentType]
+            + contestants_df["registration_time"]
             + ":00"
         )
 
