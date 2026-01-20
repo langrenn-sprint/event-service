@@ -1,4 +1,13 @@
 {
+  "naming_rules": {
+    "Gutter": "G",
+    "Jenter": "J",
+    "Menn": "M",
+    "Kvinner": "K",
+    "senior": "S",
+    "år": "",
+    " ": ""
+  },
   "gender_order": ["M", "K", "G", "J"],
   "ageclass_order": [
     "Menn senior",
