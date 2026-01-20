@@ -49,7 +49,7 @@ class EventsCommands:
                 raise RaceclassNotUniqueNameError(msg) from None
 
             if len(raceclasses) == 0:  # raceclass does not exist
-                await create_raceclass(event_id, contestant)
+                await create_raceclass(event_id, contestant, cls.raceclasses_config)
 
         # Finally we assign default group and order values and sort:
         raceclasses = await RaceclassesService.get_all_raceclasses(event_id=event_id)
@@ -69,10 +69,12 @@ class EventsCommands:
                     raise RaceclassUpdateError(msg) from None
 
 
-async def create_raceclass(event_id: str, contestant: Contestant) -> None:
+async def create_raceclass(
+    event_id: str, contestant: Contestant, raceclasses_config: RaceclassesConfig
+) -> None:
     """Create raceclass function."""
     new_raceclass = Raceclass(
-        name=contestant.ageclass.replace(" ", ""),  # name is ageclass without spaces
+        name=assign_name(raceclasses_config, contestant.ageclass),
         gender=contestant.gender,
         ageclasses=[contestant.ageclass],
         event_id=event_id,
@@ -84,6 +86,16 @@ async def create_raceclass(event_id: str, contestant: Contestant) -> None:
     if not result:
         msg = f"Create of raceclass with name {new_raceclass.name} failed."
         raise RaceclassCreateError(msg) from None
+
+
+def assign_name(raceclasses_config: RaceclassesConfig, ageclass: str) -> str:
+    """Assign a name to a raceclass based on the ageclass string."""
+    raceclass_name = ageclass
+    for naming_rule in raceclasses_config.naming_rules:
+        raceclass_name = raceclass_name.replace(
+            naming_rule, raceclasses_config.naming_rules[naming_rule]
+        )
+    return raceclass_name
 
 
 def _assign_default_values_to_raceclasses(

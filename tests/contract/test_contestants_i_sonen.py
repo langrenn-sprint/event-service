@@ -283,7 +283,7 @@ async def test_get_all_contestants_in_given_event_by_raceclass(
         async with session.post(url, headers=headers) as response:
             assert response.status == 201
 
-        raceclass_name = "J 13 år".replace(" ", "")
+        raceclass_name = "J13"
         raceclass_parameter = quote(raceclass_name)
         url = f"{http_service}/events/{event_id}/contestants?raceclass={raceclass_parameter}"
 
