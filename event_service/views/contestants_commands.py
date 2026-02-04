@@ -58,7 +58,7 @@ class ContestantsAssignBibsView(View):
         event_id = self.request.match_info["eventId"]
         try:
             await ContestantsCommands.assign_bibs(
-                event_id, start_bib if start_bib else None
+                event_id, start_bib or None
             )
         except (EventNotFoundError, NoRaceclassInEventError) as e:
             raise HTTPNotFound(reason=str(e)) from e

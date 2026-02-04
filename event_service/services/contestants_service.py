@@ -391,7 +391,7 @@ async def _parse_contestants_sportsadmin(contestants: str) -> pd.DataFrame:
             "Team",
             "Betalt/påmeldt dato",
         ]
-        contestants_df = pd.read_csv(  # noqa: PGH003 # type: ignore
+        contestants_df = pd.read_csv(
             StringIO(contestants),
             sep=";",
             encoding="utf-8",
@@ -440,7 +440,7 @@ async def _parse_contestants_i_sonen(contestants: str) -> pd.DataFrame:
             "Klasse",
             "Øvelse",
         ]
-        contestants_df = pd.read_csv(  # noqa: PGH003 # type: ignore
+        contestants_df = pd.read_csv(
             StringIO(contestants),
             sep=";",
             encoding="utf-8",

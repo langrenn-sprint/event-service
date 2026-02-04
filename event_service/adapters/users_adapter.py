@@ -26,7 +26,7 @@ class UsersAdapter:
     async def authorize(cls: Any, token: str | None, roles: list) -> None:
         """Try to authorize."""
         url = f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/authorize"
-        body = {"token": token, "roles": roles}
+        body = {"token": token, "target_roles": roles}
 
         async with ClientSession() as session, session.post(url, json=body) as response:
             if response.status == HTTPStatus.NO_CONTENT:
@@ -36,6 +36,7 @@ class UsersAdapter:
             elif response.status == HTTPStatus.FORBIDDEN:
                 raise HTTPForbidden from None
             else:  # pragma: no cover
+                reason_text = await response.text()
                 raise HTTPInternalServerError(
-                    reason=f"Got unknown status from users service: {response.status}."
+                    reason=f"Got unknown status from users service: {response.status}/{reason_text}."
                 ) from None
