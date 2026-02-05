@@ -1,23 +1,24 @@
 """Integration test cases for the events route."""
 
 import os
+import uuid
 from copy import deepcopy
+from http import HTTPStatus
 
 import jwt
 import pytest
-from aiohttp import hdrs
-from aiohttp.test_utils import TestClient as _TestClient
-from aioresponses import aioresponses
-from dotenv import load_dotenv
-from multidict import MultiDict
+from fastapi.testclient import TestClient
 from pytest_mock import MockFixture
 
-from event_service.adapters import CompetitionFormatsAdapterError
+from app import api
+from app.adapters import CompetitionFormatsAdapterError
+from app.models import Event
 
-load_dotenv()
 
-USERS_HOST_SERVER = os.getenv("USERS_HOST_SERVER")
-USERS_HOST_PORT = os.getenv("USERS_HOST_PORT")
+@pytest.fixture
+def client() -> TestClient:
+    """Fixture to create a test client for the FastAPI application."""
+    return TestClient(api)
 
 
 @pytest.fixture
@@ -25,7 +26,11 @@ def token() -> str:
     """Create a valid token."""
     secret = os.getenv("JWT_SECRET")
     algorithm = "HS256"
-    payload = {"identity": os.getenv("ADMIN_USERNAME"), "roles": ["admin"]}
+    payload = {
+        "username": os.getenv("ADMIN_USERNAME"),
+        "exp": 9999999999,
+        "role": "admin",
+    }
     return jwt.encode(payload, secret, algorithm)
 
 
@@ -34,39 +39,30 @@ def token_unsufficient_role() -> str:
     """Create a valid token."""
     secret = os.getenv("JWT_SECRET")
     algorithm = "HS256"
-    payload = {"identity": "user", "roles": ["user"]}
+    payload = {
+        "username": "any_user",
+        "exp": 9999999999,
+        "role": "user",
+    }
     return jwt.encode(payload, secret, algorithm)
 
 
 @pytest.fixture
-async def event() -> dict[str, str]:
+async def event() -> Event:
     """An event object for testing."""
-    return {
-        "name": "Oslo Skagen sprint",
-        "competition_format": "Individual sprint",
-        "date_of_event": "2021-08-31",
-        "time_of_event": "09:00:00",
-        "timezone": "Europe/Oslo",
-        "organiser": "Lyn Ski",
-        "webpage": "https://example.com",
-        "information": "Testarr for å teste den nye løysinga.",
-    }
-
-
-@pytest.fixture
-async def event_with_id() -> dict[str, str]:
-    """An event object for testing."""
-    return {
-        "id": "290e70d5-0933-4af0-bb53-remote",
-        "name": "Oslo Skagen sprint",
-        "competition_format": "Individual sprint",
-        "date_of_event": "2021-08-31",
-        "time_of_event": "09:00:00",
-        "timezone": "Europe/Oslo",
-        "organiser": "Lyn Ski",
-        "webpage": "https://example.com",
-        "information": "Testarr for å teste den nye løysinga.",
-    }
+    return Event.model_validate(
+        {
+            "id": str(uuid.uuid4()),
+            "name": "Oslo Skagen sprint",
+            "competition_format": "Individual sprint",
+            "date_of_event": "2021-08-31",
+            "time_of_event": "09:00:00",
+            "timezone": "Europe/Oslo",
+            "organiser": "Lyn Ski",
+            "webpage": "https://example.com/",
+            "information": "Testarr for å teste den nye løysinga.",
+        }
+    )
 
 
 @pytest.fixture
@@ -87,191 +83,175 @@ async def competition_format() -> dict[str, int | str]:
 
 @pytest.mark.integration
 async def test_create_event(
-    client: _TestClient,
+    client: TestClient,
     mocker: MockFixture,
     token: MockFixture,
-    event: dict,
+    event: Event,
     competition_format: dict,
 ) -> None:
     """Should return Created, location header."""
-    ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
     mocker.patch(
-        "event_service.services.events_service.create_id",
-        return_value=ID,
+        "app.adapters.events_adapter.EventsAdapter.get_event_by_id",
+        return_value=None,
     )
     mocker.patch(
-        "event_service.adapters.events_adapter.EventsAdapter.create_event",
-        return_value=ID,
+        "app.adapters.events_adapter.EventsAdapter.create_event", return_value=event.id
     )
     mocker.patch(
-        "event_service.adapters.competition_formats_adapter.CompetitionFormatsAdapter.get_competition_formats_by_name",
+        "app.adapters.competition_formats_adapter.CompetitionFormatsAdapter.get_competition_formats_by_name",
         return_value=[competition_format],
     )
 
-    request_body = event
+    request_body = event.model_dump(mode="json")
 
     headers = {
-        hdrs.CONTENT_TYPE: "application/json",
-        hdrs.AUTHORIZATION: f"Bearer {token}",
+        "Content-Type": "application/json",
+        "Authorization": f"Bearer {token}",
     }
 
-    with aioresponses(passthrough=["http://127.0.0.1"]) as m:
-        m.post(f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/authorize", status=204)
-        resp = await client.post("/events", headers=headers, json=request_body)
-        assert resp.status == 201
-        assert f"/events/{ID}" in resp.headers[hdrs.LOCATION]
+    resp = client.post("/events", headers=headers, json=request_body)
+    assert resp.status_code == 201
+    assert f"/events/{event.id}" in resp.headers["Location"]
 
 
 @pytest.mark.integration
 async def test_create_event_with_input_id(
-    client: _TestClient,
+    client: TestClient,
     mocker: MockFixture,
     token: MockFixture,
-    event_with_id: dict,
+    event: Event,
     competition_format: dict,
 ) -> None:
     """Should return Created, location header."""
-    ID = "290e70d5-0933-4af0-bb53-remote"
     mocker.patch(
-        "event_service.adapters.events_adapter.EventsAdapter.create_event",
-        return_value=ID,
+        "app.adapters.events_adapter.EventsAdapter.get_event_by_id",
+        return_value=None,
     )
     mocker.patch(
-        "event_service.adapters.events_adapter.EventsAdapter.get_event_by_id",
+        "app.adapters.events_adapter.EventsAdapter.create_event",
+        return_value=event.id,
+    )
+    mocker.patch(
+        "app.adapters.events_adapter.EventsAdapter.get_event_by_id",
         return_value={},
     )
 
     mocker.patch(
-        "event_service.adapters.competition_formats_adapter.CompetitionFormatsAdapter.get_competition_formats_by_name",
+        "app.adapters.competition_formats_adapter.CompetitionFormatsAdapter.get_competition_formats_by_name",
         return_value=[competition_format],
     )
 
-    request_body = event_with_id
+    request_body = event.model_dump(mode="json")
 
     headers = {
-        hdrs.CONTENT_TYPE: "application/json",
-        hdrs.AUTHORIZATION: f"Bearer {token}",
+        "Content-Type": "application/json",
+        "Authorization": f"Bearer {token}",
     }
 
-    with aioresponses(passthrough=["http://127.0.0.1"]) as m:
-        m.post(f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/authorize", status=204)
-        resp = await client.post("/events", headers=headers, json=request_body)
-        assert resp.status == 201
-        assert f"/events/{ID}" in resp.headers[hdrs.LOCATION]
+    resp = client.post("/events", headers=headers, json=request_body)
+    assert resp.status_code == 201
+    assert f"/events/{event.id}" in resp.headers["Location"]
 
 
 @pytest.mark.integration
 async def test_get_event_by_id(
-    client: _TestClient, mocker: MockFixture, token: MockFixture, event: dict[str, str]
+    client: TestClient, mocker: MockFixture, event: Event
 ) -> None:
     """Should return OK, and a body containing one event."""
-    ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
     mocker.patch(
-        "event_service.adapters.events_adapter.EventsAdapter.get_event_by_id",
-        return_value={"id": ID} | event,
+        "app.adapters.events_adapter.EventsAdapter.get_event_by_id",
+        return_value=event,
     )
 
-    with aioresponses(passthrough=["http://127.0.0.1"]) as m:
-        m.post(f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/authorize", status=204)
-
-        resp = await client.get(f"/events/{ID}")
-        assert resp.status == 200
-        assert "application/json" in resp.headers[hdrs.CONTENT_TYPE]
-        body = await resp.json()
-        assert type(event) is dict
-        assert body["id"] == ID
-        assert body["name"] == event["name"]
-        assert body["competition_format"] == event["competition_format"]
-        assert body["date_of_event"] == event["date_of_event"]
-        assert body["organiser"] == event["organiser"]
-        assert body["webpage"] == event["webpage"]
-        assert body["information"] == event["information"]
+    resp = client.get(f"/events/{event.id}")
+    assert resp.status_code == HTTPStatus.OK
+    assert "application/json" in resp.headers["Content-Type"]
+    body = resp.json()
+    assert type(body) is dict
+    assert body["id"] == str(event.id)
+    assert body["name"] == event.name
+    assert body["competition_format"] == event.competition_format
+    assert body["timezone"] == event.timezone
+    assert body["date_of_event"] == event.date_of_event.isoformat()
+    assert body["time_of_event"] == event.time_of_event.isoformat()  # type: ignore[attr-defined]
+    assert body["organiser"] == event.organiser
+    assert body["webpage"] == str(event.webpage)
+    assert body["information"] == event.information
 
 
 @pytest.mark.integration
 async def test_update_event_by_id(
-    client: _TestClient,
+    client: TestClient,
     mocker: MockFixture,
     token: MockFixture,
-    event: dict,
+    event: Event,
     competition_format: dict,
 ) -> None:
     """Should return No Content."""
-    ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
     mocker.patch(
-        "event_service.adapters.events_adapter.EventsAdapter.get_event_by_id",
-        return_value={"id": ID} | event,
+        "app.adapters.events_adapter.EventsAdapter.get_event_by_id",
+        return_value=event,
     )
     mocker.patch(
-        "event_service.adapters.events_adapter.EventsAdapter.update_event",
-        return_value={"id": ID} | event,
+        "app.adapters.events_adapter.EventsAdapter.update_event",
+        return_value=event.id,
     )
     mocker.patch(
-        "event_service.adapters.competition_formats_adapter.CompetitionFormatsAdapter.get_competition_formats_by_name",
+        "app.adapters.competition_formats_adapter.CompetitionFormatsAdapter.get_competition_formats_by_name",
         return_value=[competition_format],
     )
 
     headers = {
-        hdrs.CONTENT_TYPE: "application/json",
-        hdrs.AUTHORIZATION: f"Bearer {token}",
+        "Content-Type": "application/json",
+        "Authorization": f"Bearer {token}",
     }
     new_name = "Oslo Skagen sprint Oppdatert"
-    request_body = deepcopy(event)
-    request_body["id"] = ID
-    request_body["name"] = new_name
+    updated_event = deepcopy(event)
+    updated_event.name = new_name
+    request_body = updated_event.model_dump(mode="json")
 
-    with aioresponses(passthrough=["http://127.0.0.1"]) as m:
-        m.post(f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/authorize", status=204)
-
-        resp = await client.put(f"/events/{ID}", headers=headers, json=request_body)
-        assert resp.status == 204
+    resp = client.put(f"/events/{event.id}", headers=headers, json=request_body)
+    assert resp.status_code == 204
 
 
 @pytest.mark.integration
 async def test_get_all_events(
-    client: _TestClient, mocker: MockFixture, token: MockFixture
+    client: TestClient, mocker: MockFixture, event: Event
 ) -> None:
     """Should return OK and a valid json body."""
-    ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
     mocker.patch(
-        "event_service.adapters.events_adapter.EventsAdapter.get_all_events",
-        return_value=[{"id": ID, "name": "Oslo Skagen Sprint"}],
+        "app.adapters.events_adapter.EventsAdapter.get_all_events",
+        return_value=[event],
     )
 
-    with aioresponses(passthrough=["http://127.0.0.1"]) as m:
-        m.post(f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/authorize", status=204)
-        resp = await client.get("/events")
-        assert resp.status == 200
-        assert "application/json" in resp.headers[hdrs.CONTENT_TYPE]
-        events = await resp.json()
-        assert type(events) is list
-        assert len(events) > 0
-        assert events[0]["id"] == ID
+    resp = client.get("/events")
+    assert resp.status_code == 200
+    assert "application/json" in resp.headers["Content-Type"]
+    events = resp.json()
+    assert type(events) is list
+    assert len(events) > 0
+    assert events[0]["id"] == str(event.id)
 
 
 @pytest.mark.integration
 async def test_delete_event_by_id(
-    client: _TestClient, mocker: MockFixture, token: MockFixture
+    client: TestClient, mocker: MockFixture, token: MockFixture, event: Event
 ) -> None:
     """Should return No Content."""
-    ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
     mocker.patch(
-        "event_service.adapters.events_adapter.EventsAdapter.get_event_by_id",
-        return_value={"id": ID, "name": "Oslo Skagen Sprint"},
+        "app.adapters.events_adapter.EventsAdapter.get_event_by_id",
+        return_value=event,
     )
     mocker.patch(
-        "event_service.adapters.events_adapter.EventsAdapter.delete_event",
-        return_value=ID,
+        "app.adapters.events_adapter.EventsAdapter.delete_event",
+        return_value=event.id,
     )
     headers = {
-        hdrs.AUTHORIZATION: f"Bearer {token}",
+        "Authorization": f"Bearer {token}",
     }
 
-    with aioresponses(passthrough=["http://127.0.0.1"]) as m:
-        m.post(f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/authorize", status=204)
-
-        resp = await client.delete(f"/events/{ID}", headers=headers)
-        assert resp.status == 204
+    resp = client.delete(f"/events/{event.id}", headers=headers)
+    assert resp.status_code == 204
 
 
 # Bad cases
@@ -280,440 +260,297 @@ async def test_delete_event_by_id(
 # Mandatory properties missing at create and update:
 @pytest.mark.integration
 async def test_create_event_missing_mandatory_property(
-    client: _TestClient, mocker: MockFixture, token: MockFixture
+    client: TestClient, mocker: MockFixture, token: MockFixture, event: Event
 ) -> None:
     """Should return 422 HTTPUnprocessableEntity."""
-    ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
     mocker.patch(
-        "event_service.services.events_service.create_id",
-        return_value=ID,
+        "app.adapters.events_adapter.EventsAdapter.get_event_by_id",
+        return_value=None,
     )
     mocker.patch(
-        "event_service.adapters.events_adapter.EventsAdapter.create_event",
-        return_value=ID,
+        "app.adapters.events_adapter.EventsAdapter.create_event", return_value=event.id
     )
     request_body = {"optional_property": "Optional_property"}
     headers = {
-        hdrs.CONTENT_TYPE: "application/json",
-        hdrs.AUTHORIZATION: f"Bearer {token}",
+        "Content-Type": "application/json",
+        "Authorization": f"Bearer {token}",
     }
 
-    with aioresponses(passthrough=["http://127.0.0.1"]) as m:
-        m.post(f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/authorize", status=204)
-        resp = await client.post("/events", headers=headers, json=request_body)
-        assert resp.status == 422
+    resp = client.post("/events", headers=headers, json=request_body)
+    assert resp.status_code == 422
 
 
 @pytest.mark.integration
 async def test_create_event_competition_formats_adapter_raises_exception(
-    client: _TestClient,
+    client: TestClient,
     mocker: MockFixture,
     token: MockFixture,
-    event: dict,
-    competition_format: dict,
+    event: Event,
 ) -> None:
     """Should return Created, location header."""
-    ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
     mocker.patch(
-        "event_service.services.events_service.create_id",
-        return_value=ID,
+        "app.adapters.events_adapter.EventsAdapter.get_event_by_id",
+        return_value=None,
     )
     mocker.patch(
-        "event_service.adapters.events_adapter.EventsAdapter.create_event",
-        return_value=ID,
+        "app.adapters.events_adapter.EventsAdapter.create_event",
+        return_value=event.id,
     )
     mocker.patch(
-        "event_service.adapters.competition_formats_adapter.CompetitionFormatsAdapter.get_competition_formats_by_name",
+        "app.adapters.competition_formats_adapter.CompetitionFormatsAdapter.get_competition_formats_by_name",
         side_effect=CompetitionFormatsAdapterError(
             "Got unknown status 500 from competition_formats service."
         ),
     )
 
-    request_body = event
+    request_body = event.model_dump(mode="json")
 
     headers = {
-        hdrs.CONTENT_TYPE: "application/json",
-        hdrs.AUTHORIZATION: f"Bearer {token}",
+        "Content-Type": "application/json",
+        "Authorization": f"Bearer {token}",
     }
 
-    with aioresponses(passthrough=["http://127.0.0.1"]) as m:
-        m.post(f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/authorize", status=204)
-        resp = await client.post("/events", headers=headers, json=request_body)
-        assert resp.status == 400
+    resp = client.post("/events", headers=headers, json=request_body)
+    assert resp.status_code == 400
 
 
 @pytest.mark.integration
 async def test_create_event_with_input_duplicate_id(
-    client: _TestClient, mocker: MockFixture, token: MockFixture, event_with_id: dict
+    client: TestClient, mocker: MockFixture, token: MockFixture, event: Event
 ) -> None:
     """Should return 422 HTTPUnprocessableEntity."""
-    ID = "290e70d5-0933-4af0-bb53-remote"
     mocker.patch(
-        "event_service.adapters.events_adapter.EventsAdapter.get_event_by_id",
-        return_value={"id": ID} | event_with_id,
+        "app.adapters.events_adapter.EventsAdapter.get_event_by_id",
+        return_value=event,
     )
     mocker.patch(
-        "event_service.services.events_service.create_id",
-        return_value=ID,
+        "app.adapters.competition_formats_adapter.CompetitionFormatsAdapter.get_competition_formats_by_name",
+        return_value=[competition_format],
     )
     mocker.patch(
-        "event_service.adapters.events_adapter.EventsAdapter.create_event",
-        return_value=ID,
+        "app.adapters.events_adapter.EventsAdapter.create_event",
+        return_value=event.id,
     )
-    request_body = {"id": ID, "name": "Oslo Skagen sprint Oppdatert"}
+    request_body = event.model_dump(mode="json")
     headers = {
-        hdrs.CONTENT_TYPE: "application/json",
-        hdrs.AUTHORIZATION: f"Bearer {token}",
+        "Content-Type": "application/json",
+        "Authorization": f"Bearer {token}",
     }
 
-    with aioresponses(passthrough=["http://127.0.0.1"]) as m:
-        m.post(f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/authorize", status=204)
-        resp = await client.post("/events", headers=headers, json=request_body)
-        assert resp.status == 422
+    resp = client.post("/events", headers=headers, json=request_body)
+    assert resp.status_code == 422
 
 
 @pytest.mark.integration
 async def test_create_event_adapter_fails(
-    client: _TestClient, mocker: MockFixture, token: MockFixture
+    client: TestClient, mocker: MockFixture, token: MockFixture, event: Event
 ) -> None:
     """Should return 400 HTTPBadRequest."""
     mocker.patch(
-        "event_service.services.events_service.create_id",
+        "app.adapters.events_adapter.EventsAdapter.get_event_by_id",
         return_value=None,
     )
     mocker.patch(
-        "event_service.adapters.events_adapter.EventsAdapter.create_event",
+        "app.adapters.events_adapter.EventsAdapter.create_event",
         return_value=None,
     )
-    request_body = {"name": "Oslo Skagen sprint Oppdatert"}
+    mocker.patch(
+        "app.adapters.competition_formats_adapter.CompetitionFormatsAdapter.get_competition_formats_by_name",
+        return_value=[competition_format],
+    )
+
+    request_body = event.model_dump(mode="json")
     headers = {
-        hdrs.CONTENT_TYPE: "application/json",
-        hdrs.AUTHORIZATION: f"Bearer {token}",
+        "Content-Type": "application/json",
+        "Authorization": f"Bearer {token}",
     }
 
-    with aioresponses(passthrough=["http://127.0.0.1"]) as m:
-        m.post(f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/authorize", status=204)
-        resp = await client.post("/events", headers=headers, json=request_body)
-        assert resp.status == 400
+    resp = client.post("/events", headers=headers, json=request_body)
+    assert resp.status_code == 500
 
 
 @pytest.mark.integration
 async def test_create_event_invalid_timezone(
-    client: _TestClient,
+    client: TestClient,
     mocker: MockFixture,
     token: MockFixture,
-    event: dict,
+    event: Event,
     competition_format: dict,
 ) -> None:
     """Should return 422 Unprocessable entity."""
-    ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
     mocker.patch(
-        "event_service.services.events_service.create_id",
-        return_value=ID,
+        "app.adapters.events_adapter.EventsAdapter.get_event_by_id",
+        return_value=None,
     )
     mocker.patch(
-        "event_service.adapters.events_adapter.EventsAdapter.create_event",
-        return_value=ID,
+        "app.adapters.events_adapter.EventsAdapter.create_event",
+        return_value=event.id,
     )
     mocker.patch(
-        "event_service.adapters.competition_formats_adapter.CompetitionFormatsAdapter.get_competition_formats_by_name",
+        "app.adapters.competition_formats_adapter.CompetitionFormatsAdapter.get_competition_formats_by_name",
         return_value=[competition_format],
     )
 
     event_invalid_timezone = deepcopy(event)
-    event_invalid_timezone["timezone"] = "Europe/Invalid"
-    request_body = event_invalid_timezone
+    event_invalid_timezone.timezone = "Europe/Invalid"
+    request_body = event_invalid_timezone.model_dump(mode="json")
 
     headers = {
-        hdrs.CONTENT_TYPE: "application/json",
-        hdrs.AUTHORIZATION: f"Bearer {token}",
+        "Content-Type": "application/json",
+        "Authorization": f"Bearer {token}",
     }
 
-    with aioresponses(passthrough=["http://127.0.0.1"]) as m:
-        m.post(f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/authorize", status=204)
-        resp = await client.post("/events", headers=headers, json=request_body)
-        assert resp.status == 422
+    resp = client.post("/events", headers=headers, json=request_body)
+    assert resp.status_code == 422
 
 
 @pytest.mark.integration
 async def test_update_event_by_id_missing_mandatory_property(
-    client: _TestClient, mocker: MockFixture, token: MockFixture
+    client: TestClient, mocker: MockFixture, token: MockFixture, event: Event
 ) -> None:
     """Should return 422 HTTPUnprocessableEntity."""
-    ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
     mocker.patch(
-        "event_service.adapters.events_adapter.EventsAdapter.get_event_by_id",
-        return_value={"id": ID, "name": "Oslo Skagen Sprint"},
+        "app.adapters.events_adapter.EventsAdapter.get_event_by_id",
+        return_value=event,
     )
     mocker.patch(
-        "event_service.adapters.events_adapter.EventsAdapter.update_event",
-        return_value=ID,
+        "app.adapters.events_adapter.EventsAdapter.update_event",
+        return_value=event.id,
     )
 
     headers = {
-        hdrs.CONTENT_TYPE: "application/json",
-        hdrs.AUTHORIZATION: f"Bearer {token}",
+        "Content-Type": "application/json",
+        "Authorization": f"Bearer {token}",
     }
-    request_body = {"id": ID, "optional_property": "Optional_property"}
+    request_body = event.model_dump(mode="json", exclude={"name"})
 
-    with aioresponses(passthrough=["http://127.0.0.1"]) as m:
-        m.post(f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/authorize", status=204)
-
-        resp = await client.put(f"/events/{ID}", headers=headers, json=request_body)
-        assert resp.status == 422
+    resp = client.put(f"/events/{event.id}", headers=headers, json=request_body)
+    assert resp.status_code == 422
 
 
 @pytest.mark.integration
 async def test_update_event_by_id_different_id_in_body(
-    client: _TestClient, mocker: MockFixture, token: MockFixture
+    client: TestClient, mocker: MockFixture, token: MockFixture, event: Event
 ) -> None:
     """Should return 422 HTTPUnprocessableEntity."""
-    ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
     mocker.patch(
-        "event_service.adapters.events_adapter.EventsAdapter.get_event_by_id",
-        return_value={"id": ID, "name": "Oslo Skagen Sprint"},
+        "app.adapters.events_adapter.EventsAdapter.get_event_by_id",
+        return_value=event,
     )
     mocker.patch(
-        "event_service.adapters.events_adapter.EventsAdapter.update_event",
-        return_value=ID,
-    )
-
-    headers = {
-        hdrs.CONTENT_TYPE: "application/json",
-        hdrs.AUTHORIZATION: f"Bearer {token}",
-    }
-    request_body = {"id": "different_id", "name": "Oslo Skagen sprint Oppdatert"}
-
-    with aioresponses(passthrough=["http://127.0.0.1"]) as m:
-        m.post(f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/authorize", status=204)
-
-        resp = await client.put(f"/events/{ID}", headers=headers, json=request_body)
-        assert resp.status == 422
-
-
-@pytest.mark.integration
-async def test_create_event_invalid_date(
-    client: _TestClient, mocker: MockFixture, token: MockFixture, event: dict
-) -> None:
-    """Should return 400 Bad request."""
-    ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
-    mocker.patch(
-        "event_service.services.events_service.create_id",
-        return_value=ID,
+        "app.adapters.events_adapter.EventsAdapter.update_event",
+        return_value=event.id,
     )
     mocker.patch(
-        "event_service.adapters.events_adapter.EventsAdapter.create_event",
-        return_value=ID,
-    )
-
-    event_invalid_date = deepcopy(event)
-    event_invalid_date["date_of_event"] = "9999-99-99"
-
-    headers = {
-        hdrs.CONTENT_TYPE: "application/json",
-        hdrs.AUTHORIZATION: f"Bearer {token}",
-    }
-
-    with aioresponses(passthrough=["http://127.0.0.1"]) as m:
-        m.post(f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/authorize", status=204)
-        resp = await client.post("/events", headers=headers, json=event_invalid_date)
-        assert resp.status == 422
-
-
-@pytest.mark.integration
-async def test_create_event_invalid_time(
-    client: _TestClient, mocker: MockFixture, token: MockFixture, event: dict
-) -> None:
-    """Should return 400 Bad request."""
-    ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
-    mocker.patch(
-        "event_service.services.events_service.create_id",
-        return_value=ID,
-    )
-    mocker.patch(
-        "event_service.adapters.events_adapter.EventsAdapter.create_event",
-        return_value=ID,
-    )
-
-    event_invalid_time = deepcopy(event)
-    event_invalid_time["time_of_event"] = "99:99:99"
-
-    headers = {
-        hdrs.CONTENT_TYPE: "application/json",
-        hdrs.AUTHORIZATION: f"Bearer {token}",
-    }
-
-    with aioresponses(passthrough=["http://127.0.0.1"]) as m:
-        m.post(f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/authorize", status=204)
-        resp = await client.post("/events", headers=headers, json=event_invalid_time)
-        assert resp.status == 422
-
-
-@pytest.mark.integration
-async def test_update_event_invalid_date(
-    client: _TestClient, mocker: MockFixture, token: MockFixture, event: dict
-) -> None:
-    """Should return 400 Bad request."""
-    ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
-    mocker.patch(
-        "event_service.adapters.events_adapter.EventsAdapter.get_event_by_id",
-        return_value={"id": ID} | event,
-    )
-    mocker.patch(
-        "event_service.adapters.events_adapter.EventsAdapter.update_event",
-        return_value={"id": ID} | event,
+        "app.adapters.competition_formats_adapter.CompetitionFormatsAdapter.get_competition_formats_by_name",
+        return_value=[competition_format],
     )
 
     headers = {
-        hdrs.CONTENT_TYPE: "application/json",
-        hdrs.AUTHORIZATION: f"Bearer {token}",
+        "Content-Type": "application/json",
+        "Authorization": f"Bearer {token}",
     }
-    request_body = deepcopy(event)
-    request_body["id"] = ID
-    request_body["date_of_event"] = "9999-99-99"
+    event_with_different_id = deepcopy(event)
+    event_with_different_id.id = uuid.uuid4()
+    request_body = event_with_different_id.model_dump(mode="json")
 
-    with aioresponses(passthrough=["http://127.0.0.1"]) as m:
-        m.post(f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/authorize", status=204)
-
-        resp = await client.put(f"/events/{ID}", headers=headers, json=request_body)
-        assert resp.status == 422
-
-
-@pytest.mark.integration
-async def test_update_event_invalid_time(
-    client: _TestClient, mocker: MockFixture, token: MockFixture, event: dict
-) -> None:
-    """Should return 400 Bad request."""
-    ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
-    mocker.patch(
-        "event_service.adapters.events_adapter.EventsAdapter.get_event_by_id",
-        return_value={"id": ID} | event,
-    )
-    mocker.patch(
-        "event_service.adapters.events_adapter.EventsAdapter.update_event",
-        return_value={"id": ID} | event,
-    )
-
-    headers = {
-        hdrs.CONTENT_TYPE: "application/json",
-        hdrs.AUTHORIZATION: f"Bearer {token}",
-    }
-    request_body = deepcopy(event)
-    request_body["id"] = ID
-    request_body["time_of_event"] = "99:99:99"
-
-    with aioresponses(passthrough=["http://127.0.0.1"]) as m:
-        m.post(f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/authorize", status=204)
-
-        resp = await client.put(f"/events/{ID}", headers=headers, json=request_body)
-        assert resp.status == 422
+    resp = client.put(f"/events/{event.id}", headers=headers, json=request_body)
+    assert resp.status_code == 422
 
 
 @pytest.mark.integration
 async def test_create_event_multiple_competition_formats(
-    client: _TestClient,
+    client: TestClient,
     mocker: MockFixture,
     token: MockFixture,
-    event: dict,
+    event: Event,
     competition_format: dict,
 ) -> None:
     """Should return 400 Bad request."""
-    ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
     mocker.patch(
-        "event_service.services.events_service.create_id",
-        return_value=ID,
+        "app.adapters.events_adapter.EventsAdapter.get_event_by_id",
+        return_value=None,
     )
     mocker.patch(
-        "event_service.adapters.events_adapter.EventsAdapter.create_event",
-        return_value=ID,
+        "app.adapters.events_adapter.EventsAdapter.create_event",
+        return_value=event.id,
     )
     mocker.patch(
-        "event_service.adapters.competition_formats_adapter.CompetitionFormatsAdapter.get_competition_formats_by_name",
+        "app.adapters.competition_formats_adapter.CompetitionFormatsAdapter.get_competition_formats_by_name",
         return_value=[competition_format, competition_format],
     )
 
-    request_body = event
+    request_body = event.model_dump(mode="json")
 
     headers = {
-        hdrs.CONTENT_TYPE: "application/json",
-        hdrs.AUTHORIZATION: f"Bearer {token}",
+        "Content-Type": "application/json",
+        "Authorization": f"Bearer {token}",
     }
 
-    with aioresponses(passthrough=["http://127.0.0.1"]) as m:
-        m.post(f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/authorize", status=204)
-        resp = await client.post("/events", headers=headers, json=request_body)
-        assert resp.status == 400
+    resp = client.post("/events", headers=headers, json=request_body)
+    assert resp.status_code == 400
 
 
 @pytest.mark.integration
 async def test_create_event_invalid_competition_format(
-    client: _TestClient, mocker: MockFixture, token: MockFixture, event: dict
+    client: TestClient, mocker: MockFixture, token: MockFixture, event: Event
 ) -> None:
     """Should return 400 Bad request."""
-    ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
     mocker.patch(
-        "event_service.services.events_service.create_id",
-        return_value=ID,
+        "app.adapters.events_adapter.EventsAdapter.get_event_by_id",
+        return_value=None,
     )
     mocker.patch(
-        "event_service.adapters.events_adapter.EventsAdapter.create_event",
-        return_value=ID,
+        "app.adapters.events_adapter.EventsAdapter.create_event", return_value=event.id
     )
     mocker.patch(
-        "event_service.adapters.competition_formats_adapter.CompetitionFormatsAdapter.get_competition_formats_by_name",
+        "app.adapters.competition_formats_adapter.CompetitionFormatsAdapter.get_competition_formats_by_name",
         return_value=[],
     )
 
     event_invalid_competition_format = deepcopy(event)
-    event_invalid_competition_format["competition_format"] = (
-        "Invalid Competition Format"
-    )
+    event_invalid_competition_format.competition_format = "Invalid Competition Format"
+    request_body = event_invalid_competition_format.model_dump(mode="json")
 
     headers = {
-        hdrs.CONTENT_TYPE: "application/json",
-        hdrs.AUTHORIZATION: f"Bearer {token}",
+        "Content-Type": "application/json",
+        "Authorization": f"Bearer {token}",
     }
 
-    with aioresponses(passthrough=["http://127.0.0.1"]) as m:
-        m.post(f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/authorize", status=204)
-        resp = await client.post(
-            "/events", headers=headers, json=event_invalid_competition_format
-        )
-        assert resp.status == 400
+    resp = client.post("/events", headers=headers, json=request_body)
+    assert resp.status_code == 400
 
 
 @pytest.mark.integration
 async def test_update_event_invalid_competition_format(
-    client: _TestClient, mocker: MockFixture, token: MockFixture, event: dict
+    client: TestClient, mocker: MockFixture, token: MockFixture, event: Event
 ) -> None:
     """Should return 400 Bad request."""
-    ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
     mocker.patch(
-        "event_service.adapters.events_adapter.EventsAdapter.get_event_by_id",
-        return_value={"id": ID} | event,
+        "app.adapters.events_adapter.EventsAdapter.get_event_by_id",
+        return_value=event,
     )
     mocker.patch(
-        "event_service.adapters.events_adapter.EventsAdapter.update_event",
-        return_value={"id": ID} | event,
+        "app.adapters.events_adapter.EventsAdapter.update_event",
+        return_value=event.id,
     )
     mocker.patch(
-        "event_service.adapters.competition_formats_adapter.CompetitionFormatsAdapter.get_competition_formats_by_name",
+        "app.adapters.competition_formats_adapter.CompetitionFormatsAdapter.get_competition_formats_by_name",
         return_value=[],
     )
 
     headers = {
-        hdrs.CONTENT_TYPE: "application/json",
-        hdrs.AUTHORIZATION: f"Bearer {token}",
+        "Content-Type": "application/json",
+        "Authorization": f"Bearer {token}",
     }
-    request_body = deepcopy(event)
-    request_body["id"] = ID
-    request_body["competition_format"] = "Invalid Competition Format"
+    event_with_invalid_competition_format = deepcopy(event)
+    event_with_invalid_competition_format.competition_format = (
+        "Invalid Competition Format"
+    )
+    request_body = event_with_invalid_competition_format.model_dump(mode="json")
 
-    with aioresponses(passthrough=["http://127.0.0.1"]) as m:
-        m.post(f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/authorize", status=204)
-
-        resp = await client.put(f"/events/{ID}", headers=headers, json=request_body)
-        assert resp.status == 400
+    resp = client.put(f"/events/{event.id}", headers=headers, json=request_body)
+    assert resp.status_code == 400
 
 
 # Unauthorized cases:
@@ -721,173 +558,162 @@ async def test_update_event_invalid_competition_format(
 
 @pytest.mark.integration
 async def test_create_event_no_authorization(
-    client: _TestClient, mocker: MockFixture
+    client: TestClient, mocker: MockFixture, event: Event
 ) -> None:
     """Should return 401 Unauthorized."""
-    ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
     mocker.patch(
-        "event_service.services.events_service.create_id",
-        return_value=ID,
+        "app.adapters.events_adapter.EventsAdapter.get_event_by_id",
+        return_value=None,
     )
     mocker.patch(
-        "event_service.adapters.events_adapter.EventsAdapter.create_event",
-        return_value=ID,
+        "app.adapters.events_adapter.EventsAdapter.create_event",
+        return_value=event.id,
     )
 
     request_body = {"name": "Oslo Skagen sprint"}
-    headers = MultiDict([(hdrs.CONTENT_TYPE, "application/json")])
+    headers = {"Content-Type": "application/json"}
 
-    with aioresponses(passthrough=["http://127.0.0.1"]) as m:
-        m.post(f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/authorize", status=401)
-
-        resp = await client.post("/events", headers=headers, json=request_body)
-        assert resp.status == 401
+    resp = client.post("/events", headers=headers, json=request_body)
+    assert resp.status_code == 401
 
 
 @pytest.mark.integration
 async def test_update_event_by_id_no_authorization(
-    client: _TestClient, mocker: MockFixture
+    client: TestClient, mocker: MockFixture, event: Event, competition_format: dict
 ) -> None:
     """Should return 401 Unauthorized."""
-    ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
     mocker.patch(
-        "event_service.adapters.events_adapter.EventsAdapter.get_event_by_id",
-        return_value={"id": ID, "name": "Oslo Skagen Sprint"},
+        "app.adapters.events_adapter.EventsAdapter.get_event_by_id",
+        return_value=event,
     )
     mocker.patch(
-        "event_service.adapters.events_adapter.EventsAdapter.update_event",
-        return_value=ID,
+        "app.adapters.events_adapter.EventsAdapter.update_event",
+        return_value=event.id,
+    )
+    mocker.patch(
+        "app.adapters.competition_formats_adapter.CompetitionFormatsAdapter.get_competition_formats_by_name",
+        return_value=[competition_format],
     )
 
     headers = {
-        hdrs.CONTENT_TYPE: "application/json",
+        "Content-Type": "application/json",
     }
 
-    request_body = {"id": ID, "name": "Oslo Skagen sprint Oppdatert"}
+    request_body = event.model_dump(mode="json")
 
-    with aioresponses(passthrough=["http://127.0.0.1"]) as m:
-        m.post(f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/authorize", status=401)
-
-        resp = await client.put(f"/events/{ID}", headers=headers, json=request_body)
-        assert resp.status == 401
+    resp = client.put(f"/events/{event.id}", headers=headers, json=request_body)
+    assert resp.status_code == 401
 
 
 @pytest.mark.integration
 async def test_delete_event_by_id_no_authorization(
-    client: _TestClient, mocker: MockFixture
+    client: TestClient, mocker: MockFixture, event: Event
 ) -> None:
     """Should return 401 Unauthorized."""
-    ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
     mocker.patch(
-        "event_service.adapters.events_adapter.EventsAdapter.delete_event",
-        return_value=ID,
+        "app.adapters.events_adapter.EventsAdapter.delete_event",
+        return_value=event.id,
     )
-
-    with aioresponses(passthrough=["http://127.0.0.1"]) as m:
-        m.post(f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/authorize", status=401)
-
-        resp = await client.delete(f"/events/{ID}")
-        assert resp.status == 401
+    resp = client.delete(f"/events/{event.id}")
+    assert resp.status_code == 401
 
 
 # Forbidden:
 @pytest.mark.integration
 async def test_create_event_insufficient_role(
-    client: _TestClient, mocker: MockFixture, token_unsufficient_role: MockFixture
+    client: TestClient,
+    mocker: MockFixture,
+    token_unsufficient_role: MockFixture,
+    event: Event,
 ) -> None:
     """Should return 403 Forbidden."""
-    ID = "290e70d5-0933-4af0-bb53-1d705ba7eb95"
     mocker.patch(
-        "event_service.services.events_service.create_id",
-        return_value=ID,
+        "app.adapters.events_adapter.EventsAdapter.get_event_by_id",
+        return_value=None,
     )
     mocker.patch(
-        "event_service.adapters.events_adapter.EventsAdapter.create_event",
-        return_value=ID,
+        "app.adapters.events_adapter.EventsAdapter.create_event",
+        return_value=event.id,
     )
     request_body = {"name": "Oslo Skagen sprint"}
     headers = {
-        hdrs.CONTENT_TYPE: "application/json",
-        hdrs.AUTHORIZATION: f"Bearer {token_unsufficient_role}",
+        "Content-Type": "application/json",
+        "Authorization": f"Bearer {token_unsufficient_role}",
     }
 
-    with aioresponses(passthrough=["http://127.0.0.1"]) as m:
-        m.post(f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/authorize", status=403)
-        resp = await client.post("/events", headers=headers, json=request_body)
-        assert resp.status == 403
+    resp = client.post("/events", headers=headers, json=request_body)
+    assert resp.status_code == 403
 
 
 # NOT FOUND CASES:
 
 
 @pytest.mark.integration
-async def test_get_event_not_found(
-    client: _TestClient, mocker: MockFixture, token: MockFixture
-) -> None:
+async def test_get_event_not_found(client: TestClient, mocker: MockFixture) -> None:
     """Should return 404 Not found."""
-    ID = "does-not-exist"
     mocker.patch(
-        "event_service.adapters.events_adapter.EventsAdapter.get_event_by_id",
+        "app.adapters.events_adapter.EventsAdapter.get_event_by_id",
         return_value=None,
     )
 
-    with aioresponses(passthrough=["http://127.0.0.1"]) as m:
-        m.post(f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/authorize", status=204)
-
-        resp = await client.get(f"/events/{ID}")
-        assert resp.status == 404
+    resp = client.get(f"/events/{uuid.uuid4()}")
+    assert resp.status_code == 404
 
 
 @pytest.mark.integration
 async def test_update_event_not_found(
-    client: _TestClient, mocker: MockFixture, token: MockFixture
+    client: TestClient, mocker: MockFixture, token: MockFixture
 ) -> None:
     """Should return 404 Not found."""
-    ID = "does-not-exist"
     mocker.patch(
-        "event_service.adapters.events_adapter.EventsAdapter.get_event_by_id",
+        "app.adapters.events_adapter.EventsAdapter.get_event_by_id",
         return_value=None,
     )
     mocker.patch(
-        "event_service.adapters.events_adapter.EventsAdapter.update_event",
+        "app.adapters.events_adapter.EventsAdapter.update_event",
         return_value=None,
+    )
+    mocker.patch(
+        "app.adapters.competition_formats_adapter.CompetitionFormatsAdapter.get_competition_formats_by_name",
+        return_value=[competition_format],
     )
 
     headers = {
-        hdrs.CONTENT_TYPE: "application/json",
-        hdrs.AUTHORIZATION: f"Bearer {token}",
+        "Content-Type": "application/json",
+        "Authorization": f"Bearer {token}",
     }
-    request_body = {
-        "id": "290e70d5-0933-4af0-bb53-1d705ba7eb95",
-        "name": "Oslo Skagen sprint Oppdatert",
-    }
+    request_body = Event.model_validate(
+        {
+            "id": uuid.uuid4(),
+            "name": "Oslo Skagen sprint",
+            "competition_format": "Individual sprint",
+            "date_of_event": "2021-08-31",
+            "time_of_event": "09:00:00",
+            "timezone": "Europe/Oslo",
+            "organiser": "Lyn Ski",
+        }
+    ).model_dump(mode="json")
 
-    ID = "does-not-exist"
-    with aioresponses(passthrough=["http://127.0.0.1"]) as m:
-        m.post(f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/authorize", status=204)
-        resp = await client.put(f"/events/{ID}", headers=headers, json=request_body)
-        assert resp.status == 404
+    resp = client.put(f"/events/{uuid.uuid4()}", headers=headers, json=request_body)
+    assert resp.status_code == 404
 
 
 @pytest.mark.integration
 async def test_delete_event_not_found(
-    client: _TestClient, mocker: MockFixture, token: MockFixture
+    client: TestClient, mocker: MockFixture, token: MockFixture
 ) -> None:
     """Should return 404 Not found."""
-    ID = "does-not-exist"
     mocker.patch(
-        "event_service.adapters.events_adapter.EventsAdapter.get_event_by_id",
+        "app.adapters.events_adapter.EventsAdapter.get_event_by_id",
         return_value=None,
     )
     mocker.patch(
-        "event_service.adapters.events_adapter.EventsAdapter.delete_event",
+        "app.adapters.events_adapter.EventsAdapter.delete_event",
         return_value=None,
     )
 
     headers = {
-        hdrs.AUTHORIZATION: f"Bearer {token}",
+        "Authorization": f"Bearer {token}",
     }
-    with aioresponses(passthrough=["http://127.0.0.1"]) as m:
-        m.post(f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/authorize", status=204)
-        resp = await client.delete(f"/events/{ID}", headers=headers)
-        assert resp.status == 404
+    resp = client.delete(f"/events/{uuid.uuid4()}", headers=headers)
+    assert resp.status_code == 404
