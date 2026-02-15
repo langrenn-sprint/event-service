@@ -4,39 +4,44 @@ import logging
 import os
 from collections.abc import AsyncGenerator
 from datetime import date, time
+from http import HTTPStatus
 from typing import Any
 
+import aiofiles
 import motor.motor_asyncio
 import pytest
-from aiohttp import ClientSession, hdrs
+from httpx import AsyncClient
 from pytest_mock import MockFixture
 
-from event_service.utils import db_utils
+from app.utils import db_utils
 
 USERS_HOST_SERVER = os.getenv("USERS_HOST_SERVER")
 USERS_HOST_PORT = os.getenv("USERS_HOST_PORT")
 DB_HOST = os.getenv("DB_HOST", "localhost")
-DB_PORT = int(os.getenv("DB_PORT", 27017))
+DB_PORT = int(os.getenv("DB_PORT", "27017"))
 DB_NAME = os.getenv("DB_NAME", "events_test")
 DB_USER = os.getenv("DB_USER")
 DB_PASSWORD = os.getenv("DB_PASSWORD")
 
+logger = logging.getLogger(__name__)
+
 
 @pytest.fixture(scope="module", autouse=True)
-async def token(http_service: Any) -> str:
+async def admin_token(http_service: Any) -> str:
     """Create a valid token."""
     url = f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/login"
-    headers = {hdrs.CONTENT_TYPE: "application/json"}
+    headers = {"Content-Type": "application/json"}
     request_body = {
         "username": os.getenv("ADMIN_USERNAME"),
         "password": os.getenv("ADMIN_PASSWORD"),
     }
-    session = ClientSession()
-    async with session.post(url, headers=headers, json=request_body) as response:
-        body = await response.json()
-    await session.close()
-    if response.status != 200:
-        logging.error(f"Got unexpected status {response.status} from {http_service}.")
+    async with AsyncClient() as client:
+        response = await client.post(url, headers=headers, json=request_body)
+        body = response.json()
+    if response.status_code != HTTPStatus.OK:
+        logger.error(
+            f"Got unexpected status {response.status_code}/{response.text} from {http_service}."
+        )
     return body["token"]
 
 
@@ -49,29 +54,29 @@ async def clear_db() -> AsyncGenerator:
     try:
         await db_utils.drop_db_and_recreate_indexes(mongo, DB_NAME)
     except Exception as error:
-        logging.exception(f"Failed to drop database {DB_NAME}: {error}")
-        raise error
+        logger.exception(f"Failed to drop database {DB_NAME}")
+        raise error from error
 
     yield
 
     try:
         await db_utils.drop_db(mongo, DB_NAME)
     except Exception as error:
-        logging.exception(f"Failed to drop database {DB_NAME}: {error}")
-        raise error
+        logger.exception(f"Failed to drop database {DB_NAME}")
+        raise error from error
 
 
 @pytest.fixture(scope="module")
 async def event_id(
     http_service: Any,
-    token: MockFixture,
+    admin_token: MockFixture,
     clear_db: AsyncGenerator,
 ) -> str | None:
     """Create an event object for testing."""
     url = f"{http_service}/events"
     headers = {
-        hdrs.CONTENT_TYPE: "application/json",
-        hdrs.AUTHORIZATION: f"Bearer {token}",
+        "Content-Type": "application/json",
+        "Authorization": f"Bearer {admin_token}",
     }
     request_body = {
         "name": "Oslo Skagen sprint",
@@ -81,65 +86,69 @@ async def event_id(
         "webpage": "https://example.com",
         "information": "Testarr for å teste den nye løysinga.",
     }
-    session = ClientSession()
-    async with session.post(url, headers=headers, json=request_body) as response:
-        status = response.status
-    await session.close()
-    if status == 201:
+    async with AsyncClient() as client:
+        response = await client.post(url, headers=headers, json=request_body)
+        status = response.status_code
+    if status == HTTPStatus.CREATED:
         # return the event_id, which is the last item of the path
-        event_id = response.headers[hdrs.LOCATION].split("/")[-1]
-        logging.debug(f"Created event with id {event_id}.")
+        event_id = response.headers["Location"].split("/")[-1]
+        logger.debug(f"Created event with id {event_id}.")
         return event_id
-    logging.error(f"Got unsuccesful status when creating event: {status}.")
+    logger.error(f"Got unsuccesful status when creating event: {status}.")
     return None
 
 
 @pytest.mark.contract
 async def test_assign_bibs(
     http_service: Any,
-    token: MockFixture,
+    admin_token: MockFixture,
     event_id: str,
 ) -> None:
     """Should return 201 Created and a location header with url to contestants."""
     headers = {
-        hdrs.AUTHORIZATION: f"Bearer {token}",
+        "Authorization": f"Bearer {admin_token}",
     }
 
-    async with ClientSession() as session:
+    async with AsyncClient() as client:
         # ARRANGE #
 
         # First we need to assert that we have an event:
         url = f"{http_service}/events/{event_id}"
-        logging.debug(f"Verifying event with id {event_id} at url {url}.")
-        async with session.get(url) as response:
-            assert response.status == 200
+        logger.debug(f"Verifying event with id {event_id} at url {url}.")
+        response = await client.get(url)
+        assert response.status_code == HTTPStatus.OK, response.text
 
         # Then we add contestants to event:
-        url = f"{http_service}/events/{event_id}/contestants"
-        files = {"file": open("tests/files/contestants_iSonen.csv", "rb")}
-        async with session.post(url, headers=headers, data=files) as response:
-            assert response.status == 200
+        headers = {
+            "Authorization": f"Bearer {admin_token}",
+        }
+        url = f"{http_service}/events/{event_id}/contestants/file"
+        async with aiofiles.open("tests/files/contestants_iSonen.csv") as file:
+            content = await file.read()
+        files = {"file": ("contestants.csv", content, "text/csv")}
+        response = await client.post(url, headers=headers, files=files)
+        assert response.status_code == HTTPStatus.OK, response.text
 
         # We need to generate raceclasses for the event:
         url = f"{http_service}/events/{event_id}/generate-raceclasses"
-        async with session.post(url, headers=headers) as response:
-            if response.status != 201:
-                body = await response.json()
-            assert response.status == 201, body["detail"]
-            assert f"/events/{event_id}/raceclasses" in response.headers[hdrs.LOCATION]
+        response = await client.post(url, headers=headers)
+        if response.status_code != HTTPStatus.CREATED:
+            body = response.json()
+        assert response.status_code == HTTPStatus.CREATED, body["detail"]
+        assert f"/events/{event_id}/raceclasses" in response.headers["Location"]
 
         # We need to work on the raceclasses:
         url = f"{http_service}/events/{event_id}/raceclasses"
-        async with session.get(url) as response:
-            assert response.status == 200
-            raceclasses = await response.json()
+        response = await client.get(url)
+        assert response.status_code == HTTPStatus.OK
+        raceclasses = response.json()
 
         await _print_raceclasses(raceclasses)
 
         # We assign ageclasses "G 16 år" and "G 15 år" to the same new raceclass "G15/16":
-        raceclass_G16 = await _get_raceclass_by_ageclass(raceclasses, "G 16 år")
-        raceclass_G15 = await _get_raceclass_by_ageclass(raceclasses, "G 15 år")
-        raceclass_G15_16: dict = {
+        raceclass_G16 = await _get_raceclass_by_ageclass(raceclasses, "G 16 år")  # noqa: N806
+        raceclass_G15 = await _get_raceclass_by_ageclass(raceclasses, "G 15 år")  # noqa: N806
+        raceclass_G15_16: dict = {  # noqa: N806
             "event_id": event_id,
             "name": "G15-16",
             "ageclasses": raceclass_G15["ageclasses"] + raceclass_G16["ageclasses"],
@@ -149,38 +158,38 @@ async def test_assign_bibs(
         }
         request_body = raceclass_G15_16
         url = f"{http_service}/events/{event_id}/raceclasses"
-        async with session.post(url, headers=headers, json=request_body) as response:
-            assert response.status == 201
+        response = await client.post(url, headers=headers, json=request_body)
+        assert response.status_code == HTTPStatus.CREATED
         url = f"{http_service}/events/{event_id}/raceclasses/{raceclass_G15['id']}"
-        async with session.delete(url, headers=headers) as response:
-            assert response.status == 204
+        response = await client.delete(url, headers=headers)
+        assert response.status_code == HTTPStatus.NO_CONTENT
         url = f"{http_service}/events/{event_id}/raceclasses/{raceclass_G16['id']}"
-        async with session.delete(url, headers=headers) as response:
-            assert response.status == 204
+        response = await client.delete(url, headers=headers)
+        assert response.status_code == HTTPStatus.NO_CONTENT
 
         # We get the updated list of raceclasses:
         url = f"{http_service}/events/{event_id}/raceclasses"
-        async with session.get(url) as response:
-            assert response.status == 200
-            raceclasses = await response.json()
+        response = await client.get(url)
+        assert response.status_code == HTTPStatus.OK
+        raceclasses = response.json()
 
         # Also we need to set order for the remaining raceclasses:
         for raceclass in raceclasses:
-            id = raceclass["id"]
+            raceclass_id = raceclass["id"]
             (
                 raceclass["group"],
                 raceclass["order"],
                 raceclass["ranking"],
             ) = await _decide_group_order_and_ranking(raceclass)
-            url = f"{http_service}/events/{event_id}/raceclasses/{id}"
-            async with session.put(url, headers=headers, json=raceclass) as response:
-                assert response.status == 204
+            url = f"{http_service}/events/{event_id}/raceclasses/{raceclass_id}"
+            response = await client.put(url, headers=headers, json=raceclass)
+            assert response.status_code == HTTPStatus.NO_CONTENT
 
         # We again get the updated list of raceclasses:
         url = f"{http_service}/events/{event_id}/raceclasses"
-        async with session.get(url) as response:
-            assert response.status == 200
-            raceclasses = await response.json()
+        response = await client.get(url)
+        assert response.status_code == HTTPStatus.OK
+        raceclasses = response.json()
 
         await _print_raceclasses(raceclasses)
 
@@ -188,43 +197,43 @@ async def test_assign_bibs(
 
         # Finally assign bibs to all contestants:
         url = f"{http_service}/events/{event_id}/contestants/assign-bibs"
-        async with session.post(url, headers=headers) as response:
-            if response.status != 201:
-                body = await response.json()
-            assert response.status == 201, body
-            assert f"/events/{event_id}/contestants" in response.headers[hdrs.LOCATION]
+        response = await client.post(url, headers=headers)
+        if response.status_code != HTTPStatus.CREATED:
+            body = response.json()
+        assert response.status_code == HTTPStatus.CREATED, body
+        assert f"/events/{event_id}/contestants" in response.headers["Location"]
 
         # ASSERT #
 
         # We check that bibs are actually assigned:
-        url = response.headers[hdrs.LOCATION]
-        async with session.get(url) as response:
-            contestants = await response.json()
-            assert response.status == 200
-            assert "application/json" in response.headers[hdrs.CONTENT_TYPE]
-            assert type(contestants) is list
-            assert len(contestants) > 0
+        url = response.headers["Location"]
+        response = await client.get(url)
+        assert response.status_code == HTTPStatus.OK
+        assert "application/json" in response.headers["Content-Type"]
+        contestants = response.json()
+        assert type(contestants) is list
+        assert len(contestants) > 0
 
-            await _print_contestants(contestants)
-            await _dump_contestants_to_json(contestants)
+        await _print_contestants(contestants)
+        await _dump_contestants_to_json(contestants)
 
-            # Check that all bib values are ints:
-            assert all(
-                isinstance(o, (int)) for o in [c.get("bib", None) for c in contestants]
+        # Check that all bib values are ints:
+        assert all(
+            isinstance(o, (int)) for o in [c.get("bib", None) for c in contestants]
+        )
+
+        # Checkt that list is sorted and consecutive:
+        assert sorted(c["bib"] for c in contestants) == list(
+            range(
+                min(c["bib"] for c in contestants),
+                max(c["bib"] for c in contestants) + 1,
             )
+        )
 
-            # Checkt that list is sorted and consecutive:
-            assert sorted(set([c["bib"] for c in contestants])) == list(
-                range(
-                    min(set([c["bib"] for c in contestants])),
-                    max(set([c["bib"] for c in contestants])) + 1,
-                )
-            )
-
-            # Check that raceclasses has correct number of contestants:
-            assert len(contestants) == sum(
-                raceclass["no_of_contestants"] for raceclass in raceclasses
-            )
+        # Check that raceclasses has correct number of contestants:
+        assert len(contestants) == sum(
+            raceclass["no_of_contestants"] for raceclass in raceclasses
+        )
 
 
 # ---
@@ -236,7 +245,7 @@ async def _get_raceclass_by_ageclass(raceclasses: list[dict], ageclass: str) -> 
     return {}
 
 
-async def _decide_group_order_and_ranking(  # noqa: C901
+async def _decide_group_order_and_ranking(  # noqa: PLR0911, PLR0912, C901
     raceclass: dict,
 ) -> tuple[int, int, bool]:
     if raceclass["name"] == "KS":
