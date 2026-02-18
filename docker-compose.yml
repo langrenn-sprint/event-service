@@ -1,11 +1,11 @@
-version: "3"
 services:
   event-service:
     build: .
     image: ghcr.io/langrenn-sprint/event-service:test
     ports:
-      - 8080:8080
+      - 8080:8000
     environment:
+      - JWT_SECRET=${JWT_SECRET}
       - ADMIN_USERNAME=${ADMIN_USERNAME}
       - ADMIN_PASSWORD=${ADMIN_PASSWORD}
       - COMPETITION_FORMAT_HOST_SERVER=competition-format-service
@@ -58,7 +58,7 @@ services:
     depends_on:
       - mongodb
   mongodb:
-    image: mongo:latest
+    image: mongo:7-jammy
     ports:
       - 27017:27017
     environment:
