@@ -1,45 +1,51 @@
 """Contract test cases for ping."""
 
+import json
 import logging
 import os
 from collections.abc import AsyncGenerator
 from copy import deepcopy
-from json import load
+from http import HTTPStatus
 from typing import Any
 
+import aiofiles
 import motor.motor_asyncio
 import pytest
-from aiohttp import ClientSession, ContentTypeError, hdrs
+from httpx import AsyncClient
 from pytest_mock import MockFixture
 
-from event_service.utils import db_utils
+from app.utils import db_utils
 
 COMPETITION_FORMAT_HOST_SERVER = os.getenv("COMPETITION_FORMAT_HOST_SERVER")
 COMPETITION_FORMAT_HOST_PORT = os.getenv("COMPETITION_FORMAT_HOST_PORT")
 USERS_HOST_SERVER = os.getenv("USERS_HOST_SERVER")
 USERS_HOST_PORT = os.getenv("USERS_HOST_PORT")
 DB_HOST = os.getenv("DB_HOST", "localhost")
-DB_PORT = int(os.getenv("DB_PORT", 27017))
+DB_PORT = int(os.getenv("DB_PORT", "27017"))
 DB_NAME = os.getenv("DB_NAME", "events_test")
 DB_USER = os.getenv("DB_USER")
 DB_PASSWORD = os.getenv("DB_PASSWORD")
+
+logger = logging.getLogger(__name__)
 
 
 @pytest.fixture(scope="module")
 async def token(http_service: Any) -> str:
     """Create a valid token."""
     url = f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/login"
-    headers = {hdrs.CONTENT_TYPE: "application/json"}
+    headers = {"Content-Type": "application/json"}
     request_body = {
         "username": os.getenv("ADMIN_USERNAME"),
         "password": os.getenv("ADMIN_PASSWORD"),
     }
-    session = ClientSession()
-    async with session.post(url, headers=headers, json=request_body) as response:
-        body = await response.json()
-    await session.close()
-    if response.status != 200:
-        logging.error(f"Got unexpected status {response.status} from {http_service}.")
+    async with AsyncClient() as client:
+        response = await client.post(url, headers=headers, json=request_body)
+        body = response.json()
+
+    if response.status_code != HTTPStatus.OK:
+        logger.error(
+            f"Got unexpected status {response.status_code} from {http_service}."
+        )
     return body["token"]
 
 
@@ -52,16 +58,16 @@ async def clear_db() -> AsyncGenerator:
     try:
         await db_utils.drop_db_and_recreate_indexes(mongo, DB_NAME)
     except Exception as error:
-        logging.exception(f"Failed to drop database {DB_NAME}: {error}")
-        raise error
+        logger.exception(f"Failed to drop database {DB_NAME}")
+        raise error from error
 
     yield
 
     try:
         await db_utils.drop_db(mongo, DB_NAME)
     except Exception as error:
-        logging.exception(f"Failed to drop database {DB_NAME}: {error}")
-        raise error
+        logger.exception(f"Failed to drop database {DB_NAME}")
+        raise error from error
 
 
 @pytest.fixture(scope="module")
@@ -74,7 +80,7 @@ async def event() -> dict:
         "time_of_event": "09:00:00",
         "timezone": "Europe/Oslo",
         "organiser": "Lyn Ski",
-        "webpage": "https://example.com",
+        "webpage": "https://example.com/",
         "information": "Testarr for å teste den nye løysinga.",
     }
 
@@ -82,9 +88,11 @@ async def event() -> dict:
 @pytest.fixture(scope="module")
 async def competition_format_interval_start() -> dict:
     """An competition_format object for testing."""
-    with open("tests/files/competition_format_interval_start.json") as file:
-        competition_format = load(file)
-    return competition_format
+    async with aiofiles.open(
+        "tests/files/competition_format_interval_start.json"
+    ) as file:
+        content = await file.read()
+    return json.loads(content)
 
 
 @pytest.mark.contract
@@ -96,36 +104,28 @@ async def test_create_event(
     competition_format_interval_start: dict,
 ) -> None:
     """Should return Created, location header and no body."""
-    async with ClientSession() as session:
+    async with AsyncClient() as client:
         headers = {
-            hdrs.CONTENT_TYPE: "application/json",
-            hdrs.AUTHORIZATION: f"Bearer {token}",
+            "Content-Type": "application/json",
+            "Authorization": f"Bearer {token}",
         }
         # We have to create a competition_format:
         url = f"http://{COMPETITION_FORMAT_HOST_SERVER}:{COMPETITION_FORMAT_HOST_PORT}/competition-formats"
         request_body = competition_format_interval_start
-        async with session.post(url, headers=headers, json=request_body) as response:
-            try:
-                body = await response.json()
-            except ContentTypeError:
-                body = None
-
-            status = response.status
-            assert status == 201, f"{body}" if body else ""
+        response = await client.post(url, headers=headers, json=request_body)
+        if response.status_code != HTTPStatus.CREATED:
+            body = response.json()
+        assert response.status_code == HTTPStatus.CREATED, f"{body}"
 
         # Now we can create an event:
         url = f"{http_service}/events"
         request_body = event
 
-        async with session.post(url, headers=headers, json=request_body) as response:
-            try:
-                body = await response.json()
-            except ContentTypeError:
-                body = None
-
-            status = response.status
-        assert status == 201, f"{body}" if body else ""
-        assert "/events/" in response.headers[hdrs.LOCATION]
+        response = await client.post(url, headers=headers, json=request_body)
+        if response.status_code != HTTPStatus.CREATED:
+            body = response.json()
+        assert response.status_code == HTTPStatus.CREATED, f"{body}" if body else ""
+        assert "/events/" in response.headers["Location"]
 
 
 @pytest.mark.contract
@@ -133,13 +133,12 @@ async def test_get_all_events(http_service: Any, token: MockFixture) -> None:
     """Should return OK and a list of events as json."""
     url = f"{http_service}/events"
 
-    session = ClientSession()
-    async with session.get(url) as response:
-        events = await response.json()
-    await session.close()
+    async with AsyncClient() as client:
+        response = await client.get(url)
+        events = response.json()
 
-    assert response.status == 200
-    assert "application/json" in response.headers[hdrs.CONTENT_TYPE]
+    assert response.status_code == HTTPStatus.OK
+    assert "application/json" in response.headers["Content-Type"]
     assert type(events) is list
     assert len(events) > 0
 
@@ -151,26 +150,25 @@ async def test_get_event_by_id(
     """Should return OK and an event as json."""
     url = f"{http_service}/events"
 
-    async with ClientSession() as session:
-        async with session.get(url) as response:
-            events = await response.json()
-        id = events[0]["id"]
-        url = f"{url}/{id}"
-        async with session.get(url) as response:
-            body = await response.json()
-
-    assert response.status == 200
-    assert "application/json" in response.headers[hdrs.CONTENT_TYPE]
-    assert type(event) is dict
-    assert body["id"] == id
-    assert body["name"] == event["name"]
-    assert body["competition_format"] == event["competition_format"]
-    assert body["date_of_event"] == event["date_of_event"]
-    assert body["time_of_event"] == event["time_of_event"]
-    assert body["timezone"] == event["timezone"]
-    assert body["organiser"] == event["organiser"]
-    assert body["webpage"] == event["webpage"]
-    assert body["information"] == event["information"]
+    async with AsyncClient() as client:
+        response = await client.get(url)
+        events = response.json()
+        event_id = events[0]["id"]
+        url = f"{url}/{event_id}"
+        response = await client.get(url)
+        assert response.status_code == HTTPStatus.OK
+        assert "application/json" in response.headers["Content-Type"]
+        body = response.json()
+        assert type(event) is dict
+        assert body["id"] == event_id
+        assert body["name"] == event["name"]
+        assert body["competition_format"] == event["competition_format"]
+        assert body["date_of_event"] == event["date_of_event"]
+        assert body["time_of_event"] == event["time_of_event"]
+        assert body["timezone"] == event["timezone"]
+        assert body["organiser"] == event["organiser"]
+        assert body["webpage"] == event["webpage"]
+        assert body["information"] == event["information"]
 
 
 @pytest.mark.contract
@@ -178,34 +176,34 @@ async def test_update_event(http_service: Any, token: MockFixture, event: dict) 
     """Should return No Content."""
     url = f"{http_service}/events"
     headers = {
-        hdrs.CONTENT_TYPE: "application/json",
-        hdrs.AUTHORIZATION: f"Bearer {token}",
+        "Content-Type": "application/json",
+        "Authorization": f"Bearer {token}",
     }
 
-    async with ClientSession() as session:
-        async with session.get(url) as response:
-            events = await response.json()
-        id = events[0]["id"]
-        url = f"{url}/{id}"
+    async with AsyncClient() as client:
+        response = await client.get(url)
+        events = response.json()
+        event_id = events[0]["id"]
+        url = f"{url}/{event_id}"
 
         request_body = deepcopy(event)
         new_name = "Oslo Skagen sprint updated"
-        request_body["id"] = id
+        request_body["id"] = event_id
         request_body["name"] = new_name
 
-        async with session.put(url, headers=headers, json=request_body) as response:
-            assert response.status == 204
+        response = await client.put(url, headers=headers, json=request_body)
+        assert response.status_code == HTTPStatus.NO_CONTENT
 
-        async with session.get(url) as response:
-            assert response.status == 200
-            updated_event = await response.json()
-            assert updated_event["name"] == new_name
-            assert updated_event["competition_format"] == event["competition_format"]
-            assert updated_event["date_of_event"] == event["date_of_event"]
-            assert updated_event["time_of_event"] == event["time_of_event"]
-            assert updated_event["organiser"] == event["organiser"]
-            assert updated_event["webpage"] == event["webpage"]
-            assert updated_event["information"] == event["information"]
+        response = await client.get(url)
+        assert response.status_code == HTTPStatus.OK
+        updated_event = response.json()
+        assert updated_event["name"] == new_name
+        assert updated_event["competition_format"] == event["competition_format"]
+        assert updated_event["date_of_event"] == event["date_of_event"]
+        assert updated_event["time_of_event"] == event["time_of_event"]
+        assert updated_event["organiser"] == event["organiser"]
+        assert updated_event["webpage"] == event["webpage"]
+        assert updated_event["information"] == event["information"]
 
 
 @pytest.mark.contract
@@ -213,16 +211,16 @@ async def test_delete_event(http_service: Any, token: MockFixture) -> None:
     """Should return No Content."""
     url = f"{http_service}/events"
     headers = {
-        hdrs.AUTHORIZATION: f"Bearer {token}",
+        "Authorization": f"Bearer {token}",
     }
 
-    async with ClientSession() as session:
-        async with session.get(url) as response:
-            events = await response.json()
-        id = events[0]["id"]
-        url = f"{url}/{id}"
-        async with session.delete(url, headers=headers) as response:
-            assert response.status == 204
+    async with AsyncClient() as client:
+        response = await client.get(url)
+        events = response.json()
+        event_id = events[0]["id"]
+        url = f"{url}/{event_id}"
+        response = await client.delete(url, headers=headers)
+        assert response.status_code == HTTPStatus.NO_CONTENT
 
-        async with session.get(url) as response:
-            assert response.status == 404
+        response = await client.get(url)
+        assert response.status_code == HTTPStatus.NOT_FOUND

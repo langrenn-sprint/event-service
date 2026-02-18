@@ -5,40 +5,46 @@ import logging
 import os
 from collections.abc import AsyncGenerator
 from datetime import date, time
+from http import HTTPStatus
 from typing import Any
 from urllib.parse import quote
 
+import aiofiles
 import motor.motor_asyncio
 import pytest
-from aiohttp import ClientSession, hdrs
+from httpx import AsyncClient
 from pytest_mock import MockFixture
 
-from event_service.utils import db_utils
+from app.utils import db_utils
 
 USERS_HOST_SERVER = os.getenv("USERS_HOST_SERVER")
 USERS_HOST_PORT = os.getenv("USERS_HOST_PORT")
 DB_HOST = os.getenv("DB_HOST", "localhost")
-DB_PORT = int(os.getenv("DB_PORT", 27017))
+DB_PORT = int(os.getenv("DB_PORT", "27017"))
 DB_NAME = os.getenv("DB_NAME", "events_test")
 DB_USER = os.getenv("DB_USER")
 DB_PASSWORD = os.getenv("DB_PASSWORD")
+
+logger = logging.getLogger(__name__)
 
 
 @pytest.fixture(scope="module")
 async def token(http_service: Any) -> str:
     """Create a valid token."""
     url = f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/login"
-    headers = {hdrs.CONTENT_TYPE: "application/json"}
+    headers = {"Content-Type": "application/json"}
     request_body = {
         "username": os.getenv("ADMIN_USERNAME"),
         "password": os.getenv("ADMIN_PASSWORD"),
     }
-    session = ClientSession()
-    async with session.post(url, headers=headers, json=request_body) as response:
-        body = await response.json()
-    await session.close()
-    if response.status != 200:
-        logging.error(f"Got unexpected status {response.status} from {http_service}.")
+    async with AsyncClient() as client:
+        response = await client.post(url, headers=headers, json=request_body)
+        body = response.json()
+
+    if response.status_code != HTTPStatus.OK:
+        logger.error(
+            f"Got unexpected status {response.status_code} from {http_service}."
+        )
     return body["token"]
 
 
@@ -51,16 +57,16 @@ async def clear_db() -> AsyncGenerator:
     try:
         await db_utils.drop_db_and_recreate_indexes(mongo, DB_NAME)
     except Exception as error:
-        logging.exception(f"Failed to drop database {DB_NAME}: {error}")
-        raise error
+        logger.exception(f"Failed to drop database {DB_NAME}")
+        raise error from error
 
     yield
 
     try:
         await db_utils.drop_db(mongo, DB_NAME)
     except Exception as error:
-        logging.exception(f"Failed to drop database {DB_NAME}: {error}")
-        raise error
+        logger.exception(f"Failed to drop database {DB_NAME}")
+        raise error from error
 
 
 @pytest.fixture(scope="module")
@@ -70,8 +76,8 @@ async def event_id(
     """Create an event object for testing."""
     url = f"{http_service}/events"
     headers = {
-        hdrs.CONTENT_TYPE: "application/json",
-        hdrs.AUTHORIZATION: f"Bearer {token}",
+        "Content-Type": "application/json",
+        "Authorization": f"Bearer {token}",
     }
     request_body = {
         "name": "Oslo Skagen sprint",
@@ -81,14 +87,13 @@ async def event_id(
         "webpage": "https://example.com",
         "information": "Testarr for å teste den nye løysinga.",
     }
-    session = ClientSession()
-    async with session.post(url, headers=headers, json=request_body) as response:
-        status = response.status
-    await session.close()
-    if status == 201:
-        # return the event_id, which is the last item of the path
-        return response.headers[hdrs.LOCATION].split("/")[-1]
-    logging.error(f"Got unsuccesful status when creating event: {status}.")
+    async with AsyncClient() as client:
+        response = await client.post(url, headers=headers, json=request_body)
+
+        if response.status_code == 201:
+            # return the event_id, which is the last item of the path
+            return response.headers["Location"].split("/")[-1]
+    logger.error(f"Got unsuccesful status when creating event: {response.status_code}.")
     return None
 
 
@@ -120,17 +125,15 @@ async def test_create_single_contestant(
     """Should return 201 Created, location header and no body."""
     url = f"{http_service}/events/{event_id}/contestants"
     headers = {
-        hdrs.CONTENT_TYPE: "application/json",
-        hdrs.AUTHORIZATION: f"Bearer {token}",
+        "Content-Type": "application/json",
+        "Authorization": f"Bearer {token}",
     }
     request_body = contestant
-    session = ClientSession()
-    async with session.post(url, headers=headers, json=request_body) as response:
-        status = response.status
-    await session.close()
+    async with AsyncClient() as client:
+        response = await client.post(url, headers=headers, json=request_body)
 
-    assert status == 201
-    assert f"/events/{event_id}/contestants/" in response.headers[hdrs.LOCATION]
+        assert response.status_code == HTTPStatus.CREATED
+        assert f"/events/{event_id}/contestants/" in response.headers["Location"]
 
 
 @pytest.mark.contract
@@ -140,31 +143,31 @@ async def test_get_contestant_by_id(
     """Should return OK and an contestant as json."""
     url = f"{http_service}/events/{event_id}/contestants"
 
-    async with ClientSession() as session:
-        async with session.get(url) as response:
-            contestants = await response.json()
+    async with AsyncClient() as client:
+        response = await client.get(url)
+        contestants = response.json()
         assert len(contestants) > 0
         assert type(contestants) is list
-        id = contestants[0]["id"]
-        url = f"{url}/{id}"
-        async with session.get(url) as response:
-            body = await response.json()
+        contestant_id = contestants[0]["id"]
+        url = f"{url}/{contestant_id}"
+        response = await client.get(url)
 
-    assert response.status == 200
-    assert "application/json" in response.headers[hdrs.CONTENT_TYPE]
-    assert type(body) is dict
-    assert body["id"]
-    assert body["first_name"] == contestant["first_name"]
-    assert body["last_name"] == contestant["last_name"]
-    assert body["birth_date"] == contestant["birth_date"]
-    assert body["gender"] == contestant["gender"]
-    assert body["ageclass"] == contestant["ageclass"]
-    assert body["region"] == contestant["region"]
-    assert body["club"] == contestant["club"]
-    assert body["team"] == contestant["team"]
-    assert body["email"] == contestant["email"]
-    assert body["registration_date_time"] == contestant["registration_date_time"]
-    assert body["event_id"] == event_id
+        assert response.status_code == HTTPStatus.OK
+        assert "application/json" in response.headers["Content-Type"]
+        body = response.json()
+        assert type(body) is dict
+        assert body["id"]
+        assert body["first_name"] == contestant["first_name"]
+        assert body["last_name"] == contestant["last_name"]
+        assert body["birth_date"] == contestant["birth_date"]
+        assert body["gender"] == contestant["gender"]
+        assert body["ageclass"] == contestant["ageclass"]
+        assert body["region"] == contestant["region"]
+        assert body["club"] == contestant["club"]
+        assert body["team"] == contestant["team"]
+        assert body["email"] == contestant["email"]
+        assert body["registration_date_time"] == contestant["registration_date_time"]
+        assert body["event_id"] == event_id
 
 
 @pytest.mark.contract
@@ -174,24 +177,24 @@ async def test_update_contestant(
     """Should return No Content."""
     url = f"{http_service}/events/{event_id}/contestants"
     headers = {
-        hdrs.CONTENT_TYPE: "application/json",
-        hdrs.AUTHORIZATION: f"Bearer {token}",
+        "Content-Type": "application/json",
+        "Authorization": f"Bearer {token}",
     }
 
-    async with ClientSession() as session:
-        async with session.get(url) as response:
-            contestants = await response.json()
+    async with AsyncClient() as client:
+        response = await client.get(url)
+        assert response.status_code == HTTPStatus.OK
+        contestants = response.json()
         assert len(contestants) > 0
         assert type(contestants) is list
-        id = contestants[0]["id"]
-        url = f"{url}/{id}"
+        contestant_id = contestants[0]["id"]
+        url = f"{url}/{contestant_id}"
         request_body = copy.deepcopy(contestant)
-        request_body["id"] = id
+        request_body["id"] = contestant_id
         request_body["last_name"] = "Updated name"
-        async with session.put(url, headers=headers, json=request_body) as response:
-            pass
+        response = await client.put(url, headers=headers, json=request_body)
 
-    assert response.status == 204
+        assert response.status_code == HTTPStatus.NO_CONTENT
 
 
 @pytest.mark.contract
@@ -201,20 +204,19 @@ async def test_delete_contestant(
     """Should return 204 No Content."""
     url = f"{http_service}/events/{event_id}/contestants"
     headers = {
-        hdrs.AUTHORIZATION: f"Bearer {token}",
+        "Authorization": f"Bearer {token}",
     }
 
-    async with ClientSession() as session:
-        async with session.get(url) as response:
-            contestants = await response.json()
+    async with AsyncClient() as client:
+        response = await client.get(url)
+        contestants = response.json()
         assert len(contestants) > 0
         assert type(contestants) is list
-        id = contestants[0]["id"]
-        url = f"{url}/{id}"
-        async with session.delete(url, headers=headers) as response:
-            pass
+        contestant_id = contestants[0]["id"]
+        url = f"{url}/{contestant_id}"
+        response = await client.delete(url, headers=headers)
 
-    assert response.status == 204
+        assert response.status_code == HTTPStatus.NO_CONTENT
 
 
 @pytest.mark.contract
@@ -224,32 +226,32 @@ async def test_create_many_contestants_as_csv_file(
     event_id: str,
 ) -> None:
     """Should return 200 OK and a report."""
-    url = f"{http_service}/events/{event_id}/contestants"
     headers = {
-        hdrs.AUTHORIZATION: f"Bearer {token}",
+        "Authorization": f"Bearer {token}",
     }
 
     # Send csv-file in request:
-    files = {"file": open("tests/files/contestants_Sportsadmin.csv", "rb")}
-    async with ClientSession() as session:
-        async with session.delete(url) as response:
-            pass
-        async with session.post(url, headers=headers, data=files) as response:
-            status = response.status
-            body = await response.json()
+    async with aiofiles.open("tests/files/contestants_Sportsadmin.csv") as file:
+        content = await file.read()
+    files = {"file": ("contestants.csv", content, "text/csv")}
+    async with AsyncClient() as client:
+        url = f"{http_service}/events/{event_id}/contestants"
+        response = await client.delete(url, headers=headers)
+        assert response.status_code == HTTPStatus.NO_CONTENT
+        url = f"{http_service}/events/{event_id}/contestants/file"
+        response = await client.post(url, headers=headers, files=files)
 
-    assert status == 200
-    assert "application/json" in response.headers[hdrs.CONTENT_TYPE]
-
-    assert len(body) > 0
-
-    assert body["total"] == 670
-    assert body["created"] == 670
-    assert len(body["updated"]) == 0
-    assert len(body["failures"]) == 0
-    assert body["total"] == body["created"] + len(body["updated"]) + len(
-        body["failures"]
-    )
+        assert response.status_code == HTTPStatus.OK, response.text
+        assert "application/json" in response.headers["Content-Type"]
+        body = response.json()
+        assert len(body) > 0
+        assert body["total"] == 670
+        assert body["created"] == 670
+        assert len(body["updated"]) == 0
+        assert len(body["failures"]) == 0
+        assert body["total"] == body["created"] + len(body["updated"]) + len(
+            body["failures"]
+        )
 
 
 @pytest.mark.contract
@@ -259,30 +261,31 @@ async def test_update_many_existing_contestants_as_csv_file(
     event_id: str,
 ) -> None:
     """Should return 200 OK and a report."""
-    url = f"{http_service}/events/{event_id}/contestants"
+    url = f"{http_service}/events/{event_id}/contestants/file"
     headers = {
-        hdrs.AUTHORIZATION: f"Bearer {token}",
+        "Authorization": f"Bearer {token}",
     }
-
     # Send csv-file in request:
-    files = {"file": open("tests/files/contestants_G11_Sportsadmin.csv", "rb")}
-    async with ClientSession() as session:
-        async with session.post(url, headers=headers, data=files) as response:
-            status = response.status
-            body = await response.json()
+    async with aiofiles.open("tests/files/contestants_G11_Sportsadmin.csv") as file:
+        content = await file.read()
+    files = {"file": ("contestants.csv", content, "text/csv")}
 
-    assert status == 200, response
-    assert "application/json" in response.headers[hdrs.CONTENT_TYPE]
+    async with AsyncClient() as client:
+        response = await client.post(url, headers=headers, files=files)
+        if response.status_code != HTTPStatus.OK:
+            body = response.json()
+        assert response.status_code == HTTPStatus.OK, response
+        assert "application/json" in response.headers["Content-Type"]
+        body = response.json()
+        assert len(body) > 0
 
-    assert len(body) > 0
-
-    assert body["total"] == 3
-    assert body["created"] == 0
-    assert len(body["updated"]) == 3
-    assert len(body["failures"]) == 0
-    assert body["total"] == body["created"] + len(body["updated"]) + len(
-        body["failures"]
-    )
+        assert body["total"] == 3
+        assert body["created"] == 0
+        assert len(body["updated"]) == 3
+        assert len(body["failures"]) == 0
+        assert body["total"] == body["created"] + len(body["updated"]) + len(
+            body["failures"]
+        )
 
 
 @pytest.mark.contract
@@ -292,12 +295,12 @@ async def test_get_all_contestants_in_given_event(
     """Should return OK and a list of contestants as json."""
     url = f"{http_service}/events/{event_id}/contestants"
 
-    async with ClientSession() as session:
-        async with session.get(url) as response:
-            contestants = await response.json()
+    async with AsyncClient() as client:
+        response = await client.get(url)
+        contestants = response.json()
 
-    assert response.status == 200
-    assert "application/json" in response.headers[hdrs.CONTENT_TYPE]
+    assert response.status_code == HTTPStatus.OK
+    assert "application/json" in response.headers["Content-Type"]
     assert type(contestants) is list
     assert len(contestants) == 670
 
@@ -308,26 +311,26 @@ async def test_get_all_contestants_in_given_event_by_raceclass(
 ) -> None:
     """Should return OK and a list of contestants as json."""
     headers = {
-        hdrs.AUTHORIZATION: f"Bearer {token}",
+        "Authorization": f"Bearer {token}",
     }
-    async with ClientSession() as session:
+    async with AsyncClient() as client:
         # In this case we have to generate raceclasses first:
         url = f"{http_service}/events/{event_id}/generate-raceclasses"
-        async with session.post(url, headers=headers) as response:
-            assert response.status == 201
+        response = await client.post(url, headers=headers)
+        assert response.status_code == HTTPStatus.CREATED
 
-        query_parameter = f"ageclass={quote('J 15 år')}"
+        query_parameter = f"raceclass-name={quote('J15')}"
         url = f"{http_service}/events/{event_id}/contestants?{query_parameter}"
 
-        async with session.get(url) as response:
-            contestants = await response.json()
+        response = await client.get(url)
+        contestants = response.json()
 
-    assert response.status == 200, response
-    assert "application/json" in response.headers[hdrs.CONTENT_TYPE]
-    assert type(contestants) is list
-    assert len(contestants) == 28
-    for contestant in contestants:
-        assert contestant["ageclass"] == "J 15 år"
+        assert response.status_code == HTTPStatus.OK, response
+        assert "application/json" in response.headers["Content-Type"]
+        assert type(contestants) is list
+        assert len(contestants) == 28
+        for contestant in contestants:
+            assert contestant["ageclass"] == "J 15 år"
 
 
 @pytest.mark.contract
@@ -336,20 +339,20 @@ async def test_get_all_contestants_in_given_event_by_ageclass(
 ) -> None:
     """Should return OK and a list of contestants as json."""
     headers = {
-        hdrs.AUTHORIZATION: f"Bearer {token}",
+        "Authorization": f"Bearer {token}",
     }
-    async with ClientSession() as session:
-        query_param = f"ageclass={quote('J 15 år')}"
+    async with AsyncClient() as client:
+        query_param = f"ageclass-name={quote('J 15 år')}"
         url = f"{http_service}/events/{event_id}/contestants"
-        async with session.get(f"{url}?{query_param}", headers=headers) as response:
-            contestants = await response.json()
+        response = await client.get(f"{url}?{query_param}", headers=headers)
+        contestants = response.json()
 
-    assert response.status == 200
-    assert "application/json" in response.headers[hdrs.CONTENT_TYPE]
-    assert type(contestants) is list
-    assert len(contestants) == 28
-    for contestant in contestants:
-        assert contestant["ageclass"] == "J 15 år"
+        assert response.status_code == HTTPStatus.OK
+        assert "application/json" in response.headers["Content-Type"]
+        assert type(contestants) is list
+        assert len(contestants) == 28
+        for contestant in contestants:
+            assert contestant["ageclass"] == "J 15 år"
 
 
 @pytest.mark.contract
@@ -360,66 +363,68 @@ async def test_get_all_contestants_in_given_event_by_bib(
     bib = 1
 
     headers = {
-        hdrs.AUTHORIZATION: f"Bearer {token}",
+        "Authorization": f"Bearer {token}",
     }
 
-    async with ClientSession() as session:
+    async with AsyncClient() as client:
         # First we add contestants to event:
-        url = f"{http_service}/events/{event_id}/contestants"
-        files = {"file": open("tests/files/contestants_Sportsadmin.csv", "rb")}
-        async with session.post(url, headers=headers, data=files) as response:
-            assert response.status == 200
+        url = f"{http_service}/events/{event_id}/contestants/file"
+        async with aiofiles.open("tests/files/contestants_Sportsadmin.csv") as file:
+            content = await file.read()
+        files = {"file": ("contestants.csv", content, "text/csv")}
+        response = await client.post(url, headers=headers, files=files)
+        assert response.status_code == HTTPStatus.OK, response.json()
 
         # We need to generate raceclasses for the event:
         url = f"{http_service}/events/{event_id}/generate-raceclasses"
-        async with session.post(url, headers=headers) as response:
-            if response.status != 201:
-                body = await response.json()
-            assert response.status == 201, body["detail"]
-            assert f"/events/{event_id}/raceclasses" in response.headers[hdrs.LOCATION]
+        response = await client.post(url, headers=headers)
+        if response.status_code != HTTPStatus.CREATED:
+            body = response.json()
+        assert response.status_code == HTTPStatus.CREATED, body["detail"]
+        assert f"/events/{event_id}/raceclasses" in response.headers["Location"]
 
         # Check that we got the raceclasses:
         url = f"{http_service}/events/{event_id}/raceclasses"
-        async with session.get(url) as response:
-            assert response.status == 200
-            raceclasses = await response.json()
-            assert len(raceclasses) > 0, "No raceclasses found"
+        response = await client.get(url)
+        assert response.status_code == HTTPStatus.OK
+        raceclasses = response.json()
+        assert len(raceclasses) > 0, "No raceclasses found"
         # Also we need to set order for all raceclasses:
         url = f"{http_service}/events/{event_id}/raceclasses"
-        async with session.get(url) as response:
-            assert response.status == 200
-            raceclasses = await response.json()
-            for raceclass in raceclasses:
-                id = raceclass["id"]
-                (
-                    raceclass["group"],
-                    raceclass["order"],
-                    raceclass["ranking"],
-                ) = await _decide_group_order_and_ranking(raceclass)
-                async with session.put(
-                    f"{url}/{id}", headers=headers, json=raceclass
-                ) as response:
-                    assert response.status == 204
+        response = await client.get(url)
+        assert response.status_code == HTTPStatus.OK
+        raceclasses = response.json()
+        for raceclass in raceclasses:
+            raceclass_id = raceclass["id"]
+            (
+                raceclass["group"],
+                raceclass["order"],
+                raceclass["ranking"],
+            ) = await _decide_group_order_and_ranking(raceclass)
+            response = await client.put(
+                f"{url}/{raceclass_id}", headers=headers, json=raceclass
+            )
+            assert response.status_code == HTTPStatus.NO_CONTENT
 
         # Finally assign bibs to all contestants:
         url = f"{http_service}/events/{event_id}/contestants/assign-bibs"
-        async with session.post(url, headers=headers) as response:
-            assert response.status == 201
-            assert f"/events/{event_id}/contestants" in response.headers[hdrs.LOCATION]
+        response = await client.post(url, headers=headers)
+        assert response.status_code == HTTPStatus.CREATED
+        assert f"/events/{event_id}/contestants" in response.headers["Location"]
 
         # We can now get the contestants
         url = f"{http_service}/events/{event_id}/contestants"
-        async with session.get(url) as response:
-            contestants = await response.json()
-        assert response.status == 200
+        response = await client.get(url)
+        contestants = response.json()
+        assert response.status_code == HTTPStatus.OK
         assert len(contestants) > 0
         # We can now get the contestant by bib.
         url = f"{http_service}/events/{event_id}/contestants?bib={bib}"
-        async with session.get(url) as response:
-            contestants_with_bib = await response.json()
+        response = await client.get(url)
+        contestants_with_bib = response.json()
 
-        assert response.status == 200
-        assert "application/json" in response.headers[hdrs.CONTENT_TYPE]
+        assert response.status_code == HTTPStatus.OK
+        assert "application/json" in response.headers["Content-Type"]
         assert type(contestants_with_bib) is list
         assert len(contestants_with_bib) == 1
         assert contestants_with_bib[0]["bib"] == 1
@@ -433,16 +438,16 @@ async def test_search_contestant_by_name(
     url = f"{http_service}/events/{event_id}/contestants/search"
     body = {"name": "Bjørn"}
     headers = {
-        hdrs.AUTHORIZATION: f"Bearer {token}",
-        hdrs.CONTENT_TYPE: "application/json",
+        "Authorization": f"Bearer {token}",
+        "Content-Type": "application/json",
     }
 
-    async with ClientSession() as session:
-        async with session.post(url, headers=headers, json=body) as response:
-            if response.status != 200:
-                body = await response.json()
-            assert response.status == 200, body
-            contestants = await response.json()
+    async with AsyncClient() as client:
+        response = await client.post(url, headers=headers, json=body)
+        if response.status_code != HTTPStatus.OK:
+            body = response.json()
+        assert response.status_code == HTTPStatus.OK, body
+        contestants = response.json()
 
     assert len(contestants) == 3
 
@@ -454,21 +459,21 @@ async def test_delete_all_contestant(
     """Should return 204 No Content."""
     url = f"{http_service}/events/{event_id}/contestants"
     headers = {
-        hdrs.AUTHORIZATION: f"Bearer {token}",
+        "Authorization": f"Bearer {token}",
     }
 
-    async with ClientSession() as session:
-        async with session.delete(url, headers=headers) as response:
-            assert response.status == 204
+    async with AsyncClient() as client:
+        response = await client.delete(url, headers=headers)
+        assert response.status_code == HTTPStatus.NO_CONTENT
 
-        async with session.get(url) as response:
-            assert response.status == 200
-            contestants = await response.json()
-            assert len(contestants) == 0
+        response = await client.get(url)
+        assert response.status_code == HTTPStatus.OK
+        contestants = response.json()
+        assert len(contestants) == 0
 
 
 # ---
-async def _decide_group_order_and_ranking(  # noqa: C901
+async def _decide_group_order_and_ranking(  # noqa: PLR0911, PLR0912, C901
     raceclass: dict,
 ) -> tuple[int, int, bool]:
     if raceclass["name"] == "MS":
