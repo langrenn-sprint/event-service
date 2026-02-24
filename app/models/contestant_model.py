@@ -25,7 +25,7 @@ class Contestant(BaseModel):
 
     gender: str
     ageclass: str
-    region: str
+    region: str | None = Field(default=None)
     club: str
     event_id: UUID
     email: EmailStr | None = Field(default=None)

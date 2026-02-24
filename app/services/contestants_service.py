@@ -155,7 +155,7 @@ class ContestantsService:
         return None
 
     @classmethod
-    async def create_contestants(cls: Any, event_id: UUID, contestants: str) -> dict:
+    async def create_contestants(cls: Any, event_id: UUID, contestants: str) -> dict:  # noqa: C901, PLR0912, PLR0915
         """Create contestants function.
 
         Args:
@@ -201,15 +201,38 @@ class ContestantsService:
             # Validate contestant:
             try:
                 # datetime to string in isoformat:
-                try:
-                    if _c["registration_date_time"]:
+                # birth_date to string in isoformat:
+                if _c["birth_date"]:
+                    try:
+                        _c["birth_date"] = (
+                            datetime.strptime(  # noqa: DTZ007
+                                _c["birth_date"], "%d.%m.%Y"
+                            )
+                            .date()
+                            .isoformat()
+                        )
+                    except ValueError:
+                        # We try to parse birth_date in another format, to be more flexible:
+                        try:
+                            _c["birth_date"] = (
+                                datetime.strptime(  # noqa: DTZ007
+                                    _c["birth_date"], "%Y-%m-%d"
+                                )
+                                .date()
+                                .isoformat()
+                            )
+                        except ValueError as e:
+                            msg = f"Failed to parse birth_date. Please check format. Reason: {e}"
+                            raise IllegalValueError(msg) from e
+                if _c["registration_date_time"]:
+                    try:
                         _c["registration_date_time"] = datetime.strptime(  # noqa: DTZ007
                             _c["registration_date_time"],
                             "%d.%m.%Y %H:%M:%S",
                         ).isoformat()
-                except ValueError as e:
-                    msg = f"Invalid datetime format in '{_c!r}'"
-                    raise IllegalValueError(msg) from e
+                    except ValueError as e:
+                        msg = f"Failed to parse registration_date_time. Please check format. Reason: {e}"
+                        raise IllegalValueError(msg) from e
                 contestant = Contestant.model_validate(_c)
                 # Strip ageclass for whitespace:
                 contestant.ageclass = contestant.ageclass.strip()
