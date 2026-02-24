@@ -23,32 +23,48 @@ In future versions:
 
 ## Usage example
 
+Docs available at http://localhost:8000/docs when running the API locally.
+
 ```Shell
 % curl -H "Content-Type: application/json" \
   -X POST \
-  --data '{"username":"admin","password":"passw123"}' \
-  http://localhost:8082/login
+  --data '{"username":"admin","password":"password"}' \
+  http://localhost:8081/login
 % export ACCESS="" #token from response
 % curl -H "Content-Type: application/json" \
   -H "Authorization: Bearer $ACCESS" \
   -X POST \
   --data @tests/files/competition_format_individual_sprint.json \
-  http://localhost:8080/events/
+  http://localhost:8082/competition-formats
 % curl -H "Content-Type: application/json" \
   -H "Authorization: Bearer $ACCESS" \
   -X POST \
   --data @tests/files/event.json \
-  http://localhost:8080/events
-% curl -H "Authorization: Bearer $ACCESS"  http://localhost:8080/events
+  http://localhost:8000/events
+% curl -H \
+  -X GET \
+  http://localhost:8000/events
 % curl -H "Content-Type: multipart/form-data" \
   -H "Authorization: Bearer $ACCESS" \
   -X POST \
-  -F "data=@tests/files/contestants_iSonen.csv; type=text/csv" \
-  http://localhost:8080/events/<event-id/contestants
+  -F "file=@tests/files/contestants_iSonen.csv; type=text/csv" \
+  http://localhost:8000/events/<event-id>/contestants/file
+% curl \
+  -X GET \
+  http://localhost:8000/events/<event-id>/contestants
 % curl \
   -H "Authorization: Bearer $ACCESS" \
+  -X POST \
+  http://localhost:8000/events/<event-id>/generate-raceclasses
+% curl \
   -X GET \
-  http://localhost:8080/events/<event-id>/contestants
+  http://localhost:8000/events/db781aab-0dd3-46cb-9de0-118b957e2a4a/raceclasses
+% curl \
+  -X GET \
+  "http://localhost:8000/events/db781aab-0dd3-46cb-9de0-118b957e2a4a/raceclasses?raceclass-name=J11"
+% curl \
+  -X GET \
+  "http://localhost:8000/events/db781aab-0dd3-46cb-9de0-118b957e2a4a/raceclasses?ageclass-name=J%2013%20%C3%A5r"
 ```
 
 Look to the [openAPI specification](./specification.yaml) for the details.
@@ -76,7 +92,7 @@ Look to the [openAPI specification](./specification.yaml) for the details.
 An example .env file for local development:
 
 ```Shell
-JWT_SECRET=secret
+JWT_SECRET=test_jwt_secret_key_for_development_do_not_use_in_production_12345
 JWT_EXP_DELTA_SECONDS=3600
 ADMIN_USERNAME=admin
 ADMIN_PASSWORD=password
@@ -93,13 +109,13 @@ LOGGING_LEVEL=DEBUG
 Start the server locally:
 
 ```shell
-% uv run adev runserver -p 8080 --aux-port 8089 event_service
+% uv run --env-file .env fastapi dev
 ```
 
 ### Running the API in a wsgi-server (gunicorn)
 
 ```shell
-% uv run gunicorn event_service:create_app --bind localhost:8080 --worker-class aiohttp.GunicornWebWorker
+% uv run --env-file .env uvicorn app:api --host 0.0.0.0 --port 8000 --workers 1 --log-config=logging.yaml
 ```
 
 ### Running the wsgi-server in Docker
@@ -108,7 +124,7 @@ To build and run the api in a Docker container:
 
 ```Shell
 % docker build -t ghcr.io/langrenn-sprint/event-service:latest .
-% docker run --env-file .env -p 8080:8080 -d ghcr.io/langrenn-sprint/event-service:latest
+% docker run --env-file .env -p 8080:8000 -d ghcr.io/langrenn-sprint/event-service:latest
 ```
 
 The easier way would be with docker-compose:

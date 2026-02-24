@@ -1,32 +1,29 @@
 """Unit test cases for the create_raceclass_name function."""
 
+import uuid
+
 import pytest
 import pytest_asyncio
 from pytest_mock import MockFixture
 
-from event_service.commands.events_commands import (
+from app.adapters import RaceclassesConfigAdapter
+from app.commands.events_commands import (
     _assign_default_values_to_raceclasses,
 )
-
-from event_service.adapters import RaceclassesConfigAdapter
-from event_service.models.raceclass_model import Raceclass
-from event_service.models.raceclasses_config_model import RaceclassesConfig
+from app.models.raceclass_model import Raceclass
+from app.models.raceclasses_config_model import RaceclassesConfig
 
 
 @pytest_asyncio.fixture()
 async def default_raceclasses_config() -> RaceclassesConfig:
     """Fixture for default RaceclassesConfig."""
-    default_raceclasses_config = (
-        await RaceclassesConfigAdapter.get_default_raceclasses_config()
-    )
-    return RaceclassesConfig(**default_raceclasses_config)
+    return await RaceclassesConfigAdapter.get_default_raceclasses_config()
 
 
 @pytest.mark.unit
 @pytest.mark.asyncio
 async def test_assign_default_values_to_raceclasses_empty_list(
-    default_raceclasses_config,
-    mocker: MockFixture,
+    default_raceclasses_config: RaceclassesConfig,
 ):
     """Should return empty list when input list is empty."""
     raceclasses = []
@@ -39,26 +36,27 @@ async def test_assign_default_values_to_raceclasses_empty_list(
 @pytest.mark.unit
 @pytest.mark.asyncio
 async def test_assign_default_values_to_raceclasses_two_ageclasses(
-    default_raceclasses_config,
+    default_raceclasses_config: RaceclassesConfig,
     mocker: MockFixture,
 ):
     """Should return list with reverse order when two raceclasses are given."""
     mocker.patch(
-        "event_service.adapters.contestants_adapter.ContestantsAdapter.get_all_contestants",
+        "app.adapters.contestants_adapter.ContestantsAdapter.get_all_contestants",
         return_value=[],
     )
+    event_id = uuid.UUID("12345678-1234-5678-1234-567812345678")
     raceclasses = [
         Raceclass(
-            name="J 15 år", ageclasses=["J 15 år"], gender="K", event_id="event1"
+            name="J 15 år", ageclasses=["J 15 år"], gender="K", event_id=event_id
         ),
         Raceclass(
-            name="G 15 år", ageclasses=["G 15 år"], gender="M", event_id="event1"
+            name="G 15 år", ageclasses=["G 15 år"], gender="M", event_id=event_id
         ),
         Raceclass(
-            name="J 16 år", ageclasses=["J 16 år"], gender="K", event_id="event1"
+            name="J 16 år", ageclasses=["J 16 år"], gender="K", event_id=event_id
         ),
         Raceclass(
-            name="G 16 år", ageclasses=["G 16 år"], gender="M", event_id="event1"
+            name="G 16 år", ageclasses=["G 16 år"], gender="M", event_id=event_id
         ),
     ]
     result = _assign_default_values_to_raceclasses(
@@ -89,28 +87,29 @@ async def test_assign_default_values_to_raceclasses_two_ageclasses(
 @pytest.mark.unit
 @pytest.mark.asyncio
 async def test_assign_default_values_to_raceclasses_three_ageclasses_and_one_unranked(
-    default_raceclasses_config, mocker: MockFixture
+    default_raceclasses_config: RaceclassesConfig, mocker: MockFixture
 ):
     """Should return list with reverse order when three raceclasses are given."""
     mocker.patch(
-        "event_service.adapters.contestants_adapter.ContestantsAdapter.get_all_contestants",
+        "app.adapters.contestants_adapter.ContestantsAdapter.get_all_contestants",
         return_value=[],
     )
+    event_id = uuid.UUID("12345678-1234-5678-1234-567812345678")
     raceclasses = [
         Raceclass(
-            name="J 15 år", ageclasses=["J 15 år"], gender="K", event_id="event1"
+            name="J 15 år", ageclasses=["J 15 år"], gender="K", event_id=event_id
         ),
         Raceclass(
-            name="G 15 år", ageclasses=["G 15 år"], gender="M", event_id="event1"
+            name="G 15 år", ageclasses=["G 15 år"], gender="M", event_id=event_id
         ),
         Raceclass(
-            name="J 16 år", ageclasses=["J 16 år"], gender="K", event_id="event1"
+            name="J 16 år", ageclasses=["J 16 år"], gender="K", event_id=event_id
         ),
         Raceclass(
-            name="G 16 år", ageclasses=["G 16 år"], gender="M", event_id="event1"
+            name="G 16 år", ageclasses=["G 16 år"], gender="M", event_id=event_id
         ),
-        Raceclass(name="J 8 år", ageclasses=["J 8 år"], gender="K", event_id="event1"),
-        Raceclass(name="G 8 år", ageclasses=["G 8 år"], gender="M", event_id="event1"),
+        Raceclass(name="J 8 år", ageclasses=["J 8 år"], gender="K", event_id=event_id),
+        Raceclass(name="G 8 år", ageclasses=["G 8 år"], gender="M", event_id=event_id),
     ]
     result = _assign_default_values_to_raceclasses(
         default_raceclasses_config, raceclasses
@@ -150,101 +149,102 @@ async def test_assign_default_values_to_raceclasses_three_ageclasses_and_one_unr
 @pytest.mark.unit
 @pytest.mark.asyncio
 async def test_assign_default_values_to_raceclasses_all(
-    default_raceclasses_config, mocker: MockFixture
+    default_raceclasses_config: RaceclassesConfig, mocker: MockFixture
 ):
     """Should return list with correct order when all raceclasses are given."""
     mocker.patch(
-        "event_service.adapters.contestants_adapter.ContestantsAdapter.get_all_contestants",
+        "app.adapters.contestants_adapter.ContestantsAdapter.get_all_contestants",
         return_value=[],
     )
+    event_id = uuid.UUID("12345678-1234-5678-1234-567812345678")
     raceclasses = [
         Raceclass(
-            name="J 15 år", ageclasses=["J 15 år"], gender="K", event_id="event1"
+            name="J 15 år", ageclasses=["J 15 år"], gender="K", event_id=event_id
         ),
         Raceclass(
-            name="G 15 år", ageclasses=["G 15 år"], gender="M", event_id="event1"
+            name="G 15 år", ageclasses=["G 15 år"], gender="M", event_id=event_id
         ),
         Raceclass(
-            name="J 16 år", ageclasses=["J 16 år"], gender="K", event_id="event1"
+            name="J 16 år", ageclasses=["J 16 år"], gender="K", event_id=event_id
         ),
         Raceclass(
-            name="G 16 år", ageclasses=["G 16 år"], gender="M", event_id="event1"
+            name="G 16 år", ageclasses=["G 16 år"], gender="M", event_id=event_id
         ),
-        Raceclass(name="J 8 år", ageclasses=["J 8 år"], gender="K", event_id="event1"),
-        Raceclass(name="G 8 år", ageclasses=["G 8 år"], gender="M", event_id="event1"),
-        Raceclass(name="J 9 år", ageclasses=["J 9 år"], gender="K", event_id="event1"),
-        Raceclass(name="G 9 år", ageclasses=["G 9 år"], gender="M", event_id="event1"),
+        Raceclass(name="J 8 år", ageclasses=["J 8 år"], gender="K", event_id=event_id),
+        Raceclass(name="G 8 år", ageclasses=["G 8 år"], gender="M", event_id=event_id),
+        Raceclass(name="J 9 år", ageclasses=["J 9 år"], gender="K", event_id=event_id),
+        Raceclass(name="G 9 år", ageclasses=["G 9 år"], gender="M", event_id=event_id),
         Raceclass(
-            name="J 10 år", ageclasses=["J 10 år"], gender="K", event_id="event1"
-        ),
-        Raceclass(
-            name="G 10 år", ageclasses=["G 10 år"], gender="M", event_id="event1"
+            name="J 10 år", ageclasses=["J 10 år"], gender="K", event_id=event_id
         ),
         Raceclass(
-            name="J 11 år", ageclasses=["J 11 år"], gender="K", event_id="event1"
+            name="G 10 år", ageclasses=["G 10 år"], gender="M", event_id=event_id
         ),
         Raceclass(
-            name="G 11 år", ageclasses=["G 11 år"], gender="M", event_id="event1"
+            name="J 11 år", ageclasses=["J 11 år"], gender="K", event_id=event_id
         ),
         Raceclass(
-            name="J 12 år", ageclasses=["J 12 år"], gender="K", event_id="event1"
+            name="G 11 år", ageclasses=["G 11 år"], gender="M", event_id=event_id
         ),
         Raceclass(
-            name="G 12 år", ageclasses=["G 12 år"], gender="M", event_id="event1"
+            name="J 12 år", ageclasses=["J 12 år"], gender="K", event_id=event_id
         ),
         Raceclass(
-            name="J 13 år", ageclasses=["J 13 år"], gender="K", event_id="event1"
+            name="G 12 år", ageclasses=["G 12 år"], gender="M", event_id=event_id
         ),
         Raceclass(
-            name="G 13 år", ageclasses=["G 13 år"], gender="M", event_id="event1"
+            name="J 13 år", ageclasses=["J 13 år"], gender="K", event_id=event_id
         ),
         Raceclass(
-            name="J 14 år", ageclasses=["J 14 år"], gender="K", event_id="event1"
+            name="G 13 år", ageclasses=["G 13 år"], gender="M", event_id=event_id
         ),
         Raceclass(
-            name="G 14 år", ageclasses=["G 14 år"], gender="M", event_id="event1"
+            name="J 14 år", ageclasses=["J 14 år"], gender="K", event_id=event_id
+        ),
+        Raceclass(
+            name="G 14 år", ageclasses=["G 14 år"], gender="M", event_id=event_id
         ),
         Raceclass(
             name="Kvinner senior",
             ageclasses=["Kvinner senior"],
             gender="K",
-            event_id="event1",
+            event_id=event_id,
         ),
         Raceclass(
             name="Menn senior",
             ageclasses=["Menn senior"],
             gender="M",
-            event_id="event_id",
+            event_id=event_id,
         ),
         Raceclass(
             name="Kvinner 19-20",
             ageclasses=["Kvinner 19-20"],
             gender="K",
-            event_id="event1",
+            event_id=event_id,
         ),
         Raceclass(
             name="Menn 19-20",
             ageclasses=["Menn 19-20"],
             gender="M",
-            event_id="event1",
+            event_id=event_id,
         ),
         Raceclass(
             name="Kvinner 18",
             ageclasses=["Kvinner 18"],
             gender="K",
-            event_id="event1",
+            event_id=event_id,
         ),
         Raceclass(
-            name="Menn 18", ageclasses=["Menn 18"], gender="M", event_id="event1"
+            name="Menn 18", ageclasses=["Menn 18"], gender="M", event_id=event_id
         ),
         Raceclass(
             name="Kvinner 17",
             ageclasses=["Kvinner 17"],
             gender="K",
-            event_id="event1",
+            event_id=event_id,
         ),
         Raceclass(
-            name="Menn 17", ageclasses=["Menn 17"], gender="M", event_id="event1"
+            name="Menn 17", ageclasses=["Menn 17"], gender="M", event_id=event_id
         ),
     ]
     result = _assign_default_values_to_raceclasses(

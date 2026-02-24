@@ -18,19 +18,13 @@ dependencies = [
     "PyJWT>=2.1.0",
     "aiodns>=3.0.0",
     "aiofiles>=25.1.0",
-    "aiohttp>=3.7.2",
-    "aiohttp-middlewares>=2.1.0",
     "certifi>=2024.12.14",
-    "dataclasses-json>=0.6.3",
-    "gunicorn>=23.0.0",
-    "marshmallow>=3.13.0",
+    "fastapi[standard]>=0.128.1",
+    "httpx>=0.28.1",
     "motor>=3.3.2",
-    "multidict>=6.0.1",
-    "nest-asyncio>=1.6.0",
     "numpy>=2.2.3",
     "pandas>=2.2.3",
-    "python-dotenv>=1.0.0",
-    "python-json-logger>=3.2.1",
+    "pydantic>=2.12.5",
 ]
 [project.urls]
 Homepage = "https://github.com/langrenn-sprint/event-service"
@@ -39,30 +33,25 @@ Repository = "https://github.com/langrenn-sprint/event-service"
 [dependency-groups]
 dev = [
     "Pygments>=2.10.0",
-    "aiohttp-devtools>=1.0.post0",
-    "aioresponses>=0.7.2",
     "codecov>=2.1.10",
     "coverage>=7.1.0",
     "docker>=7.0.0",
     "pytest>=8.3.4",
-    "pytest-aiohttp>=1.0.4",
     "pytest-asyncio>=0.25.0",
     "pytest-cov>=6.0.0",
     "pytest-docker>=3.1.1",
     "pytest-mock>=3.8.2",
-    "requests>=2.25.1",
-    "types-requests>=2.31.0.20231231",
-    "types-urllib3>=1.26.25.14",
     "pip-audit>=2.7.3",
     "ruff>=0.8.4",
     "poethepoet>=0.32.0",
     "deptry>=0.21.2",
     "pytest-env>=1.1.5",
     "ty>=0.0.12",
+    "httpx>=0.28.1",
 ]
 
 [tool.uv]
-required-version = ">=0.9.26"
+required-version = ">=0.10.2"
 
 [tool.ruff.lint]
 select = ["ALL"]
@@ -70,31 +59,20 @@ select = ["ALL"]
 ignore = ["COM812", "ISC001", "T201", "G004", "E501", "ANN401"]
 
 [tool.ruff.lint.per-file-ignores]
-"tests/**/*.py" = ["ALL"]
-#     # at least this three should be fine in tests:
-#     "S101",     # asserts allowed in tests...
-#     "ANN401",   # Any should be allowed
-#     "ARG001",   # Unused function args -> fixtures nevertheless are functionally relevant...
-#     "PLR0913",
-#     "PTH123",   # Don't care about paths in tests
-#     "ASYNC230", # Don't care about async in tests
-#     "ERA001",   # Don't care about commented-out code in tests
-#     "TD002",    # Don't care about missing author
-#     "TD003",    # Don't care about missing issue links in tests
-#     "FIX002",   # Don't care about TODOs in tests
-#     "PLR0911",  # Don't care about too many return statements in tests
-#     "PLR0912",  # Don't care about too many branches in tests
-#     "PLR0915",  # Don't care about too many statements in tests
-#     "FBT003",   # Don't care about boolean positional value in tests
-#     "N802",     # Don't care about function name caseing in tests
-#     "N806",     # Don't care about variable name caseing in tests
-#     "PLC2401",  # Don't care about non-ascii characters in tests
-#     "PLR2004",  # Don't care about magic value in tests
-#     "PGH003",   # Don't care specific rule codes in tests
-#]
+"app/main.py" = ["ERA001"]
+"tests/**/*.py" = [
+     "S101",     # asserts allowed in tests...
+     "ANN201",   # Missing return type annotation -> tests are often more readable without return type annotations...
+     "ARG001",   # Unused function args -> fixtures nevertheless are functionally relevant...
+     "ERA001",   # Don't care about commented-out code in tests
+     "PLR0913",  # Don't care about too many arguments in test
+     "PLR0915",  # Don't care about too many statements in tests
+     "PLR2004",  # Don't care about magic value in tests
+]
+
 [tool.ruff.lint.isort]
 # so it knows to group first-party stuff last
-known-first-party = ["event_service"]
+known-first-party = ["app"]
 
 [tool.ruff.lint.pydocstyle]
 # Use Google-style docstrings.
@@ -102,18 +80,18 @@ convention = "google"
 
 [tool.deptry]
 ignore_notebooks = true
-known_first_party = ["event_service"]
+known_first_party = ["app"]
 
 [tool.deptry.per_rule_ignores]
 DEP002 = ["aiodns", "certifi", "PyJWT"]
 
 [tool.coverage.paths]
-source = ["event_service", "*/site-packages"]
+source = ["app", "*/site-packages"]
 
 [tool.coverage.run]
 branch = false
 omit = ["*gunicorn_config.py", "*db_utils.py"]
-source = ["event_service"]
+source = ["app"]
 
 [tool.coverage.report]
 fail_under = 100
@@ -123,7 +101,7 @@ show_missing = true
 [tool.pytest.ini_options]
 env = [
     "CONFIG=test",
-    "JWT_SECRET=secret",
+    "JWT_SECRET=test_jwt_secret_key_for_development_do_not_use_in_production_12345",
     "ADMIN_USERNAME=admin",
     "ADMIN_PASSWORD=password",
     "JWT_EXP_DELTA_SECONDS=60",
@@ -154,7 +132,7 @@ check-deps = { cmd = "uv run deptry ." }
 audit = { cmd = "uv run pip-audit" }
 unit-test = { cmd = "uv run pytest -m unit", env = { "CONFIG" = "test" } }
 integration-test = { cmd = "uv run pytest -m integration -s --cov --cov-report=term-missing --cov-report=html:.htmlcov", env = { "CONFIG" = "test" } }
-contract-test = { cmd = "uv run pytest -m contract -s" }
+contract-test = { cmd = "uv run pytest -m contract -s -rA" }
 release = { sequence = [
     "lint",
     "check-types",
