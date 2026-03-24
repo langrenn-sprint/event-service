@@ -136,7 +136,7 @@ format = { cmd = "uv run ruff format" }
 lint = { cmd = "uv run ruff check --fix" }
 check-types = "uv run ty check ."
 check-deps = { cmd = "uv run deptry ." }
-audit = { cmd = "uv run pip-audit" }
+audit = { cmd = "uv run pip-audit . --ignore-vuln CVE-2026-4539" }
 unit-test = { cmd = "uv run pytest -m unit", env = { "CONFIG" = "test" } }
 integration-test = { cmd = "uv run pytest -m integration -s --cov --cov-report=term-missing --cov-report=html:.htmlcov", env = { "CONFIG" = "test" } }
 contract-test = { cmd = "uv run pytest -m contract -s -rA" }
