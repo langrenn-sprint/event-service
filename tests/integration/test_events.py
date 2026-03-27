@@ -173,7 +173,11 @@ async def test_get_event_by_id(
     assert body["competition_format"] == event.competition_format
     assert body["timezone"] == event.timezone
     assert body["date_of_event"] == event.date_of_event.isoformat()
-    assert body["time_of_event"] == event.time_of_event.isoformat()  # type: ignore[attr-defined]
+    assert (
+        body["time_of_event"] == event.time_of_event.isoformat()
+        if event.time_of_event
+        else None
+    )
     assert body["organiser"] == event.organiser
     assert body["webpage"] == str(event.webpage)
     assert body["information"] == event.information

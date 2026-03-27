@@ -16,7 +16,7 @@ class Contestant(BaseModel):
     id: UUID = Field(default_factory=uuid4)
     first_name: str
     last_name: str
-    birth_date: date
+    birth_date: date | None = Field(default=None)
 
     @field_serializer("birth_date")
     def serialize_birth_date(self, dt: date) -> str:

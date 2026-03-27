@@ -752,7 +752,11 @@ async def test_get_contestant_by_id(
     assert body["id"] == str(contestant.id)
     assert body["first_name"] == contestant.first_name
     assert body["last_name"] == contestant.last_name
-    assert body["birth_date"] == contestant.birth_date.isoformat()
+    assert (
+        body["birth_date"] == contestant.birth_date.isoformat()
+        if contestant.birth_date
+        else None
+    )
     assert body["gender"] == contestant.gender
     assert body["ageclass"] == contestant.ageclass
     assert body["region"] == contestant.region
