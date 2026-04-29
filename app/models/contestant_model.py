@@ -19,9 +19,9 @@ class Contestant(BaseModel):
     birth_date: date | None = Field(default=None)
 
     @field_serializer("birth_date")
-    def serialize_birth_date(self, dt: date) -> str:
+    def serialize_birth_date(self, dt: date | None) -> str | None:
         """Serialize birth date to ISO format."""
-        return dt.isoformat()
+        return dt.isoformat() if dt else None
 
     gender: str | None = Field(default=None)
     ageclass: str
