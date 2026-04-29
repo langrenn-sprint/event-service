@@ -150,6 +150,59 @@ async def test_create_contestant_good_case(
 
 
 @pytest.mark.integration
+async def test_create_contestant_without_birth_date(
+    client: TestClient,
+    mocker: MockFixture,
+    token: MockFixture,
+    event: Event,
+    contestant: Contestant,
+) -> None:
+    """Should return Created when birth_date is not provided."""
+    contestant_no_birth_date = contestant.model_copy(update={"birth_date": None})
+
+    mocker.patch(
+        "app.adapters.events_adapter.EventsAdapter.get_event_by_id",
+        return_value=event,
+    )
+    mocker.patch(
+        "app.adapters.contestants_adapter.ContestantsAdapter.get_contestant_by_name",
+        return_value=None,
+    )
+    mocker.patch(
+        "app.adapters.contestants_adapter.ContestantsAdapter.get_contestant_by_minidrett_id",
+        return_value=None,
+    )
+    mocker.patch(
+        "app.adapters.contestants_adapter.ContestantsAdapter.create_contestant",
+        return_value=contestant_no_birth_date.id,
+    )
+    mocker.patch(
+        "app.adapters.contestants_adapter.ContestantsAdapter.get_contestant_by_bib",
+        return_value=None,
+    )
+    mocker.patch(
+        "app.adapters.raceclasses_adapter.RaceclassesAdapter.get_all_raceclasses",
+        return_value=[],
+    )
+
+    request_body = contestant_no_birth_date.model_dump(mode="json")
+
+    headers = {
+        "Content-Type": "application/json",
+        "Authorization": f"Bearer {token}",
+    }
+
+    resp = client.post(
+        f"/events/{event.id}/contestants", headers=headers, json=request_body
+    )
+    assert resp.status_code == 201, resp.json()
+    assert (
+        f"/events/{event.id}/contestants/{contestant_no_birth_date.id}"
+        in resp.headers["Location"]
+    )
+
+
+@pytest.mark.integration
 async def test_create_contestants_csv_good_case(
     client: TestClient,
     mocker: MockFixture,
