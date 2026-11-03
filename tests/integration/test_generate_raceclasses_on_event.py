@@ -141,6 +141,69 @@ async def test_generate_raceclasses_on_event(
 
 
 @pytest.mark.integration
+async def test_generate_raceclasses_on_event_one_lookup_per_ageclass(
+    client: TestClient,
+    mocker: MockFixture,
+    token: MockFixture,
+    event: Event,
+    contestant: Contestant,
+) -> None:
+    """Should look up and create each ageclass once, from its first contestant."""
+    # Two contestants in the same ageclass, with different distances,
+    # and one contestant in another ageclass:
+    first_g16 = contestant.model_copy(update={"id": uuid.uuid4(), "distance": "5km"})
+    second_g16 = contestant.model_copy(update={"id": uuid.uuid4(), "distance": "10km"})
+    j15 = contestant.model_copy(
+        update={
+            "id": uuid.uuid4(),
+            "ageclass": "J 15 år",
+            "gender": "K",
+            "distance": "3km",
+        }
+    )
+    mocker.patch(
+        "app.adapters.events_adapter.EventsAdapter.get_event_by_id",
+        return_value=event,
+    )
+    mocker.patch(
+        "app.adapters.contestants_adapter.ContestantsAdapter.get_all_contestants",
+        return_value=[first_g16, second_g16, j15],
+    )
+    get_by_ageclass_name = mocker.patch(
+        "app.adapters.raceclasses_adapter.RaceclassesAdapter.get_raceclass_by_ageclass_name",
+        return_value=[],
+    )
+    create_raceclass = mocker.patch(
+        "app.adapters.raceclasses_adapter.RaceclassesAdapter.create_raceclass",
+        return_value=str(uuid.uuid4()),
+    )
+    mocker.patch(
+        "app.adapters.raceclasses_adapter.RaceclassesAdapter.get_all_raceclasses",
+        return_value=[],
+    )
+
+    headers = {
+        "Content-Type": "application/json",
+        "Authorization": f"Bearer {token}",
+    }
+
+    resp = client.post(f"/events/{event.id}/generate-raceclasses", headers=headers)
+    assert resp.status_code == 201
+
+    # One lookup per unique ageclass, not per contestant:
+    assert [c.args[1] for c in get_by_ageclass_name.await_args_list] == [
+        "G 16 år",
+        "J 15 år",
+    ]
+    # The raceclasses are created from the first contestant in each ageclass:
+    created = [c.args[1] for c in create_raceclass.await_args_list]
+    assert [(r.ageclasses, r.gender, r.distance) for r in created] == [
+        (["G 16 år"], "M", "5km"),
+        (["J 15 år"], "K", "3km"),
+    ]
+
+
+@pytest.mark.integration
 async def test_generate_raceclasses_on_event_raceclass_exist(
     client: TestClient,
     mocker: MockFixture,
