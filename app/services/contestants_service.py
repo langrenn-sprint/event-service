@@ -414,7 +414,7 @@ async def _parse_contestants_i_sonen(contestants: str) -> pd.DataFrame:
             usecols=cols,
         )
         # Need to map column names to dataclass:
-        contestants_df.rename(
+        contestants_df = contestants_df.rename(
             columns={
                 "Fornavn": "first_name",
                 "Etternavn": "last_name",
@@ -430,7 +430,6 @@ async def _parse_contestants_i_sonen(contestants: str) -> pd.DataFrame:
                 "Klasse": "ageclass",
                 "Øvelse": "distance",
             },
-            inplace=True,  # noqa: PD002
         )
         # We need to combine registration_date and registration_time to one column:
         contestants_df["registration_date_time"] = (

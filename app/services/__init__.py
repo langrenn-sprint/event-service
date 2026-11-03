@@ -41,5 +41,4 @@ __all__ = [
     "RaceclassesService",
     "ResultNotFoundError",
     "ResultsService",
-    "ResultsService",
 ]

@@ -122,7 +122,9 @@ def _assign_default_values_to_raceclasses(
             raceclasses,
             key=lambda raceclass: (
                 raceclasses_config.ageclass_order.index(raceclass.ageclasses[0]),
-                (raceclasses_config.gender_order.index(raceclass.gender)),
+                # A missing (None) or unknown gender raises ValueError, which is
+                # handled below by returning the raceclasses unsorted:
+                raceclasses_config.gender_order.index(raceclass.gender),  # ty: ignore[invalid-argument-type]
             ),
         )
 
