@@ -36,8 +36,13 @@ class EventsCommands:
 
         # Get all contestants in event:
         contestants = await ContestantsAdapter.get_all_contestants(event_id)
-        # For every contestant, create corresponding raceclass:
+        # Look up each ageclass only once, using its first contestant. Looking it up
+        # for every contestant made this slow for events with many contestants.
+        first_contestant_by_ageclass: dict[str, Contestant] = {}
         for contestant in contestants:
+            first_contestant_by_ageclass.setdefault(contestant.ageclass, contestant)
+        # For every ageclass, create corresponding raceclass:
+        for contestant in first_contestant_by_ageclass.values():
             # Check if raceclass exist:
             raceclasses = await RaceclassesService.get_raceclass_by_ageclass_name(
                 event_id, contestant.ageclass
