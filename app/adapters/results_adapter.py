@@ -1,6 +1,5 @@
 """Module for raceclass results adapter."""
 
-import logging
 from typing import Any
 from uuid import UUID
 
@@ -11,13 +10,11 @@ class ResultsAdapter:
     """Class representing an adapter for results."""
 
     database: Any
-    logger: logging.Logger
 
     @classmethod
     async def init(cls, database: Any) -> None:  # pragma: no cover
         """Initialize the class properties."""
         cls.database = database
-        cls.logger = logging.getLogger("uvicorn.error")
 
     @classmethod
     async def get_all_results(

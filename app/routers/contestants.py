@@ -30,7 +30,7 @@ BASE_URL = f"http://{HOST_SERVER}:{HOST_PORT}"
 router = APIRouter(tags=["contestants"])
 
 
-logger = logging.getLogger("event_service.views.contestants")
+logger = logging.getLogger(__name__)
 
 
 @router.get("/events/{event_id}/contestants")

@@ -1,6 +1,5 @@
 """Module for competition_format adapter."""
 
-import logging
 import os
 from http import HTTPStatus
 from typing import Any
@@ -29,12 +28,9 @@ class CompetitionFormatsAdapterError(Exception):
 class CompetitionFormatsAdapter:
     """Class representing an adapter for competition_formats."""
 
-    logger: logging.Logger
-
     @classmethod
     async def init(cls) -> None:  # pragma: no cover
         """Initialize the class properties."""
-        cls.logger = logging.getLogger("uvicorn.error")
 
     @classmethod
     async def get_competition_formats_by_name(

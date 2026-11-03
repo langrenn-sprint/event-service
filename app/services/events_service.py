@@ -19,6 +19,8 @@ from .exceptions import (
     InvalidTimezoneError,
 )
 
+logger = logging.getLogger(__name__)
+
 
 def create_id() -> str:  # pragma: no cover
     """Creates an uuid."""
@@ -36,8 +38,6 @@ class EventNotFoundError(Exception):
 
 class EventsService:
     """Class representing a service for events."""
-
-    logger = logging.getLogger("event_service.services.events_service")
 
     @classmethod
     async def create_event(cls: Any, event: Event) -> UUID | None:
@@ -62,7 +62,7 @@ class EventsService:
         await validate_event(event)
         # insert new event
         result = await EventsAdapter.create_event(event)
-        cls.logger.debug(f"inserted event with id: {event.id}")
+        logger.debug(f"inserted event with id: {event.id}")
         if not result:
             return None
         return event.id

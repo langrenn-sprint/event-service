@@ -20,6 +20,8 @@ from app.services.exceptions import (
     RaceclassNotFoundError,
 )
 
+logger = logging.getLogger(__name__)
+
 
 def create_id() -> str:  # pragma: no cover
     """Creates an uuid."""
@@ -46,8 +48,6 @@ class ContestantAllreadyExistError(Exception):
 
 class ContestantsService:
     """Class representing a service for contestants."""
-
-    logger = logging.getLogger("event_service.services.contestants_service")
 
     @classmethod
     async def get_contestants_by_raceclass(
@@ -147,7 +147,7 @@ class ContestantsService:
 
         # insert new contestant
         result = await ContestantsAdapter.create_contestant(event_id, contestant)
-        cls.logger.debug(
+        logger.debug(
             f"inserted contestant with event_id/contestant_id: {event_id}/{contestant.id}"
         )
         if result:
@@ -247,7 +247,7 @@ class ContestantsService:
                     _result = await ContestantsAdapter.update_contestant(
                         event_id, _existing_contestant.id, updated_contestant
                     )
-                    cls.logger.debug(
+                    logger.debug(
                         f"updated event_id/contestant_id: {event_id}/{contestant.id}"
                     )
                     if _result:
@@ -263,7 +263,7 @@ class ContestantsService:
                     _result = await ContestantsAdapter.create_contestant(
                         event_id, new_contestant
                     )
-                    cls.logger.debug(
+                    logger.debug(
                         f"inserted event_id/contestant_id: {event_id}/{contestant.id}"
                     )
                     if _result:
@@ -273,7 +273,7 @@ class ContestantsService:
                             f"reason: {_result}: {contestant.model_dump()}"
                         )
             except (IllegalValueError, ValidationError) as e:
-                cls.logger.exception(f"Failed to create contestant with {_c}.")
+                logger.exception(f"Failed to create contestant with {_c}.")
                 result["failures"].append(f"reason: {e}: {_c}")
                 continue
 
