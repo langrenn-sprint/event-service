@@ -37,7 +37,7 @@ from app.routers import (
 from app.utils import db_utils
 
 LOGGING_LEVEL = os.getenv("LOGGING_LEVEL", "INFO")
-DB_HOST = os.getenv("DB_HOST", "mongodb")
+DB_HOST = os.getenv("DB_HOST", "localhost")
 DB_PORT = int(os.getenv("DB_PORT", "27017"))
 DB_NAME = os.getenv("DB_NAME", "events")
 DB_USER = os.getenv("DB_USER")
@@ -66,12 +66,46 @@ class EndpointFilter(logging.Filter):
         return True  # Include this log record
 
 
-logger = logging.getLogger("uvicorn.error")
-access_logger = logging.getLogger("uvicorn.access")
-logging.getLogger("alembic").setLevel(logging.WARNING)
-# Exclude metrics and health check endpoint from access logs
-excluded_endpoints = ["/health", "/metrics"]
-access_logger.addFilter(EndpointFilter(excluded_endpoints))
+class LevelPrefixFormatter(logging.Formatter):
+    """Formatter that pads the level like uvicorn does, so log lines align."""
+
+    def format(self, record: logging.LogRecord) -> str:
+        """Add a padded level prefix ("INFO:     ") to the record and format it."""
+        record.levelprefix = f"{record.levelname}:".ljust(9)
+        return super().format(record)
+
+
+def configure_logging(level: str) -> None:
+    """Configure the application logger.
+
+    Every module logs through logging.getLogger(__name__), so all application
+    loggers are children of the "app" logger, which is configured here. This
+    works the same however the app is started (uvicorn, fastapi dev, tests).
+    Uvicorn's own loggers are configured by uvicorn (logging.yaml in Docker).
+
+    An empty level means INFO: docker-compose passes LOGGING_LEVEL as an empty
+    string when it is not set on the host.
+    """
+    app_logger = logging.getLogger("app")
+    app_logger.setLevel(level.upper() or "INFO")
+    if not app_logger.handlers:
+        handler = logging.StreamHandler()
+        handler.setFormatter(
+            LevelPrefixFormatter(
+                "%(levelprefix)s [%(asctime)s] %(name)s - %(message)s",
+                datefmt="%d-%m-%Y %H:%M:%S",
+            )
+        )
+        app_logger.addHandler(handler)
+    # Do not also pass records on to the root logger, which would log them twice:
+    app_logger.propagate = False
+
+
+configure_logging(LOGGING_LEVEL)
+logger = logging.getLogger(__name__)
+
+# Exclude the liveness and readiness probes from the access log:
+logging.getLogger("uvicorn.access").addFilter(EndpointFilter(["/ping", "/ready"]))
 
 
 @asynccontextmanager
@@ -142,25 +176,25 @@ api = FastAPI(
 
 
 @api.exception_handler(TokenError)
-async def unicorn_exception_handler(
-    request: Request, exc: TokenError
-) -> JSONResponse:  # pragma: no cover
-    """Handle token validation errors."""
+async def token_exception_handler(request: Request, exc: TokenError) -> JSONResponse:
+    """Handle token errors.
+
+    Users without the required role get 403 from RoleChecker, not from here.
+    """
     _ = request  # Unused variable
-    _ = exc  # Unused variable
-    if isinstance(exc, TokenMissingError):
+    if isinstance(exc, (TokenMissingError, TokenValidationError)):
+        # Missing, expired, wrongly signed or undecodable token:
+        # the client is not authenticated.
         return JSONResponse(
             status_code=401,
             content={"detail": "Not authenticated"},
         )
-    if isinstance(exc, TokenValidationError):
-        return JSONResponse(
-            status_code=403,
-            content={"detail": "Not authorized to access this resource"},
-        )
+    # Any other token error is a server problem, e.g. APIConfigurationError when
+    # JWT_SECRET is missing. The details are logged where the error is raised,
+    # not returned to the client.
     return JSONResponse(
-        status_code=403,
-        content={"detail": "Not authorized to access this resource"},
+        status_code=500,
+        content={"detail": "Internal Server Error"},
     )
 
 

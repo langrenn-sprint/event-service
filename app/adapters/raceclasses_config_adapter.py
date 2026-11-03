@@ -1,7 +1,6 @@
 """Module for raceclass adapter."""
 
 import json
-import logging
 from pathlib import Path
 from typing import Any
 
@@ -16,12 +15,10 @@ class RaceclassesConfigAdapter:
     config_file_name = (
         Path(__file__).parent.parent / "config" / "raceclasses_config.json"
     )
-    logger: logging.Logger
 
     @classmethod
     async def init(cls) -> None:  # pragma: no cover
         """Initialize the class properties."""
-        cls.logger = logging.getLogger("uvicorn.error")
 
     @classmethod
     async def get_default_raceclasses_config(

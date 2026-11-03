@@ -93,10 +93,10 @@ async def contestant_with_bib(event: Event) -> Contestant:
 
 @pytest.fixture
 def token_unsufficient_role() -> str:
-    """Create a valid token."""
+    """Create a valid token for a user without the required role."""
     secret = os.getenv("JWT_SECRET")
     algorithm = "HS256"
-    payload = {"identity": "user", "roles": ["user"]}
+    payload = {"username": "any_user", "exp": 9999999999, "role": "user"}
     return jwt.encode(payload, secret, algorithm)
 
 

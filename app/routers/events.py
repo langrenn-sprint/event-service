@@ -26,7 +26,7 @@ BASE_URL = f"http://{HOST_SERVER}:{HOST_PORT}"
 
 router = APIRouter(tags=["events"])
 
-logger = logging.getLogger("uvicorn.error")
+logger = logging.getLogger(__name__)
 
 
 @router.get("/events")

@@ -1,6 +1,5 @@
 """Module for contestant adapter."""
 
-import logging
 from typing import Any
 from uuid import UUID
 
@@ -10,13 +9,11 @@ from app.models import Contestant
 class ContestantsAdapter:
     """Class representing an adapter for contestants."""
 
-    logger: logging.Logger
     database: Any
 
     @classmethod
     async def init(cls, database: Any) -> None:  # pragma: no cover
         """Initialize the class properties."""
-        cls.logger = logging.getLogger("uvicorn.error")
         cls.database = database
 
     @classmethod

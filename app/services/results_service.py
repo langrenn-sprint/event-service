@@ -8,6 +8,8 @@ from app.adapters import EventsAdapter, ResultsAdapter
 from app.models import Result
 from app.services import EventNotFoundError
 
+logger = logging.getLogger(__name__)
+
 
 class ResultNotFoundError(Exception):
     """Class representing custom exception for fetch method."""
@@ -20,8 +22,6 @@ class ResultNotFoundError(Exception):
 
 class ResultsService:
     """Class representing a service for results."""
-
-    logger = logging.getLogger("event_service.services.results_service")
 
     @classmethod
     async def create_result(cls: Any, event_id: UUID, result: Result) -> UUID | None:
@@ -45,7 +45,7 @@ class ResultsService:
             msg = f"Event with id {event_id} not found"
             raise EventNotFoundError(msg) from None
         res = await ResultsAdapter.create_result(result)
-        cls.logger.debug(f"inserted result with id: {result.id}")
+        logger.debug(f"inserted result with id: {result.id}")
         if res:
             return result.id
         return None

@@ -23,7 +23,7 @@ HOST_PORT = os.getenv("HOST_PORT", "8080")
 BASE_URL = f"http://{HOST_SERVER}:{HOST_PORT}"
 
 
-logger = logging.getLogger("uvicorn.error")
+logger = logging.getLogger(__name__)
 
 router = APIRouter(tags=["raceclasses"])
 

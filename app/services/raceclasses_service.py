@@ -12,6 +12,8 @@ from app.services import (
     RaceclassNotFoundError,
 )
 
+logger = logging.getLogger(__name__)
+
 
 class RaceclassCreateError(Exception):
     """Class representing custom exception for create method."""
@@ -27,8 +29,6 @@ class RaceclassNotUniqueNameError(Exception):
 
 class RaceclassesService:
     """Class representing a service for raceclasses."""
-
-    logger = logging.getLogger("event_service.services.raceclasses_service")
 
     @classmethod
     async def get_all_raceclasses(cls: Any, event_id: UUID) -> list[Raceclass]:
@@ -77,7 +77,7 @@ class RaceclassesService:
         raceclass.ageclasses = [ageclass.strip() for ageclass in raceclass.ageclasses]
         # insert new raceclass
         result = await RaceclassesAdapter.create_raceclass(event_id, raceclass)
-        cls.logger.debug(
+        logger.debug(
             f"inserted raceclass with event_id/raceclass_id: {event_id}/{raceclass.id}"
         )
         if result:
