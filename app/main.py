@@ -82,9 +82,12 @@ def configure_logging(level: str) -> None:
     loggers are children of the "app" logger, which is configured here. This
     works the same however the app is started (uvicorn, fastapi dev, tests).
     Uvicorn's own loggers are configured by uvicorn (logging.yaml in Docker).
+
+    An empty level means INFO: docker-compose passes LOGGING_LEVEL as an empty
+    string when it is not set on the host.
     """
     app_logger = logging.getLogger("app")
-    app_logger.setLevel(level.upper())
+    app_logger.setLevel(level.upper() or "INFO")
     if not app_logger.handlers:
         handler = logging.StreamHandler()
         handler.setFormatter(
