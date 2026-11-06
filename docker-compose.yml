@@ -58,7 +58,7 @@ services:
     depends_on:
       - mongodb
   mongodb:
-    image: mongo:7-jammy
+    image: mongo:8.0-noble
     ports:
       - 27017
     environment:
