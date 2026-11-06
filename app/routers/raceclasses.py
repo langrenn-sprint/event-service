@@ -6,10 +6,10 @@ from http import HTTPStatus
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query
 from fastapi.responses import Response
 
-from app.authorization import Role, RoleChecker
+from app.authorization import Role, require_roles
 from app.models import Raceclass
 from app.services import (
     EventNotFoundError,
@@ -60,7 +60,7 @@ async def get_all_raceclasses(
 
 @router.post(
     "/events/{event_id}/raceclasses",
-    dependencies=[Depends(RoleChecker([Role.ADMIN, Role.EVENT_ADMIN]))],
+    dependencies=[require_roles(Role.ADMIN, Role.EVENT_ADMIN)],
 )
 async def create_raceclass(event_id: UUID, raceclass: Raceclass) -> Response:
     """Create raceclass function."""
@@ -84,7 +84,7 @@ async def create_raceclass(event_id: UUID, raceclass: Raceclass) -> Response:
 
 @router.delete(
     "/events/{event_id}/raceclasses",
-    dependencies=[Depends(RoleChecker([Role.ADMIN, Role.EVENT_ADMIN]))],
+    dependencies=[require_roles(Role.ADMIN, Role.EVENT_ADMIN)],
 )
 async def delete_all_raceclasses(event_id: UUID) -> Response:
     """Delete all raceclasses function."""
@@ -108,7 +108,7 @@ async def get_raceclass_by_id(event_id: UUID, raceclass_id: UUID) -> Raceclass:
 
 @router.put(
     "/events/{event_id}/raceclasses/{raceclass_id}",
-    dependencies=[Depends(RoleChecker([Role.ADMIN, Role.EVENT_ADMIN]))],
+    dependencies=[require_roles(Role.ADMIN, Role.EVENT_ADMIN)],
 )
 async def put(event_id: UUID, raceclass_id: UUID, raceclass: Raceclass) -> Response:
     """Update raceclass function."""
@@ -127,7 +127,7 @@ async def put(event_id: UUID, raceclass_id: UUID, raceclass: Raceclass) -> Respo
 
 @router.delete(
     "/events/{event_id}/raceclasses/{raceclass_id}",
-    dependencies=[Depends(RoleChecker([Role.ADMIN, Role.EVENT_ADMIN]))],
+    dependencies=[require_roles(Role.ADMIN, Role.EVENT_ADMIN)],
 )
 async def delete_raceclass_by_id(event_id: UUID, raceclass_id: UUID) -> Response:
     """Delete raceclass by id function."""

@@ -6,10 +6,10 @@ from http import HTTPStatus
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query
 from fastapi.responses import Response
 
-from app.authorization import Role, RoleChecker
+from app.authorization import Role, require_roles
 from app.commands import (
     ContestantsCommands,
     NoRaceclassInEventError,
@@ -32,7 +32,7 @@ router = APIRouter(tags=["contestants"])
 
 @router.post(
     "/events/{event_id}/contestants/assign-bibs",
-    dependencies=[Depends(RoleChecker([Role.ADMIN, Role.EVENT_ADMIN]))],
+    dependencies=[require_roles(Role.ADMIN, Role.EVENT_ADMIN)],
 )
 async def assign_bibs(
     event_id: UUID,

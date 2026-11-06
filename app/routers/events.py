@@ -5,11 +5,11 @@ import os
 from http import HTTPStatus
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, HTTPException
 from fastapi.responses import Response
 
 from app.adapters import EventsAdapter
-from app.authorization import Role, RoleChecker
+from app.authorization import Role, require_roles
 from app.models import Event
 from app.services import (
     CompetitionFormatNotFoundError,
@@ -47,7 +47,7 @@ async def get_all_events() -> list[Event]:
 
 @router.post(
     "/events",
-    dependencies=[Depends(RoleChecker([Role.ADMIN, Role.EVENT_ADMIN]))],
+    dependencies=[require_roles(Role.ADMIN, Role.EVENT_ADMIN)],
 )
 async def create_event(event: Event) -> Response:
     """Create an event."""
@@ -79,7 +79,7 @@ async def get_event_by_id(event_id: UUID) -> Event:
 
 @router.put(
     "/events/{event_id}",
-    dependencies=[Depends(RoleChecker([Role.ADMIN, Role.EVENT_ADMIN]))],
+    dependencies=[require_roles(Role.ADMIN, Role.EVENT_ADMIN)],
 )
 async def update_event(event_id: UUID, event: Event) -> Response:
     """Update an event by id."""
@@ -98,7 +98,7 @@ async def update_event(event_id: UUID, event: Event) -> Response:
 
 @router.delete(
     "/events/{event_id}",
-    dependencies=[Depends(RoleChecker([Role.ADMIN, Role.EVENT_ADMIN]))],
+    dependencies=[require_roles(Role.ADMIN, Role.EVENT_ADMIN)],
 )
 async def delete_event(event_id: UUID) -> Response:
     """Delete an event."""
