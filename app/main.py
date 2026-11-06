@@ -5,9 +5,9 @@ import os
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 
-import motor.motor_asyncio
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
+from pymongo import AsyncMongoClient
 
 from app.adapters import (
     CompetitionFormatsAdapter,
@@ -115,7 +115,7 @@ async def lifespan(api: FastAPI) -> AsyncGenerator[None]:  # noqa: ARG001  # pra
     # Initialize database:
     msg = f"Connecting to db at {DB_HOST}:{DB_PORT}"
     logger.debug(msg)
-    mongo = motor.motor_asyncio.AsyncIOMotorClient(
+    mongo = AsyncMongoClient(
         host=DB_HOST,
         port=DB_PORT,
         username=DB_USER,
@@ -142,7 +142,7 @@ async def lifespan(api: FastAPI) -> AsyncGenerator[None]:  # noqa: ARG001  # pra
     yield
 
     # Cleanup resources if needed
-    mongo.close()
+    await mongo.close()
 
 
 tags_metadata = [

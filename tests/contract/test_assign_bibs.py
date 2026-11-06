@@ -9,9 +9,9 @@ from typing import Any
 from urllib.parse import urlsplit
 
 import aiofiles
-import motor.motor_asyncio
 import pytest
 from httpx import AsyncClient
+from pymongo import AsyncMongoClient
 from pytest_mock import MockFixture
 
 from app.utils import db_utils
@@ -45,9 +45,7 @@ async def admin_token(http_service: Any, users_url: str) -> str:
 @pytest.fixture(scope="module", autouse=True)
 async def clear_db(db_address: dict[str, Any]) -> AsyncGenerator:
     """Clear db before and after tests."""
-    mongo = motor.motor_asyncio.AsyncIOMotorClient(
-        **db_address, username=DB_USER, password=DB_PASSWORD
-    )
+    mongo = AsyncMongoClient(**db_address, username=DB_USER, password=DB_PASSWORD)
     try:
         await db_utils.drop_db_and_recreate_indexes(mongo, DB_NAME)
     except Exception as error:
@@ -61,6 +59,7 @@ async def clear_db(db_address: dict[str, Any]) -> AsyncGenerator:
     except Exception as error:
         logger.exception(f"Failed to drop database {DB_NAME}")
         raise error from error
+    await mongo.close()
 
 
 @pytest.fixture(scope="module")
