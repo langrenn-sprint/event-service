@@ -5,11 +5,11 @@ import os
 from http import HTTPStatus
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, HTTPException
 from fastapi.responses import Response
 
 from app.adapters import ResultsAdapter
-from app.authorization import Role, RoleChecker
+from app.authorization import Role, require_roles
 from app.models import Result
 from app.services import EventNotFoundError, ResultNotFoundError, ResultsService
 
@@ -32,7 +32,7 @@ async def get_all_results(event_id: UUID) -> list[Result]:
 
 @router.post(
     "/events/{event_id}/results",
-    dependencies=[Depends(RoleChecker([Role.ADMIN, Role.EVENT_ADMIN]))],
+    dependencies=[require_roles(Role.ADMIN, Role.EVENT_ADMIN, Role.RESULT_ADMIN)],
 )
 async def create_race_result(event_id: UUID, result: Result) -> Response:
     """Create race result function."""
@@ -63,7 +63,7 @@ async def get_result_by_raceclass_name(event_id: UUID, raceclass_name: str) -> R
 
 @router.delete(
     "/events/{event_id}/results/{raceclass_name}",
-    dependencies=[Depends(RoleChecker([Role.ADMIN, Role.EVENT_ADMIN]))],
+    dependencies=[require_roles(Role.ADMIN, Role.EVENT_ADMIN, Role.RESULT_ADMIN)],
 )
 async def delete(event_id: UUID, raceclass_name: str) -> Response:
     """Delete route function."""

@@ -22,6 +22,7 @@ from app.authorization import (
     TokenError,
     TokenMissingError,
     TokenValidationError,
+    document_roles,
 )
 from app.routers import (
     contestants,
@@ -209,3 +210,4 @@ api.include_router(contestants.router)
 api.include_router(contestants_commands.router)
 api.include_router(contestants_search.router)
 api.include_router(results.router)
+document_roles(api)

@@ -7,11 +7,11 @@ from http import HTTPStatus
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, Query, UploadFile
+from fastapi import APIRouter, HTTPException, Query, UploadFile
 from fastapi.responses import Response
 
 from app.adapters import ContestantsAdapter
-from app.authorization import Role, RoleChecker
+from app.authorization import Role, require_roles
 from app.models import Contestant
 from app.services import (
     BibAlreadyInUseError,
@@ -90,7 +90,7 @@ async def get_all_contestants(
 
 @router.post(
     "/events/{event_id}/contestants",
-    dependencies=[Depends(RoleChecker([Role.ADMIN, Role.EVENT_ADMIN]))],
+    dependencies=[require_roles(Role.ADMIN, Role.EVENT_ADMIN, Role.CONTESTANT_ADMIN)],
 )
 async def create_contestant(event_id: UUID, contestant: Contestant) -> Response:
     """Create contestant."""
@@ -115,7 +115,7 @@ async def create_contestant(event_id: UUID, contestant: Contestant) -> Response:
 
 @router.post(
     "/events/{event_id}/contestants/file",
-    dependencies=[Depends(RoleChecker([Role.ADMIN, Role.EVENT_ADMIN]))],
+    dependencies=[require_roles(Role.ADMIN, Role.EVENT_ADMIN)],
 )
 async def create_many_contestants(
     event_id: UUID,
@@ -160,7 +160,7 @@ async def get_contestant_by_id(event_id: UUID, contestant_id: UUID) -> Contestan
 
 @router.put(
     "/events/{event_id}/contestants/{contestant_id}",
-    dependencies=[Depends(RoleChecker([Role.ADMIN, Role.EVENT_ADMIN]))],
+    dependencies=[require_roles(Role.ADMIN, Role.EVENT_ADMIN, Role.CONTESTANT_ADMIN)],
 )
 async def update_contestant(
     event_id: UUID, contestant_id: UUID, contestant: Contestant
@@ -185,7 +185,7 @@ async def update_contestant(
 
 @router.delete(
     "/events/{event_id}/contestants/{contestant_id}",
-    dependencies=[Depends(RoleChecker([Role.ADMIN, Role.EVENT_ADMIN]))],
+    dependencies=[require_roles(Role.ADMIN, Role.EVENT_ADMIN)],
 )
 async def delete_contestant(event_id: UUID, contestant_id: UUID) -> Response:
     """Delete a contestant."""
@@ -202,7 +202,7 @@ async def delete_contestant(event_id: UUID, contestant_id: UUID) -> Response:
 
 @router.delete(
     "/events/{event_id}/contestants",
-    dependencies=[Depends(RoleChecker([Role.ADMIN, Role.EVENT_ADMIN]))],
+    dependencies=[require_roles(Role.ADMIN, Role.EVENT_ADMIN)],
 )
 async def delete_all_contestants(event_id: UUID) -> Response:
     """Delete all contestants."""

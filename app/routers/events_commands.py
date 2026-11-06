@@ -5,10 +5,10 @@ import os
 from http import HTTPStatus
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, HTTPException
 from fastapi.responses import Response
 
-from app.authorization import Role, RoleChecker
+from app.authorization import Role, require_roles
 from app.commands import EventsCommands
 from app.services import (
     EventNotFoundError,
@@ -28,7 +28,7 @@ router = APIRouter(tags=["events"])
 
 @router.post(
     "/events/{event_id}/generate-raceclasses",
-    dependencies=[Depends(RoleChecker([Role.ADMIN, Role.EVENT_ADMIN]))],
+    dependencies=[require_roles(Role.ADMIN, Role.EVENT_ADMIN)],
 )
 async def generate_raceclasses_on_event(event_id: UUID) -> Response:
     """Generate raceclasses on a given event."""
