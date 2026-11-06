@@ -17,10 +17,6 @@ from pytest_mock import MockFixture
 
 from app.utils import db_utils
 
-USERS_HOST_SERVER = os.getenv("USERS_HOST_SERVER")
-USERS_HOST_PORT = os.getenv("USERS_HOST_PORT")
-DB_HOST = os.getenv("DB_HOST", "localhost")
-DB_PORT = int(os.getenv("DB_PORT", "27017"))
 DB_NAME = os.getenv("DB_NAME", "events_test")
 DB_USER = os.getenv("DB_USER")
 DB_PASSWORD = os.getenv("DB_PASSWORD")
@@ -29,9 +25,9 @@ logger = logging.getLogger(__name__)
 
 
 @pytest.fixture(scope="module")
-async def admin_token(http_service: Any) -> str:
+async def admin_token(http_service: Any, users_url: str) -> str:
     """Create a valid token for admin user."""
-    url = f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/login"
+    url = f"{users_url}/login"
     headers = {"Content-Type": "application/json"}
     request_body = {
         "username": os.getenv("ADMIN_USERNAME"),
@@ -48,10 +44,10 @@ async def admin_token(http_service: Any) -> str:
 
 
 @pytest.fixture(scope="module", autouse=True)
-async def clear_db() -> AsyncGenerator:
+async def clear_db(db_address: dict[str, Any]) -> AsyncGenerator:
     """Clear db before and after tests."""
     mongo = motor.motor_asyncio.AsyncIOMotorClient(
-        host=DB_HOST, port=DB_PORT, username=DB_USER, password=DB_PASSWORD
+        **db_address, username=DB_USER, password=DB_PASSWORD
     )
     try:
         await db_utils.drop_db_and_recreate_indexes(mongo, DB_NAME)

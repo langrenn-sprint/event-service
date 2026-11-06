@@ -16,12 +16,6 @@ from pytest_mock import MockFixture
 
 from app.utils import db_utils
 
-COMPETITION_FORMAT_HOST_SERVER = os.getenv("COMPETITION_FORMAT_HOST_SERVER")
-COMPETITION_FORMAT_HOST_PORT = os.getenv("COMPETITION_FORMAT_HOST_PORT")
-USERS_HOST_SERVER = os.getenv("USERS_HOST_SERVER")
-USERS_HOST_PORT = os.getenv("USERS_HOST_PORT")
-DB_HOST = os.getenv("DB_HOST", "localhost")
-DB_PORT = int(os.getenv("DB_PORT", "27017"))
 DB_NAME = os.getenv("DB_NAME", "events_test")
 DB_USER = os.getenv("DB_USER")
 DB_PASSWORD = os.getenv("DB_PASSWORD")
@@ -30,9 +24,9 @@ logger = logging.getLogger(__name__)
 
 
 @pytest.fixture(scope="module")
-async def token(http_service: Any) -> str:
+async def token(http_service: Any, users_url: str) -> str:
     """Create a valid token."""
-    url = f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/login"
+    url = f"{users_url}/login"
     headers = {"Content-Type": "application/json"}
     request_body = {
         "username": os.getenv("ADMIN_USERNAME"),
@@ -50,10 +44,10 @@ async def token(http_service: Any) -> str:
 
 
 @pytest.fixture(scope="module", autouse=True)
-async def clear_db() -> AsyncGenerator:
+async def clear_db(db_address: dict[str, Any]) -> AsyncGenerator:
     """Delete all events before we start."""
     mongo = motor.motor_asyncio.AsyncIOMotorClient(
-        host=DB_HOST, port=DB_PORT, username=DB_USER, password=DB_PASSWORD
+        **db_address, username=DB_USER, password=DB_PASSWORD
     )
     try:
         await db_utils.drop_db_and_recreate_indexes(mongo, DB_NAME)
@@ -102,6 +96,7 @@ async def test_create_event(
     clear_db: AsyncGenerator,
     event: dict,
     competition_format_interval_start: dict,
+    competition_format_url: str,
 ) -> None:
     """Should return Created, location header and no body."""
     async with AsyncClient() as client:
@@ -110,7 +105,7 @@ async def test_create_event(
             "Authorization": f"Bearer {token}",
         }
         # We have to create a competition_format:
-        url = f"http://{COMPETITION_FORMAT_HOST_SERVER}:{COMPETITION_FORMAT_HOST_PORT}/competition-formats"
+        url = f"{competition_format_url}/competition-formats"
         request_body = competition_format_interval_start
         response = await client.post(url, headers=headers, json=request_body)
         if response.status_code != HTTPStatus.CREATED:

@@ -5,6 +5,7 @@ import os
 from collections.abc import AsyncGenerator
 from http import HTTPStatus
 from typing import Any
+from urllib.parse import urlsplit
 
 import aiofiles
 import motor.motor_asyncio
@@ -14,10 +15,6 @@ from pytest_mock import MockFixture
 
 from app.utils import db_utils
 
-USERS_HOST_SERVER = os.getenv("USERS_HOST_SERVER")
-USERS_HOST_PORT = os.getenv("USERS_HOST_PORT")
-DB_HOST = os.getenv("DB_HOST", "localhost")
-DB_PORT = int(os.getenv("DB_PORT", "27017"))
 DB_NAME = os.getenv("DB_NAME", "events_test")
 DB_USER = os.getenv("DB_USER")
 DB_PASSWORD = os.getenv("DB_PASSWORD")
@@ -26,9 +23,9 @@ logger = logging.getLogger(__name__)
 
 
 @pytest.fixture(scope="module")
-async def token(http_service: Any) -> str:
+async def token(http_service: Any, users_url: str) -> str:
     """Create a valid token."""
-    url = f"http://{USERS_HOST_SERVER}:{USERS_HOST_PORT}/login"
+    url = f"{users_url}/login"
     headers = {"Content-Type": "application/json"}
     request_body = {
         "username": os.getenv("ADMIN_USERNAME"),
@@ -46,10 +43,10 @@ async def token(http_service: Any) -> str:
 
 
 @pytest.fixture(autouse=True)
-async def clear_db() -> AsyncGenerator:
+async def clear_db(db_address: dict[str, Any]) -> AsyncGenerator:
     """Delete all events before we start."""
     mongo = motor.motor_asyncio.AsyncIOMotorClient(
-        host=DB_HOST, port=DB_PORT, username=DB_USER, password=DB_PASSWORD
+        **db_address, username=DB_USER, password=DB_PASSWORD
     )
     try:
         await db_utils.drop_db_and_recreate_indexes(mongo, DB_NAME)
@@ -134,7 +131,8 @@ async def test_generate_raceclasses(
         assert f"/events/{event_id}/raceclasses" in response.headers["Location"]
 
         # We check that 19 raceclasses are actually created:
-        url = response.headers["Location"]
+        # Location uses the service's configured host, not Docker's port
+        url = f"{http_service}{urlsplit(response.headers['Location']).path}"
         response = await client.get(url)
         assert response.status_code == HTTPStatus.OK
         raceclasses = response.json()
